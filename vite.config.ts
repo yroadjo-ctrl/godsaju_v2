@@ -4,7 +4,8 @@ import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+
+const isManusEnv = !!process.env.BUILT_IN_FORGE_API_URL;
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -203,7 +204,13 @@ function vitePluginStorageProxy(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
+const getManusPlugins = async () => {
+  if (!isManusEnv) return [];
+  const { vitePluginManusRuntime } = await import("vite-plugin-manus-runtime");
+  return [vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
+};
+
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), ...(await getManusPlugins())];
 
 export default defineConfig({
   plugins,
