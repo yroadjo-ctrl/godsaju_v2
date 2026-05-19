@@ -420,11 +420,11 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
             <div 
               key={day}
               onClick={() => handleCellClick(day)}
-              className={`border-r border-b border-slate-300 h-20 sm:h-28 overflow-hidden transition-colors cursor-pointer group relative ${bgColor} ${interactionRing} flex flex-col`}
+              className={`border-r border-b border-slate-300 h-28 transition-colors cursor-pointer group relative ${bgColor} ${interactionRing} flex flex-col`}
             >
               {/* 절기 - 상단 전체 너비 바 */}
               {jieQi ? (
-                <div className="w-full text-center text-[7px] sm:text-[9px] font-bold text-white whitespace-nowrap rounded-t-sm py-px"
+                <div className="w-full text-center text-[9px] font-bold text-white whitespace-nowrap rounded-t-sm py-px"
                   style={{ backgroundColor: '#FF66FF' }}>
                   {jieQi.name} {jieQi.time}
                 </div>
@@ -432,14 +432,12 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                 <div className="h-[3px]" />
               )}
 
-              <div className={`px-1 sm:px-1.5 ${jieQi ? 'pt-0' : 'pt-1'}`}>
-                <div className="flex items-baseline justify-between">
-                  <span className={`text-xs sm:text-sm font-bold ${dayColor}`}>{day}</span>
-                  {isGongmang && (
-                    <span className="text-[8px] sm:text-[9px] font-bold" style={{ color: '#FF0000' }}>空</span>
-                  )}
-                </div>
-                <span className="text-[8px] sm:text-[9px] text-slate-600 font-medium">(음{lunar})</span>
+              <div className={`flex items-baseline gap-0.5 px-1.5 ${jieQi ? 'pt-0' : 'pt-1'}`}>
+                <span className={`text-sm font-bold ${dayColor}`}>{day}</span>
+                <span className="text-[9px] text-slate-600 font-medium">(음{lunar})</span>
+                {isGongmang && (
+                  <span className="text-[9px] font-bold" style={{ color: '#FF0000' }}>空</span>
+                )}
               </div>
               
               {/* 일진(日干支) 표시 - 셀 중앙 */}
@@ -450,31 +448,31 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                   return (
                     <div className={`${jieQi ? 'mt-0' : 'mt-0.5'} flex flex-col items-center justify-center px-1`}>
                       {/* 천간 + 천간십성 */}
-                      <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+                      <div className="flex items-center justify-center gap-1">
                         <div className="flex flex-col items-center">
-                          <span className={`text-xs sm:text-base font-bold ${getOhaengColor(ganzi.stem)}`}>
+                          <span className={`text-base font-bold ${getOhaengColor(ganzi.stem)}`}>
                             {ganzi.stem}
                           </span>
                           {tenStems.stemTenStem && (
-                            <span className={`text-[7px] sm:text-[8px] font-bold ${getOhaengColor(ganzi.stem)}`}>
+                            <span className={`text-[8px] font-bold ${getOhaengColor(ganzi.stem)}`}>
                               ({tenStems.stemTenStem})
                             </span>
                           )}
                         </div>
                         {/* 지지 + 지지십성 */}
                         <div className="flex flex-col items-center">
-                          <span className={`text-xs sm:text-base font-bold ${getOhaengColor(ganzi.branch)}`}>
+                          <span className={`text-base font-bold ${getOhaengColor(ganzi.branch)}`}>
                             {ganzi.branch}
                           </span>
                           {tenStems.branchTenStem && (
-                            <span className={`text-[7px] sm:text-[8px] font-bold ${getOhaengColor(ganzi.branch)}`}>
+                            <span className={`text-[8px] font-bold ${getOhaengColor(ganzi.branch)}`}>
                               ({tenStems.branchTenStem})
                             </span>
                           )}
                         </div>
                       </div>
-                      {/* 12운성 + 12신살 (같은 줄) — PC(sm↑)에서만 표시 */}
-                      <div className="hidden sm:flex items-center justify-center gap-3 mt-0.5">
+                      {/* 12운성 + 12신살 (같은 줄) */}
+                      <div className="flex items-center justify-center gap-3 mt-0.5">
                         {/* 12운성 */}
                         {(() => {
                           const meteorology = getTwelveMeteorology(ganzi.branch);
@@ -501,7 +499,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                         })()}
                       </div>
 
-                      {/* 합충형파해 이모지 + Popover — PC(sm↑)에서만 표시 */}
+                      {/* 합충형파해 이모지 + Popover */}
                       {(() => {
                         const interactions = getDayInteractions(ganzi.stem, ganzi.branch);
                         if (interactions.length === 0) return null;
@@ -509,7 +507,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                         return (
                           <Popover>
                             <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <div className="hidden sm:flex gap-0.5 justify-center mt-1 cursor-pointer hover:opacity-70">
+                              <div className="flex gap-0.5 justify-center mt-1 cursor-pointer hover:opacity-70">
                                 {uniqueTypes.slice(0, 4).map((type, ti) => (
                                   <span key={ti} className="text-[11px] leading-none" title={RELATION_KOR[type] ?? type}>
                                     {RELATION_EMOJI[type] ?? '•'}
