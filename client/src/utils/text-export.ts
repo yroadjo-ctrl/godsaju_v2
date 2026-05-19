@@ -257,34 +257,54 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 특수신살 (갓사주 전용) - result.pillars에서 직접 추출
   if (result.godSinsal && result.godSinsal.length > 0) {
-    // result.pillars에서 직접 천간/지지 추출 (정확한 원본 데이터)
-    const stems = result.pillars.map(p => p.pillar.stem)
-    const branches = result.pillars.map(p => p.pillar.branch)
-    
+    const ssStemKor: Record<string, string> = {
+      '甲': '갑', '乙': '을', '丙': '병', '丁': '정', '戊': '무',
+      '己': '기', '庚': '경', '辛': '신', '壬': '임', '癸': '계',
+    }
+    const ssBranchKor: Record<string, string> = {
+      '子': '자', '丑': '축', '寅': '인', '卯': '묘', '辰': '진',
+      '巳': '사', '午': '오', '未': '미', '申': '신', '酉': '유',
+      '戌': '술', '亥': '해',
+    }
+    const ssSinsalHanja: Record<string, string> = {
+      '현침살': '懸針殺', '백호대살': '白虎大殺', '괴강살': '魁罡殺',
+      '천을귀인': '天乙貴人', '태극귀인': '太極貴人', '월덕귀인': '月德貴人',
+      '천덕귀인': '天德貴人', '홍염살': '紅艶殺', '도화살': '桃花殺',
+      '양인살': '羊刃殺', '원진살': '怨嗔殺', '귀문관살': '鬼門關殺',
+      '천문성': '天門星', '역마살': '驛馬殺', '망신살': '亡身殺',
+      '장성살': '將星殺', '화개살': '華蓋殺', '겁살': '劫殺',
+      '재살': '災殺', '천살': '天殺', '지살': '地殺',
+      '연살': '年殺', '월살': '月殺',
+    }
+    const ssSinsalLabel = (name: string) => {
+      const hanja = ssSinsalHanja[name]
+      return hanja ? `${name}(${hanja})` : name
+    }
+
+    const ssStems    = result.pillars.map(p => p.pillar.stem)
+    const ssBranches = result.pillars.map(p => p.pillar.branch)
+
+    // 천간/지지 병기 셀 (정(丁) 형식)
+    const ssStemCells   = ssStems.map(s => `${ssStemKor[s] || s}(${s})`)
+    const ssBranchCells = ssBranches.map(b => `${ssBranchKor[b] || b}(${b})`)
+
+    // 신살 셀 (한자 병기 + 줄 구분은 ' / ')
+    const ssHeavenCells = Array(4).fill(null).map((_, i) => {
+      const names = result.godSinsal?.filter(s => s.position === 'heaven' && s.pillarIndex === i).map(s => ssSinsalLabel(s.name)) ?? []
+      return names.length > 0 ? names.join(' / ') : '-'
+    })
+    const ssEarthCells = Array(4).fill(null).map((_, i) => {
+      const names = result.godSinsal?.filter(s => s.position === 'earth' && s.pillarIndex === i).map(s => ssSinsalLabel(s.name)) ?? []
+      return names.length > 0 ? names.join(' / ') : '-'
+    })
+
     lines.push('特殊神殺 (길성과 흉성)')
-    lines.push('')
-    lines.push('| ' + padFixedWidth('구분', LABEL_WIDTH - 2) + ' | ' + headerLabels.map(h => padFixedWidth(h, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-    lines.push('|' + '─'.repeat(LABEL_WIDTH) + '|' + Array(4).fill('─'.repeat(COLUMN_WIDTH)).join('|') + '|')
-    
-    // 천간 행
-    lines.push('| ' + padFixedWidth('天干', LABEL_WIDTH - 2) + ' | ' + stems.map((stem, i) => padFixedWidth(stem, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-    
-    // 천간 신살 행 (기둥별로 필터링)
-    const heavenSinsalsByPillar = Array(4).fill(null).map((_, i) => 
-      result.godSinsal?.filter(s => s.position === 'heaven' && s.pillarIndex === i).map(s => s.name).join(', ') || '-'
-    )
-    lines.push('| ' + padFixedWidth('神殺', LABEL_WIDTH - 2) + ' | ' + heavenSinsalsByPillar.map(s => padFixedWidth(s, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-    
-    // 지지 행
-    lines.push('| ' + padFixedWidth('地支', LABEL_WIDTH - 2) + ' | ' + branches.map((branch, i) => padFixedWidth(branch, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-    
-    // 지지 신살 행 (기둥별로 필터링)
-    const earthSinsalsByPillar = Array(4).fill(null).map((_, i) => 
-      result.godSinsal?.filter(s => s.position === 'earth' && s.pillarIndex === i).map(s => s.name).join(', ') || '-'
-    )
-    lines.push('| ' + padFixedWidth('神殺', LABEL_WIDTH - 2) + ' | ' + earthSinsalsByPillar.map(s => padFixedWidth(s, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-    
-    lines.push('|' + '─'.repeat(LABEL_WIDTH) + '|' + Array(4).fill('─'.repeat(COLUMN_WIDTH)).join('|') + '|')
+    lines.push(`| 구분 | ${headerLabels.join(' | ')} |`)
+    lines.push('|---|---|---|---|---|')
+    lines.push(`| 天干 | ${ssStemCells.join(' | ')} |`)
+    lines.push(`| 天干 神殺 | ${ssHeavenCells.join(' | ')} |`)
+    lines.push(`| 地支 | ${ssBranchCells.join(' | ')} |`)
+    lines.push(`| 地支 神殺 | ${ssEarthCells.join(' | ')} |`)
     lines.push('')
   }
 
