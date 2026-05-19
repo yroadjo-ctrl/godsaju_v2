@@ -420,7 +420,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
             <div 
               key={day}
               onClick={() => handleCellClick(day)}
-              className={`border-r border-b border-slate-300 h-20 sm:h-28 transition-colors cursor-pointer group relative ${bgColor} ${interactionRing} flex flex-col`}
+              className={`border-r border-b border-slate-300 h-20 sm:h-28 overflow-hidden transition-colors cursor-pointer group relative ${bgColor} ${interactionRing} flex flex-col`}
             >
               {/* 절기 - 상단 전체 너비 바 */}
               {jieQi ? (
@@ -432,12 +432,14 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                 <div className="h-[3px]" />
               )}
 
-              <div className={`flex items-baseline gap-0.5 px-1 sm:px-1.5 ${jieQi ? 'pt-0' : 'pt-1'}`}>
-                <span className={`text-xs sm:text-sm font-bold ${dayColor}`}>{day}</span>
+              <div className={`px-1 sm:px-1.5 ${jieQi ? 'pt-0' : 'pt-1'}`}>
+                <div className="flex items-baseline justify-between">
+                  <span className={`text-xs sm:text-sm font-bold ${dayColor}`}>{day}</span>
+                  {isGongmang && (
+                    <span className="text-[8px] sm:text-[9px] font-bold" style={{ color: '#FF0000' }}>空</span>
+                  )}
+                </div>
                 <span className="text-[8px] sm:text-[9px] text-slate-600 font-medium">(음{lunar})</span>
-                {isGongmang && (
-                  <span className="text-[8px] sm:text-[9px] font-bold" style={{ color: '#FF0000' }}>空</span>
-                )}
               </div>
               
               {/* 일진(日干支) 표시 - 셀 중앙 */}
