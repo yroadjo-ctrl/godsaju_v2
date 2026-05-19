@@ -44,7 +44,7 @@ export default function SajuView({ input }: Props) {
       {/* 명식 테이블 */}
       <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-medium text-gray-700 dark:text-gray-200">四柱八字</h2>
+          <h2 className="text-base font-medium text-gray-700 dark:text-gray-200">四柱原局</h2>
           <CopyButton 
             getText={async () => sajuToText(result, undefined, monthlyDisplayYear)}
             label={t('copy.aiCopy')}

@@ -113,7 +113,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     return line
   }
 
-  lines.push(`四柱八字 (${genderChar})`)
+  lines.push(`四柱原局 (${genderChar})`)
   lines.push('')
   
   // 열 너비 고정 (각 기두 + 3개 기듡 = 32)
@@ -246,7 +246,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     bzMulti.push(`${rel.type}${el}`)
   }
 
-  lines.push('八字關係 (원국 기둥 간 합충형파해)')
+  lines.push('合沖刑破害(四柱原局)')
   lines.push(bzHeader)
   lines.push(bzDivider)
   bzRows.forEach(row => lines.push(row))

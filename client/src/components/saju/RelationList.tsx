@@ -82,7 +82,7 @@ export default function RelationList({ relations, pillars }: Props) {
 
   return (
     <section>
-      <h3 className="text-base font-medium text-gray-700 mb-3">八字關係</h3>
+      <h3 className="text-base font-medium text-gray-700 mb-3">合沖刑破害(四柱原局)</h3>
 
       {/* 매트릭스 표 — 열: 時→日→月→年 / 행: 年→月→日→時 */}
       <div className="overflow-x-auto">
