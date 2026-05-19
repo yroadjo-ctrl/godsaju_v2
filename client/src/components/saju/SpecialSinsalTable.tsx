@@ -116,10 +116,10 @@ export default function SpecialSinsalTable({
             ))}
           </tr>
 
-          {/* 천간 신살 행 - 여러 신살 세로 정렬 */}
-          <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
-              神殺
+          {/* 천간 신살 행 */}
+          <tr className="border-b border-gray-300 dark:border-gray-600 bg-blue-50 dark:bg-blue-900/20">
+            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 leading-tight">
+              <div>天干</div><div>神殺</div>
             </td>
             {heavenSinsals.map((sinsals, i) => (
               <td
@@ -136,7 +136,7 @@ export default function SpecialSinsalTable({
                     ))}
                   </div>
                 ) : (
-                  <span className="block text-center text-gray-400 dark:text-gray-500">x</span>
+                  <span className="block text-center text-blue-300">-</span>
                 )}
               </td>
             ))}
@@ -162,10 +162,10 @@ export default function SpecialSinsalTable({
             ))}
           </tr>
 
-          {/* 지지 신살 행 - 여러 신살 세로 정렬 */}
-          <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
-              神殺
+          {/* 지지 신살 행 */}
+          <tr className="border-b border-gray-300 dark:border-gray-600 bg-amber-50 dark:bg-amber-900/20">
+            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 leading-tight">
+              <div>地支</div><div>神殺</div>
             </td>
             {earthSinsals.map((sinsals, i) => (
               <td
@@ -182,7 +182,7 @@ export default function SpecialSinsalTable({
                     ))}
                   </div>
                 ) : (
-                  <span className="block text-center text-gray-400 dark:text-gray-500">x</span>
+                  <span className="block text-center text-amber-300">-</span>
                 )}
               </td>
             ))}
