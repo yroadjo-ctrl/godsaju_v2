@@ -198,51 +198,62 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   lines.push('|' + '─'.repeat(LABEL_WIDTH) + '|' + Array(4).fill('─'.repeat(COLUMN_WIDTH)).join('|') + '|')
   lines.push('')
 
-  // 팔자 관계 (중복 제거 - 남은 단 하나만 출력)
-  const relLines: string[] = []
-  const pairNames: Record<string, string> = {
-    '0,1': '時-日', '0,2': '時-月', '0,3': '時-年',
-    '1,2': '日-月', '1,3': '日-年', '2,3': '月-年',
+  // 八字關係 — 마크다운 매트릭스 표
+  // 열(좌→우): 時(0)→日(1)→月(2)→年(3)  /  행(위→아래): 年(3)→月(2)→日(1)→時(0)
+  const bzGanzis = pillars.map(p => p.pillar.ganzi)
+
+  function bzPairKey(a: number, b: number) {
+    return `${Math.min(a, b)},${Math.max(a, b)}`
   }
-
-  const ganzis = pillars.map(p => p.pillar.ganzi)
-
-  relations.pairs.forEach((rel, key) => {
-    const [iStr, jStr] = key.split(',')
-    const i = Number(iStr)
-    const j = Number(jStr)
+  function bzCellText(rowIdx: number, colIdx: number): string {
+    if (rowIdx === colIdx) return '—'
+    const rel = relations.pairs.get(bzPairKey(rowIdx, colIdx))
+    if (!rel) return '-'
     const parts: string[] = []
-
     for (const r of rel.stem) {
       const detail = r.detail && ELEMENT_HANJA[r.detail] ? ELEMENT_HANJA[r.detail] : ''
-      parts.push(`${ganzis[i][0]}${ganzis[j][0]}${r.type}${detail}`)
+      parts.push(`${bzGanzis[rowIdx][0]}${bzGanzis[colIdx][0]} ${r.type}${detail}`)
     }
     for (const r of rel.branch) {
       const detail = r.detail && ELEMENT_HANJA[r.detail]
         ? ELEMENT_HANJA[r.detail]
         : r.detail ? `(${r.detail})` : ''
-      parts.push(`${ganzis[i][1]}${ganzis[j][1]}${r.type}${detail}`)
+      parts.push(`${bzGanzis[rowIdx][1]}${bzGanzis[colIdx][1]} ${r.type}${detail}`)
     }
-    if (parts.length > 0) {
-      relLines.push(`${pairNames[key] || key}: ${parts.join(', ')}`)
-    }
+    return parts.length > 0 ? parts.join(' / ') : '-'
+  }
+
+  const BZ_COL_ORDER  = [0, 1, 2, 3]          // 時→日→月→年
+  const BZ_COL_LABELS = ['時柱', '日柱', '月柱', '年柱']
+  const BZ_ROW_ORDER  = [3, 2, 1, 0]          // 年→月→日→時
+  const BZ_ROW_LABELS = ['年柱', '月柱', '日柱', '時柱']
+
+  const bzHeader = `|  | ${BZ_COL_ORDER.map((ci, c) => `${BZ_COL_LABELS[c]}(${bzGanzis[ci]})`).join(' | ')} |`
+  const bzDivider = `|---|${BZ_COL_ORDER.map(() => '---').join('|')}|`
+  const bzRows = BZ_ROW_ORDER.map((ri, r) => {
+    const cells = BZ_COL_ORDER.map(ci => bzCellText(ri, ci))
+    return `| ${BZ_ROW_LABELS[r]}(${bzGanzis[ri]}) | ${cells.join(' | ')} |`
   })
 
+  // 삼합/방합
+  const bzMulti: string[] = []
   for (const rel of relations.triple) {
     const el = rel.detail && ELEMENT_HANJA[rel.detail] ? ELEMENT_HANJA[rel.detail] : ''
-    relLines.push(`${rel.type}${el}局`)
+    bzMulti.push(`${rel.type}${el}局`)
   }
   for (const rel of relations.directional) {
     const el = rel.detail && ELEMENT_HANJA[rel.detail] ? ELEMENT_HANJA[rel.detail] : ''
-    relLines.push(`${rel.type}${el}`)
+    bzMulti.push(`${rel.type}${el}`)
   }
 
-  if (relLines.length > 0) {
-    lines.push('八字關係')
-    lines.push('─────')
-    relLines.forEach(l => lines.push(l))
-    lines.push('')
+  lines.push('八字關係 (원국 기둥 간 합충형파해)')
+  lines.push(bzHeader)
+  lines.push(bzDivider)
+  bzRows.forEach(row => lines.push(row))
+  if (bzMulti.length > 0) {
+    lines.push(`3자 관계: ${bzMulti.join(', ')}`)
   }
+  lines.push('')
 
   // 특수신살 (갓사주 전용) - result.pillars에서 직접 추출
   if (result.godSinsal && result.godSinsal.length > 0) {
