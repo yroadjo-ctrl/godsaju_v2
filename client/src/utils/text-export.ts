@@ -115,87 +115,60 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   lines.push(`四柱原局 (${genderChar})`)
   lines.push('')
-  
-  // 열 너비 고정 (각 기두 + 3개 기듡 = 32)
-  const LABEL_WIDTH = 12
-  const COLUMN_WIDTH = 32
-  
-  // 헤더 행 - 구분 라벤 및 각 기두의 설명
+
   const headerLabels = ['時柱', '日柱', '月柱', '年柱']
   const headerDesc1 = ['말년운(60세~)', '중년운(40~60세)', '청년운(20~40세)', '초년운(0~20세)']
   const headerDesc2 = ['자녀운, 결실', '정체성, 자아', '부모, 사회상', '조상, 시대상']
-  
-  lines.push('| ' + padFixedWidth('구분', LABEL_WIDTH - 2) + ' | ' + headerLabels.map(h => padFixedWidth(h, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-  lines.push('| ' + padFixedWidth('', LABEL_WIDTH - 2) + ' | ' + headerDesc1.map(h => padFixedWidth(h, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-  lines.push('| ' + padFixedWidth('', LABEL_WIDTH - 2) + ' | ' + headerDesc2.map(h => padFixedWidth(h, COLUMN_WIDTH - 3)).join(' | ') + ' |')
-  lines.push('|' + '─'.repeat(LABEL_WIDTH) + '|' + Array(4).fill('─'.repeat(COLUMN_WIDTH)).join('|') + '|')
-  
-  // 천간 행 - 3단 합체 (한자 + 음양오행 + 고정육친)
   const q = input.unknownTime
-  lines.push('| ' + padFixedWidth('천간', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    if (i === 0 && q) return padFixedWidth('?', COLUMN_WIDTH - 3)
+
+  lines.push(`| 구분 | ${headerLabels.join(' | ')} |`)
+  lines.push(`|  | ${headerDesc1.join(' | ')} |`)
+  lines.push(`|  | ${headerDesc2.join(' | ')} |`)
+  lines.push('|---|---|---|---|---|')
+
+  // 천간 행
+  lines.push(`| 천간 | ${pillars.map((p, i) => {
+    if (i === 0 && q) return '?'
     const stem = p.pillar.stem
     const yinYang = formatYinYang(stemYinYangMap[stem] || '')
     const relation = (fixedRelations as any)[i]?.stem || ''
-    const combined = `${stem}(${yinYang})(${relation})`
-    return padFixedWidth(combined, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
+    return `${stem}(${yinYang})(${relation})`
+  }).join(' | ')} |`)
+
   // 십성(천간) 행
-  lines.push('| ' + padFixedWidth('십성', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    const val = i === 0 && q ? '?' : p.stemSipsin
-    return padFixedWidth(val, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
-  // 지지 행 - 3단 합체 (한자 + 음양오행 + 고정육친)
-  lines.push('| ' + padFixedWidth('지지', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    if (i === 0 && q) return padFixedWidth('?', COLUMN_WIDTH - 3)
+  lines.push(`| 십성 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.stemSipsin).join(' | ')} |`)
+
+  // 지지 행
+  lines.push(`| 지지 | ${pillars.map((p, i) => {
+    if (i === 0 && q) return '?'
     const branch = p.pillar.branch
     const yinYang = formatYinYang(branchYinYangMap[branch] || '')
     const relation = (fixedRelations as any)[i]?.branch || ''
-    const combined = `${branch}(${yinYang})(${relation})`
-    return padFixedWidth(combined, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
+    return `${branch}(${yinYang})(${relation})`
+  }).join(' | ')} |`)
+
   // 십성(지지) 행
-  lines.push('| ' + padFixedWidth('십성', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    const val = i === 0 && q ? '?' : p.branchSipsin
-    return padFixedWidth(val, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
+  lines.push(`| 십성 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.branchSipsin).join(' | ')} |`)
+
   // 지장간 행
-  lines.push('| ' + padFixedWidth('지장간', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    const val = i === 0 && q ? '?' : p.jigang
-    return padFixedWidth(val, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
+  lines.push(`| 지장간 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.jigang).join(' | ')} |`)
+
   // 12운성 행
-  lines.push('| ' + padFixedWidth('12운성', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    const val = i === 0 && q ? '?' : p.unseong
-    return padFixedWidth(val, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
-  // 12신살 행 (연살 -> 연살로 수정)
-  lines.push('| ' + padFixedWidth('12신살', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    const val = i === 0 && q ? '?' : p.sinsal
-    return padFixedWidth(val, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
-  // 귀인 행 - 명시적 삽입
-  lines.push('| ' + padFixedWidth('귀인', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
-    const val = i === 0 && q ? '?' : getGuiinForPillar(i)
-    return padFixedWidth(val, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
+  lines.push(`| 12운성 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.unseong).join(' | ')} |`)
+
+  // 12신살 행
+  lines.push(`| 12신살 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.sinsal).join(' | ')} |`)
+
+  // 귀인 행
+  lines.push(`| 귀인 | ${pillars.map((p, i) => i === 0 && q ? '?' : getGuiinForPillar(i)).join(' | ')} |`)
+
   // 공망 행
-  const gmSet = new Set(gongmang.branches)
-  lines.push('| ' + padFixedWidth('공망', LABEL_WIDTH - 2) + ' | ' + pillars.map((p, i) => {
+  lines.push(`| 공망 | ${pillars.map((p, i) => {
+    if (i === 0 && q) return '?'
     const hasGongmang = gongmang.pillarIndices.includes(i)
-    const val = i === 0 && q ? '?' : (hasGongmang ? `${gongmang.branches[0]}, ${gongmang.branches[1]}` : '-')
-    return padFixedWidth(val, COLUMN_WIDTH - 3)
-  }).join(' | ') + ' |')
-  
-  lines.push('|' + '─'.repeat(LABEL_WIDTH) + '|' + Array(4).fill('─'.repeat(COLUMN_WIDTH)).join('|') + '|')
+    return hasGongmang ? `${gongmang.branches[0]}, ${gongmang.branches[1]}` : '-'
+  }).join(' | ')} |`)
+
   lines.push('')
 
   // 八字關係 — 마크다운 매트릭스 표
@@ -246,16 +219,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     bzMulti.push(`${rel.type}${el}`)
   }
 
-  lines.push('合沖刑破害(四柱原局)')
-  lines.push(bzHeader)
-  lines.push(bzDivider)
-  bzRows.forEach(row => lines.push(row))
-  if (bzMulti.length > 0) {
-    lines.push(`3자 관계: ${bzMulti.join(', ')}`)
-  }
-  lines.push('')
-
-  // 특수신살 (갓사주 전용) - result.pillars에서 직접 추출
+  // 특수신살 (갓사주 전용) — 합충형파해 앞에 배치
   if (result.godSinsal && result.godSinsal.length > 0) {
     const ssStemKor: Record<string, string> = {
       '甲': '갑', '乙': '을', '丙': '병', '丁': '정', '戊': '무',
@@ -280,15 +244,10 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       const hanja = ssSinsalHanja[name]
       return hanja ? `${name}(${hanja})` : name
     }
-
     const ssStems    = result.pillars.map(p => p.pillar.stem)
     const ssBranches = result.pillars.map(p => p.pillar.branch)
-
-    // 천간/지지 병기 셀 (정(丁) 형식)
     const ssStemCells   = ssStems.map(s => `${ssStemKor[s] || s}(${s})`)
     const ssBranchCells = ssBranches.map(b => `${ssBranchKor[b] || b}(${b})`)
-
-    // 신살 셀 (한자 병기 + 줄 구분은 ' / ')
     const ssHeavenCells = Array(4).fill(null).map((_, i) => {
       const names = result.godSinsal?.filter(s => s.position === 'heaven' && s.pillarIndex === i).map(s => ssSinsalLabel(s.name)) ?? []
       return names.length > 0 ? names.join(' / ') : '-'
@@ -297,7 +256,6 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       const names = result.godSinsal?.filter(s => s.position === 'earth' && s.pillarIndex === i).map(s => ssSinsalLabel(s.name)) ?? []
       return names.length > 0 ? names.join(' / ') : '-'
     })
-
     lines.push('特殊神殺 (길성과 흉성)')
     lines.push(`| 구분 | ${headerLabels.join(' | ')} |`)
     lines.push('|---|---|---|---|---|')
@@ -307,6 +265,16 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     lines.push(`| 地支 神殺 | ${ssEarthCells.join(' | ')} |`)
     lines.push('')
   }
+
+  // 合沖刑破害(四柱原局) — 특수신살 뒤에 배치
+  lines.push('合沖刑破害(四柱原局)')
+  lines.push(bzHeader)
+  lines.push(bzDivider)
+  bzRows.forEach(row => lines.push(row))
+  if (bzMulti.length > 0) {
+    lines.push(`3자 관계: ${bzMulti.join(', ')}`)
+  }
+  lines.push('')
 
   // 신살 목록 제거 - 특수신살 표에서 모두 표시됨
 
