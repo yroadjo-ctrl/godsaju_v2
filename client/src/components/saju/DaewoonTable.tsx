@@ -235,7 +235,7 @@ export default function DaewoonTable({
                     <th 
                       key={idx} 
                       className={`border border-black px-2 py-2 text-center min-w-[100px] text-xs font-semibold cursor-pointer transition-colors ${
-                        isSelected ? 'bg-blue-200' : isActive ? 'bg-amber-300' : 'bg-gray-100 hover:bg-gray-200'
+                        isSelected ? 'bg-[#66FFFF]' : isActive ? 'bg-[#FFFF00]' : 'bg-gray-100 hover:bg-gray-200'
                       }`}
                       onClick={() => setSelectedIdx(actualIdx)}
                     >
@@ -366,7 +366,7 @@ export default function DaewoonTable({
                     const isCurrentYear = item.year === new Date().getFullYear()
                     return (
                       <th key={idx} className={`border border-black px-2 py-2 text-center min-w-[100px] text-xs font-semibold ${
-                        isCurrentYear ? 'bg-amber-300' : 'bg-gray-100'
+                        isCurrentYear ? 'bg-[#FFFF00]' : 'bg-gray-100'
                       }`}>
                         {item.age}세<br/>({item.year}년)
                       </th>

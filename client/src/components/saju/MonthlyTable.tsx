@@ -165,7 +165,7 @@ export default function MonthlyTable({
                   <th
                     key={idx}
                     className={`border border-black px-2 py-1 text-center min-w-[100px] text-xs ${
-                      isCurrentMonth ? 'bg-amber-400 text-white font-bold' : 'bg-gray-100'
+                      isCurrentMonth ? 'bg-[#FFFF00] text-black font-bold' : 'bg-gray-100'
                     }`}
                   >
                     {item.year}년<br />{item.month}월

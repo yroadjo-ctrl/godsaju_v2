@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Solar } from 'lunar-javascript'
-import { getRelation, getHiddenStems, getTwelveMeteor, getTwelveSpirit } from '@core/pillars'
+import { getRelation, getHiddenStems, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
+import { HGANJI, GONGMANG_TABLE } from '@core/constants'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 
 
@@ -113,13 +115,31 @@ function dateToString(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+// 오행 영어→한자 변환
+const ELEMENT_HANJA: Record<string, string> = {
+  tree: '木', fire: '火', earth: '土', metal: '金', water: '水',
+};
+
+// 합충형파해 이모지 매핑
+const RELATION_EMOJI: Record<string, string> = {
+  '合': '🔗', '半合': '🤝', '沖': '⚡', '刑': '⚠️',
+  '破': '💥', '害': '🗡️', '怨嗔': '😤', '鬼門': '👻',
+};
+
+// 관계 타입 한글 라벨
+const RELATION_KOR: Record<string, string> = {
+  '合': '합(合)', '半合': '반합(半合)', '沖': '충(沖)', '刑': '형(刑)',
+  '破': '파(破)', '害': '해(害)', '怨嗔': '원진(怨嗔)', '鬼門': '귀문관살(鬼門)',
+};
+
 interface Props {
   dayStem?: string;
   yearBranch?: string;
+  natalPillars?: string[]; // [시주, 일주, 월주, 년주] 간지 문자열
   onSelectedDateChange?: (date: Date | null) => void;
 }
 
-const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateChange }) => {
+const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onSelectedDateChange }) => {
   const [viewDate, setViewDate] = useState(new Date());
   
   // 오늘 날짜 (고정, 주황색)
@@ -193,39 +213,70 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
     return { stemTenStem, branchTenStem };
   };
 
-  // 오행 색상 매핑 (천간과 지지별)
+  // 공망(空亡) 지지 집합 — 원국 일주 기준
+  const gongmangBranchSet = useMemo((): Set<string> => {
+    if (!natalPillars || natalPillars.length < 2) return new Set()
+    const dayGanzi = natalPillars[1] // 일주 (index 1)
+    const idx = HGANJI.indexOf(dayGanzi)
+    if (idx < 0) return new Set()
+    const branches = GONGMANG_TABLE[Math.trunc(idx / 10)] ?? []
+    return new Set(branches)
+  }, [natalPillars])
+
+  // 오행 색상 매핑 (목:#00C459 화:#FF0000 토:#FF9900 수:#3366FF 금:#808080)
   const getOhaengColor = (char: string): string => {
-    // 천간 오행
-    const stemOhaeng: Record<string, string> = {
-      '甲': 'text-green-600',   // 목
-      '乙': 'text-green-600',   // 목
-      '丙': 'text-red-600',     // 화
-      '丁': 'text-red-600',     // 화
-      '戊': 'text-yellow-700',  // 토
-      '己': 'text-yellow-700',  // 토
-      '庚': 'text-gray-600',    // 금
-      '辛': 'text-gray-600',    // 금
-      '壬': 'text-blue-600',    // 수
-      '癸': 'text-blue-600'     // 수
+    const map: Record<string, string> = {
+      '甲': 'text-[#00C459]', '乙': 'text-[#00C459]',
+      '丙': 'text-[#FF0000]', '丁': 'text-[#FF0000]',
+      '戊': 'text-[#FF9900]', '己': 'text-[#FF9900]',
+      '庚': 'text-[#808080]', '辛': 'text-[#808080]',
+      '壬': 'text-[#3366FF]', '癸': 'text-[#3366FF]',
+      '子': 'text-[#3366FF]', '亥': 'text-[#3366FF]',
+      '丑': 'text-[#FF9900]', '辰': 'text-[#FF9900]', '未': 'text-[#FF9900]', '戌': 'text-[#FF9900]',
+      '寅': 'text-[#00C459]', '卯': 'text-[#00C459]',
+      '巳': 'text-[#FF0000]', '午': 'text-[#FF0000]',
+      '申': 'text-[#808080]', '酉': 'text-[#808080]',
     };
-    
-    // 지지 오행
-    const branchOhaeng: Record<string, string> = {
-      '子': 'text-blue-600',    // 수
-      '丑': 'text-yellow-700',  // 토
-      '寅': 'text-green-600',   // 목
-      '卯': 'text-green-600',   // 목
-      '辰': 'text-yellow-700',  // 토
-      '巳': 'text-red-600',     // 화
-      '午': 'text-red-600',     // 화
-      '未': 'text-yellow-700',  // 토
-      '申': 'text-gray-600',    // 금
-      '酉': 'text-gray-600',    // 금
-      '戌': 'text-yellow-700',  // 토
-      '亥': 'text-blue-600'     // 수
-    };
-    
-    return stemOhaeng[char] || branchOhaeng[char] || 'text-slate-600';
+    return map[char] || 'text-slate-600';
+  };
+
+  // 일운 합충형파해 계산 (원국 4주 vs 일진 천간/지지)
+  const getDayInteractions = (dayStemChar: string, dayBranchChar: string) => {
+    if (!natalPillars || natalPillars.length === 0) return [];
+    const posLabels = ['시', '일', '월', '년'];
+    const results: Array<{ type: string; detail: string | null; label: string }> = [];
+
+    natalPillars.forEach((pillar, idx) => {
+      const nStem = pillar[0];
+      const nBranch = pillar[1];
+      const pos = posLabels[idx];
+
+      // 천간 관계
+      getStemRelation(nStem, dayStemChar).forEach(rel => {
+        if (rel.type) {
+          const detailStr = rel.detail ? (ELEMENT_HANJA[rel.detail] ?? rel.detail) : '';
+          results.push({
+            type: rel.type,
+            detail: rel.detail,
+            label: `${nStem}${dayStemChar} ${rel.type}${detailStr} (${pos}간)`,
+          });
+        }
+      });
+
+      // 지지 관계
+      getBranchRelation(nBranch, dayBranchChar).forEach(rel => {
+        if (rel.type) {
+          const detailStr = rel.detail ? (ELEMENT_HANJA[rel.detail] ?? rel.detail) : '';
+          results.push({
+            type: rel.type,
+            detail: rel.detail,
+            label: `${nBranch}${dayBranchChar} ${rel.type}${detailStr} (${pos}지)`,
+          });
+        }
+      });
+    });
+
+    return results;
   };
 
   // 셀 클릭 핸들러
@@ -265,6 +316,31 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
     return null;
   };
 
+  // 합충형파해 우선순위 기반 셀 테두리 색상 결정
+  const INTERACTION_PRIORITY = ['沖', '刑', '合', '半合', '破', '害', '怨嗔', '鬼門'];
+  const INTERACTION_RING: Record<string, string> = {
+    '沖':  'ring-2 ring-inset ring-[#FF0000]',
+    '刑':  'ring-2 ring-inset ring-[#FF00FF]',
+    '合':  'ring-2 ring-inset ring-[#00B050]',
+    '半合': 'ring-2 ring-inset ring-[#00B050]',
+    '破':  'ring-2 ring-inset ring-[#FFC000]',
+    '害':  'ring-2 ring-inset ring-[#FFFF00]',
+    '怨嗔': 'ring-2 ring-inset ring-[#FF99FF]',
+    '鬼門': 'ring-2 ring-inset ring-[#FF99FF]',
+  };
+
+  const getCellInteractionRing = (day: number): string => {
+    const ganzi = getDayGanzi(day);
+    if (!ganzi) return '';
+    const interactions = getDayInteractions(ganzi.stem, ganzi.branch);
+    if (interactions.length === 0) return '';
+    const types = new Set(interactions.map(r => r.type));
+    for (const priority of INTERACTION_PRIORITY) {
+      if (types.has(priority)) return INTERACTION_RING[priority] ?? '';
+    }
+    return '';
+  };
+
   // 셀 배경색 결정
   const getCellBgColor = (day: number): string => {
     const cellDateStr = dateToString(new Date(year, month, day));
@@ -272,9 +348,9 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
     const isSelected = cellDateStr === selectedDateStr && !isToday;
     
     if (isSelected) {
-      return 'bg-blue-200';  // 선택됨 (파란색)
+      return 'bg-[#66FFFF]';  // 선택됨
     } else if (isToday) {
-      return 'bg-amber-300';  // 오늘 (주황색)
+      return 'bg-[#FFFF00]';  // 오늘
     }
     return 'hover:bg-slate-50';  // 기본
   };
@@ -319,7 +395,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
 
         {/* 시작일 전 빈 칸 처리 */}
         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-          <div key={`empty-${i}`} className="border-r border-b border-slate-300 h-24 bg-slate-50/50"></div>
+          <div key={`empty-${i}`} className="border-r border-b border-slate-300 h-28 bg-slate-50/50"></div>
         ))}
 
         {/* 실제 날짜 칸 */}
@@ -328,31 +404,40 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
           const dayOfWeek = (firstDayOfMonth + i) % 7;
           const lunar = getLunarDay(day);
           const jieQi = getJieQiInfo(day);
+
+          // 공망 여부
+          const dayGanziInfo = getDayGanzi(day);
+          const isGongmang = dayGanziInfo ? gongmangBranchSet.has(dayGanziInfo.branch) : false;
           
           // 요일별 색상: 0=일(빨강), 6=토(파랑)
           const dayColor = dayOfWeek === 0 ? 'text-red-600' : dayOfWeek === 6 ? 'text-blue-600' : 'text-slate-700';
           
           // 셀 배경색
           const bgColor = getCellBgColor(day);
+          const interactionRing = getCellInteractionRing(day);
 
           return (
             <div 
               key={day}
               onClick={() => handleCellClick(day)}
-              className={`border-r border-b border-slate-300 h-24 p-2 transition-colors cursor-pointer group relative ${bgColor}`}
+              className={`border-r border-b border-slate-300 h-28 transition-colors cursor-pointer group relative ${bgColor} ${interactionRing} flex flex-col`}
             >
-              {/* 절기 시간 - 우측 상단 파란색 */}
-              {jieQi && (
-                <div className="absolute top-0.5 right-1 text-[9px] font-bold text-blue-600 whitespace-nowrap">
+              {/* 절기 - 상단 전체 너비 바 */}
+              {jieQi ? (
+                <div className="w-full text-center text-[9px] font-bold text-white whitespace-nowrap rounded-t-sm py-px"
+                  style={{ backgroundColor: '#FF66FF' }}>
                   {jieQi.name} {jieQi.time}
                 </div>
+              ) : (
+                <div className="h-[3px]" />
               )}
 
-              <div className="flex items-baseline gap-1">
+              <div className={`flex items-baseline gap-0.5 px-1.5 ${jieQi ? 'pt-0' : 'pt-1'}`}>
                 <span className={`text-sm font-bold ${dayColor}`}>{day}</span>
-                <span className="text-[9px] text-slate-600 font-medium">
-                  (음 {lunar})
-                </span>
+                <span className="text-[9px] text-slate-600 font-medium">(음{lunar})</span>
+                {isGongmang && (
+                  <span className="text-[9px] font-bold" style={{ color: '#FF0000' }}>空</span>
+                )}
               </div>
               
               {/* 일진(日干支) 표시 - 셀 중앙 */}
@@ -361,7 +446,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
                 if (ganzi) {
                   const tenStems = getTenStems(ganzi.stem, ganzi.branch);
                   return (
-                    <div className="mt-1 flex flex-col items-center justify-center">
+                    <div className={`${jieQi ? 'mt-0' : 'mt-0.5'} flex flex-col items-center justify-center px-1`}>
                       {/* 천간 + 천간십성 */}
                       <div className="flex items-center justify-center gap-1">
                         <div className="flex flex-col items-center">
@@ -393,7 +478,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
                           const meteorology = getTwelveMeteorology(ganzi.branch);
                           if (meteorology) {
                             return (
-                              <div className="text-[7px] text-gray-500 text-center">
+                              <div className="text-[7px] text-black text-center">
                                 ({meteorology})
                               </div>
                             );
@@ -405,7 +490,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
                           const spirits = getTwelveSpirits(ganzi.branch);
                           if (spirits) {
                             return (
-                              <div className="text-[7px] text-gray-500 text-center">
+                              <div className="text-[7px] text-black text-center">
                                 ({spirits})
                               </div>
                             );
@@ -413,6 +498,52 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
                           return null;
                         })()}
                       </div>
+
+                      {/* 합충형파해 이모지 + Popover */}
+                      {(() => {
+                        const interactions = getDayInteractions(ganzi.stem, ganzi.branch);
+                        if (interactions.length === 0) return null;
+                        const uniqueTypes = [...new Set(interactions.map(r => r.type))];
+                        return (
+                          <Popover>
+                            <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <div className="flex gap-0.5 justify-center mt-1 cursor-pointer hover:opacity-70">
+                                {uniqueTypes.slice(0, 4).map((type, ti) => (
+                                  <span key={ti} className="text-[11px] leading-none" title={RELATION_KOR[type] ?? type}>
+                                    {RELATION_EMOJI[type] ?? '•'}
+                                  </span>
+                                ))}
+                                {uniqueTypes.length > 4 && (
+                                  <span className="text-[8px] text-slate-400">+{uniqueTypes.length - 4}</span>
+                                )}
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              side="bottom"
+                              align="center"
+                              sideOffset={6}
+                              className="w-56 p-3 z-50 bg-white border border-slate-200 shadow-lg"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-xs font-bold text-slate-700">
+                                  {month + 1}월 {day}일 합충형파해
+                                </span>
+                              </div>
+                              <div className="space-y-1.5">
+                                {interactions.map((item, ii) => (
+                                  <div key={ii} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                    <span className="text-sm leading-none flex-shrink-0">
+                                      {RELATION_EMOJI[item.type] ?? '•'}
+                                    </span>
+                                    <span>{item.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        );
+                      })()}
                     </div>
                   );
                 }
@@ -427,8 +558,15 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, onSelectedDateCha
         })}
       </div>
       
-        <div className="mt-4 text-[11px] text-slate-400 text-right">
-          * 날짜를 클릭하면 하이라이트됩니다. (오늘은 주황색 고정)
+        <div className="mt-4 flex flex-wrap gap-3 items-center text-[11px] text-slate-500">
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FF0000]"></span>충(沖)</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FF00FF]"></span>형(刑)</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#00B050]"></span>합(合)/반합</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FFC000]"></span>파(破)</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FFFF00]"></span>해(害)</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FF99FF]"></span>원진/귀문</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-4 h-3 rounded-sm text-[8px] font-bold text-white flex items-center justify-center" style={{backgroundColor:'#FF66FF'}}>절기</span>절기</span>
+          <span className="ml-auto text-slate-400">* 중복 시 우선순위 높은 관계 표시 · 이모지 클릭 시 상세 보기</span>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { Solar } from 'lunar-javascript'
 import type { SajuResult, ZiweiChart, LiuNianInfo, NatalChart } from '@core/types'
 import { ELEMENT_HANJA, PILLAR_NAMES, PALACE_NAMES, MAIN_STAR_NAMES, JIJANGGAN, GONGMANG_TABLE, HGANJI } from '@core/constants'
 import { getDaxianList } from '@core/ziwei'
@@ -245,13 +246,6 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 특수신살 (갓사주 전용) - result.pillars에서 직접 추출
   if (result.godSinsal && result.godSinsal.length > 0) {
-    // 데이터 검증: 1982-09-08 07:00 테스트 사주 강제 수정
-    if (input.year === 1982 && input.month === 9 && input.day === 8 && input.hour === 7) {
-      result.pillars[0].pillar.stem = '丁'
-      result.pillars[0].pillar.branch = '卯'
-      result.pillars[2].pillar.stem = '戊'
-    }
-    
     // result.pillars에서 직접 천간/지지 추출 (정확한 원본 데이터)
     const stems = result.pillars.map(p => p.pillar.stem)
     const branches = result.pillars.map(p => p.pillar.branch)
@@ -431,22 +425,30 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     const dayGanziIdx = HGANJI.indexOf(dayGanzi)
     const gongmangBranches: string[] = dayGanziIdx >= 0 ? GONGMANG_TABLE[Math.trunc(dayGanziIdx / 10)] : []
     
-    // 대운 주기 기반 동적 커팅
+    // 현재 활성 대운 찾기 (실제 대운 시작 나이 기준)
     const currentYear = new Date().getFullYear()
     const currentAge = currentYear - input.year // 만 나이
-    const daewunStartAge = Math.floor(currentAge / 10) * 10 // 현재 대운의 시작 나이
-    const daewunEndAge = daewunStartAge + 9 // 현재 대운의 끝 나이
-    
-    // 연도 범위: 대운 주기에 맞춰 10년만 표시
+
+    let activeDaewoonIdx = 0
+    for (let i = 0; i < daewoon.length; i++) {
+      if (daewoon[i].age <= currentAge) {
+        activeDaewoonIdx = i
+      } else {
+        break
+      }
+    }
+    const activeDw = daewoon[activeDaewoonIdx]
+    const nextDw   = daewoon[activeDaewoonIdx + 1]
+    const daewunStartAge = activeDw?.age ?? 0
+    const daewunEndAge   = nextDw ? nextDw.age - 1 : daewunStartAge + 9
+
+    // 연도 범위: 실제 대운 구간에 맞춰 표시
     const startYear = input.year + daewunStartAge
-    const endYear = input.year + daewunEndAge
-    
+    const endYear   = input.year + daewunEndAge
+
     const sewunData: any[] = []
     for (let year = startYear; year <= endYear; year++) {
-      const age = year - input.year // 만 나이 계산
-      
-      // 나이 검증: 대운 범위 내에서만 데이터 추가
-      if (age < daewunStartAge || age > daewunEndAge) continue
+      const age = year - input.year
       
       const ganzi = getYearGanzi(year)
       const stem = ganzi.charAt(0)
@@ -729,7 +731,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     const monthlySpiritRow = ['12신살', ...monthlyData.map(m => m.spirit)].join(' | ')
     lines.push(`| ${monthlySpiritRow} |`)
     
-    const monthlyRemarkRow = ['비고', ...monthlyData.map(m => m.hasKongwang ? '空亡' : '')].join(' | ')
+    const monthlyRemarkRow = ['비고', ...monthlyData.map(m => m.isGongmang ? '空亡' : '')].join(' | ')
     lines.push(`| ${monthlyRemarkRow} |`)
     
     // 합충형파해 행
@@ -737,12 +739,151 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     lines.push(`| ${monthlyInteractionsRow} |`)
   }
 
-  // 일운 (Transit) 섹션
+  // 일운 (日運) - 오늘 ~ 다음달 오늘-1일
   lines.push('')
   lines.push('日運')
-  lines.push('─────')
   lines.push('')
-  lines.push('(매일의 간지와 특이사항을 표시합니다)')
+
+  const dlToday = new Date()
+  const dlEnd = new Date(dlToday)
+  dlEnd.setMonth(dlEnd.getMonth() + 1)
+  dlEnd.setDate(dlEnd.getDate() - 1)
+
+  const startY = dlToday.getFullYear()
+  const startM = dlToday.getMonth() + 1
+  const startD = dlToday.getDate()
+  const endY = dlEnd.getFullYear()
+  const endM = dlEnd.getMonth() + 1
+  const endD = dlEnd.getDate()
+  lines.push(`(${startY}.${startM}.${startD} ~ ${endY}.${endM}.${endD})`)
+  lines.push('')
+
+  // 합충형파해 한글 매핑
+  const DL_RELATION_KOR: Record<string, string> = {
+    '合': '합', '半合': '반합', '沖': '충', '刑': '형',
+    '破': '파', '害': '해', '怨嗔': '원진', '鬼門': '귀문관살',
+  }
+
+  // 절기 데이터 맵 생성 (날짜 범위에 포함된 연도)
+  const DL_JIEQI_HAN = [
+    "小寒","大寒","立春","雨水","驚蟄","春分",
+    "清明","穀雨","立夏","小滿","芒種","夏至",
+    "小暑","大暑","立秋","處暑","白露","秋分",
+    "寒露","霜降","立冬","小雪","大雪","冬至",
+  ]
+  const DL_JIEQI_KOR = [
+    "소한","대한","입춘","우수","경칩","춘분",
+    "청명","곡우","입하","소만","망종","하지",
+    "소서","대서","입추","처서","백로","추분",
+    "한로","상강","입동","소설","대설","동지",
+  ]
+  const DL_JIEQI_FALLBACK: Record<number, string> = {
+    4:"惊蛰", 7:"谷雨", 9:"小满", 10:"芒种", 15:"处暑",
+  }
+  const dlJieQiMap: Record<string, { name: string; time: string }> = {}
+  new Set([dlToday.getFullYear(), dlEnd.getFullYear()]).forEach(yr => {
+    try {
+      const tbl = Solar.fromYmd(yr, 1, 1).getLunar().getJieQiTable()
+      DL_JIEQI_HAN.forEach((han, idx) => {
+        let data = tbl[han] ?? tbl[DL_JIEQI_FALLBACK[idx] ?? '']
+        if (!data) return
+        const parts = data.toYmdHms().split(/[-: ]/).map(Number)
+        const dt = new Date(parts[0], parts[1]-1, parts[2], parts[3], parts[4])
+        dt.setHours(dt.getHours() + 1)
+        const key = `${dt.getFullYear()}-${dt.getMonth()+1}-${dt.getDate()}`
+        dlJieQiMap[key] = {
+          name: DL_JIEQI_KOR[idx],
+          time: `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`,
+        }
+      })
+    } catch (_e) {}
+  })
+
+  // 일운 공망 지지 집합 (원국 일주 기준)
+  const dlDayGanzi = pillars[1]?.pillar.ganzi || ''
+  const dlDayGanziIdx = HGANJI.indexOf(dlDayGanzi)
+  const dlGongmangBranches: Set<string> = dlDayGanziIdx >= 0
+    ? new Set(GONGMANG_TABLE[Math.trunc(dlDayGanziIdx / 10)] ?? [])
+    : new Set()
+
+  lines.push('| 날짜(음력) / 절기 | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 | 합충형파해 | 비고 |')
+  lines.push('|---|---|---|---|---|---|---|---|---|')
+
+  const dlCurrent = new Date(dlToday)
+  while (dlCurrent <= dlEnd) {
+    const y = dlCurrent.getFullYear()
+    const m = dlCurrent.getMonth() + 1
+    const d = dlCurrent.getDate()
+
+    try {
+      const solar = Solar.fromYmd(y, m, d)
+      const lunar = solar.getLunar()
+      const dStem   = lunar.getDayGan()
+      const dBranch = lunar.getDayZhi()
+      const lunarMonth = lunar.getMonth()
+      const lunarDay   = lunar.getDay()
+
+      // 천간십성 한글(한자) 병기
+      const stemRel = getRelation(dayStem, dStem)
+      const stemSipsinStr = stemRel ? `${stemRel.hangul}(${stemRel.hanja})` : ''
+
+      // 지지십성 한글(한자) 병기 (정기 기준)
+      const jeonggiChar   = getJeonggi(dBranch)
+      const branchRel     = getRelation(dayStem, jeonggiChar)
+      const branchSipsinStr = branchRel ? `${branchRel.hangul}(${branchRel.hanja})` : ''
+
+      // 12운성 · 12신살 (이미 한글(한자) 형식으로 반환)
+      const meteorStr = getTwelveMeteor(dayStem, dBranch)
+      const spiritStr = formatSinsal(getTwelveSpirit(yearBranch, dBranch))
+
+      // 합충형파해 한글(한자) 병기
+      const interArr: string[] = []
+      const dlPosLabels = ['시', '일', '월', '년']
+      pillars.forEach((p, idx) => {
+        const nStem   = p.pillar.stem
+        const nBranch = p.pillar.branch
+        const pos     = dlPosLabels[idx]
+
+        getStemRelation(nStem, dStem).forEach(rel => {
+          if (rel.type) {
+            const kor       = DL_RELATION_KOR[rel.type] ?? rel.type
+            const detailStr = rel.detail ? (ELEMENT_HANJA[rel.detail] ?? rel.detail) : ''
+            interArr.push(`${nStem}${dStem} ${kor}(${rel.type})${detailStr}(${pos}간)`)
+          }
+        })
+
+        getBranchRelation(nBranch, dBranch).forEach(rel => {
+          if (rel.type) {
+            const kor       = DL_RELATION_KOR[rel.type] ?? rel.type
+            const detailStr = rel.detail ? (ELEMENT_HANJA[rel.detail] ?? rel.detail) : ''
+            interArr.push(`${nBranch}${dBranch} ${kor}(${rel.type})${detailStr}(${pos}지)`)
+          }
+        })
+      })
+      const interStr = interArr.length > 0 ? interArr.join(' / ') : '-'
+
+      // 날짜 + 절기
+      const jieQiInfo = dlJieQiMap[`${y}-${m}-${d}`]
+      const jieQiStr  = jieQiInfo ? ` / ${jieQiInfo.name} ${jieQiInfo.time}` : ''
+      const dateStr   = `${m}월${d}일(음${lunarMonth}.${lunarDay})${jieQiStr}`
+
+      // 천간·지지 한글(한자) 병기
+      const stemAttrDl   = getStemAttr(dStem)
+      const branchAttrDl = getBranchAttr(dBranch)
+      const stemColStr   = `${stemAttrDl.um}(${dStem})`
+      const branchColStr = `${branchAttrDl.um}(${dBranch})`
+
+      // 공망 비고
+      const bigoStr = dlGongmangBranches.has(dBranch) ? '空亡' : ''
+
+      lines.push(`| ${dateStr} | ${stemSipsinStr} | ${stemColStr} | ${branchColStr} | ${branchSipsinStr} | ${meteorStr} | ${spiritStr} | ${interStr} | ${bigoStr} |`)
+    } catch (_e) {
+      // 날짜 처리 오류 무시
+    }
+
+    dlCurrent.setDate(dlCurrent.getDate() + 1)
+  }
+
   lines.push('')
 
   return lines.join('\n')

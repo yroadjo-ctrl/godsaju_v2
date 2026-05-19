@@ -1,69 +1,46 @@
 import type { Relation } from '@core/types'
 
+// 오행 색상 기준 (목:#00C459 화:#FF0000 토:#FF9900 수:#3366FF 금:#808080)
 export function stemColorClass(stem: string): string {
   const map: Record<string, string> = {
-    '甲': 'text-green-600 dark:text-green-400',
-    '乙': 'text-green-500 dark:text-green-300',
-    '丙': 'text-red-600 dark:text-red-400',
-    '丁': 'text-red-500 dark:text-red-300',
-    '戊': 'text-yellow-600 dark:text-yellow-400',
-    '己': 'text-yellow-500 dark:text-yellow-300',
-    '庚': 'text-gray-600 dark:text-gray-400',
-    '辛': 'text-gray-500 dark:text-gray-300',
-    '壬': 'text-blue-600 dark:text-blue-400',
-    '癸': 'text-blue-500 dark:text-blue-300',
+    '甲': 'text-[#00C459]', '乙': 'text-[#00C459]',
+    '丙': 'text-[#FF0000]', '丁': 'text-[#FF0000]',
+    '戊': 'text-[#FF9900]', '己': 'text-[#FF9900]',
+    '庚': 'text-[#808080]', '辛': 'text-[#808080]',
+    '壬': 'text-[#3366FF]', '癸': 'text-[#3366FF]',
   }
   return map[stem] || ''
 }
 
 export function branchColorClass(branch: string): string {
   const map: Record<string, string> = {
-    '子': 'text-blue-600 dark:text-blue-400',
-    '丑': 'text-yellow-600 dark:text-yellow-400',
-    '寅': 'text-green-600 dark:text-green-400',
-    '卯': 'text-green-500 dark:text-green-300',
-    '辰': 'text-yellow-500 dark:text-yellow-300',
-    '巳': 'text-red-600 dark:text-red-400',
-    '午': 'text-red-500 dark:text-red-300',
-    '未': 'text-yellow-600 dark:text-yellow-400',
-    '申': 'text-gray-600 dark:text-gray-400',
-    '酉': 'text-gray-500 dark:text-gray-300',
-    '戌': 'text-yellow-500 dark:text-yellow-300',
-    '亥': 'text-blue-500 dark:text-blue-300',
+    '子': 'text-[#3366FF]', '亥': 'text-[#3366FF]',
+    '丑': 'text-[#FF9900]', '辰': 'text-[#FF9900]', '未': 'text-[#FF9900]', '戌': 'text-[#FF9900]',
+    '寅': 'text-[#00C459]', '卯': 'text-[#00C459]',
+    '巳': 'text-[#FF0000]', '午': 'text-[#FF0000]',
+    '申': 'text-[#808080]', '酉': 'text-[#808080]',
   }
   return map[branch] || ''
 }
 
 export function stemSolidBgClass(stem: string): string {
   const map: Record<string, string> = {
-    '甲': 'bg-green-600 text-white',
-    '乙': 'bg-green-500 text-white',
-    '丙': 'bg-red-600 text-white',
-    '丁': 'bg-red-500 text-white',
-    '戊': 'bg-yellow-600 text-white',
-    '己': 'bg-yellow-500 text-white',
-    '庚': 'bg-gray-600 text-white',
-    '辛': 'bg-gray-500 text-white',
-    '壬': 'bg-blue-600 text-white',
-    '癸': 'bg-blue-500 text-white',
+    '甲': 'bg-[#00C459] text-white', '乙': 'bg-[#00C459] text-white',
+    '丙': 'bg-[#FF0000] text-white', '丁': 'bg-[#FF0000] text-white',
+    '戊': 'bg-[#FF9900] text-white', '己': 'bg-[#FF9900] text-white',
+    '庚': 'bg-[#808080] text-white', '辛': 'bg-[#808080] text-white',
+    '壬': 'bg-[#3366FF] text-white', '癸': 'bg-[#3366FF] text-white',
   }
   return map[stem] || ''
 }
 
 export function branchSolidBgClass(branch: string): string {
   const map: Record<string, string> = {
-    '子': 'bg-blue-600 text-white',
-    '丑': 'bg-yellow-600 text-white',
-    '寅': 'bg-green-600 text-white',
-    '卯': 'bg-green-500 text-white',
-    '辰': 'bg-yellow-500 text-white',
-    '巳': 'bg-red-600 text-white',
-    '午': 'bg-red-500 text-white',
-    '未': 'bg-yellow-600 text-white',
-    '申': 'bg-gray-600 text-white',
-    '酉': 'bg-gray-500 text-white',
-    '戌': 'bg-yellow-500 text-white',
-    '亥': 'bg-blue-500 text-white',
+    '子': 'bg-[#3366FF] text-white', '亥': 'bg-[#3366FF] text-white',
+    '丑': 'bg-[#FF9900] text-white', '辰': 'bg-[#FF9900] text-white', '未': 'bg-[#FF9900] text-white', '戌': 'bg-[#FF9900] text-white',
+    '寅': 'bg-[#00C459] text-white', '卯': 'bg-[#00C459] text-white',
+    '巳': 'bg-[#FF0000] text-white', '午': 'bg-[#FF0000] text-white',
+    '申': 'bg-[#808080] text-white', '酉': 'bg-[#808080] text-white',
   }
   return map[branch] || ''
 }
