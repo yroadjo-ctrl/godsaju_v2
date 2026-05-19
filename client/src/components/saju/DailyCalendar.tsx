@@ -424,7 +424,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
             >
               {/* 절기 - 상단 전체 너비 바 */}
               {jieQi ? (
-                <div className="w-full text-center text-[9px] font-bold text-white whitespace-nowrap rounded-t-sm py-px"
+                <div className="w-full text-center text-[7px] sm:text-[9px] font-bold text-white whitespace-nowrap rounded-t-sm py-px"
                   style={{ backgroundColor: '#FF66FF' }}>
                   {jieQi.name} {jieQi.time}
                 </div>
@@ -432,11 +432,11 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                 <div className="h-[3px]" />
               )}
 
-              <div className={`flex items-baseline gap-0.5 px-1.5 ${jieQi ? 'pt-0' : 'pt-1'}`}>
-                <span className={`text-sm font-bold ${dayColor}`}>{day}</span>
-                <span className="text-[9px] text-slate-600 font-medium">(음{lunar})</span>
+              <div className={`flex items-baseline gap-0.5 px-1 sm:px-1.5 ${jieQi ? 'pt-0' : 'pt-1'}`}>
+                <span className={`text-xs sm:text-sm font-bold ${dayColor}`}>{day}</span>
+                <span className="text-[8px] sm:text-[9px] text-slate-600 font-medium">(음{lunar})</span>
                 {isGongmang && (
-                  <span className="text-[9px] font-bold" style={{ color: '#FF0000' }}>空</span>
+                  <span className="text-[8px] sm:text-[9px] font-bold" style={{ color: '#FF0000' }}>空</span>
                 )}
               </div>
               
@@ -448,24 +448,24 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                   return (
                     <div className={`${jieQi ? 'mt-0' : 'mt-0.5'} flex flex-col items-center justify-center px-1`}>
                       {/* 천간 + 천간십성 */}
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-0.5 sm:gap-1">
                         <div className="flex flex-col items-center">
-                          <span className={`text-base font-bold ${getOhaengColor(ganzi.stem)}`}>
+                          <span className={`text-xs sm:text-base font-bold ${getOhaengColor(ganzi.stem)}`}>
                             {ganzi.stem}
                           </span>
                           {tenStems.stemTenStem && (
-                            <span className={`text-[8px] font-bold ${getOhaengColor(ganzi.stem)}`}>
+                            <span className={`text-[7px] sm:text-[8px] font-bold ${getOhaengColor(ganzi.stem)}`}>
                               ({tenStems.stemTenStem})
                             </span>
                           )}
                         </div>
                         {/* 지지 + 지지십성 */}
                         <div className="flex flex-col items-center">
-                          <span className={`text-base font-bold ${getOhaengColor(ganzi.branch)}`}>
+                          <span className={`text-xs sm:text-base font-bold ${getOhaengColor(ganzi.branch)}`}>
                             {ganzi.branch}
                           </span>
                           {tenStems.branchTenStem && (
-                            <span className={`text-[8px] font-bold ${getOhaengColor(ganzi.branch)}`}>
+                            <span className={`text-[7px] sm:text-[8px] font-bold ${getOhaengColor(ganzi.branch)}`}>
                               ({tenStems.branchTenStem})
                             </span>
                           )}
