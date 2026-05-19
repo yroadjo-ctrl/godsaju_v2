@@ -18,7 +18,7 @@ function getTagStyle(type: string): string {
   if (type === '破' || type === '害')
     return 'bg-[#FF9900] text-white'
   if (type === '怨嗔' || type === '鬼門')
-    return 'bg-[#9900CC] text-white'
+    return 'bg-[#FFCCFF] text-[#660066]'
   return 'bg-gray-200 text-gray-700'
 }
 
@@ -188,7 +188,7 @@ export default function RelationList({ relations, pillars }: Props) {
           <span className="inline-block w-3 h-3 rounded bg-[#FF9900]"></span>파(破)/해(害)
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded bg-[#9900CC]"></span>원진/귀문
+          <span className="inline-block w-3 h-3 rounded bg-[#FFCCFF]"></span>원진/귀문
         </span>
       </div>
     </section>

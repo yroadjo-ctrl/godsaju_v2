@@ -320,13 +320,13 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
   const INTERACTION_PRIORITY = ['沖', '刑', '合', '半合', '破', '害', '怨嗔', '鬼門'];
   const INTERACTION_RING: Record<string, string> = {
     '沖':  'ring-2 ring-inset ring-[#FF0000]',
-    '刑':  'ring-2 ring-inset ring-[#FF00FF]',
+    '刑':  'ring-2 ring-inset ring-[#CC00CC]',
     '合':  'ring-2 ring-inset ring-[#00B050]',
     '半合': 'ring-2 ring-inset ring-[#00B050]',
     '破':  'ring-2 ring-inset ring-[#FFC000]',
     '害':  'ring-2 ring-inset ring-[#FFFF00]',
-    '怨嗔': 'ring-2 ring-inset ring-[#FF99FF]',
-    '鬼門': 'ring-2 ring-inset ring-[#FF99FF]',
+    '怨嗔': 'ring-2 ring-inset ring-[#FFCCFF]',
+    '鬼門': 'ring-2 ring-inset ring-[#FFCCFF]',
   };
 
   const getCellInteractionRing = (day: number): string => {
@@ -560,11 +560,11 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
       
         <div className="mt-4 flex flex-wrap gap-3 items-center text-[11px] text-slate-500">
           <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FF0000]"></span>충(沖)</span>
-          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FF00FF]"></span>형(刑)</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#CC00CC]"></span>형(刑)</span>
           <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#00B050]"></span>합(合)/반합</span>
           <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FFC000]"></span>파(破)</span>
           <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FFFF00]"></span>해(害)</span>
-          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FF99FF]"></span>원진/귀문</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm ring-2 ring-[#FFCCFF]"></span>원진/귀문</span>
           <span className="flex items-center gap-1"><span className="inline-block w-4 h-3 rounded-sm text-[8px] font-bold text-white flex items-center justify-center" style={{backgroundColor:'#FF66FF'}}>절기</span>절기</span>
           <span className="ml-auto text-slate-400">* 중복 시 우선순위 높은 관계 표시 · 이모지 클릭 시 상세 보기</span>
         </div>
