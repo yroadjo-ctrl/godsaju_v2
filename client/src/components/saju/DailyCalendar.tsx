@@ -420,7 +420,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
             <div 
               key={day}
               onClick={() => handleCellClick(day)}
-              className={`border-r border-b border-slate-300 h-28 transition-colors cursor-pointer group relative ${bgColor} ${interactionRing} flex flex-col`}
+              className={`border-r border-b border-slate-300 h-20 sm:h-28 transition-colors cursor-pointer group relative ${bgColor} ${interactionRing} flex flex-col`}
             >
               {/* 절기 - 상단 전체 너비 바 */}
               {jieQi ? (
@@ -471,8 +471,8 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                           )}
                         </div>
                       </div>
-                      {/* 12운성 + 12신살 (같은 줄) */}
-                      <div className="flex items-center justify-center gap-3 mt-0.5">
+                      {/* 12운성 + 12신살 (같은 줄) — PC(sm↑)에서만 표시 */}
+                      <div className="hidden sm:flex items-center justify-center gap-3 mt-0.5">
                         {/* 12운성 */}
                         {(() => {
                           const meteorology = getTwelveMeteorology(ganzi.branch);
@@ -499,7 +499,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                         })()}
                       </div>
 
-                      {/* 합충형파해 이모지 + Popover */}
+                      {/* 합충형파해 이모지 + Popover — PC(sm↑)에서만 표시 */}
                       {(() => {
                         const interactions = getDayInteractions(ganzi.stem, ganzi.branch);
                         if (interactions.length === 0) return null;
@@ -507,7 +507,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                         return (
                           <Popover>
                             <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <div className="flex gap-0.5 justify-center mt-1 cursor-pointer hover:opacity-70">
+                              <div className="hidden sm:flex gap-0.5 justify-center mt-1 cursor-pointer hover:opacity-70">
                                 {uniqueTypes.slice(0, 4).map((type, ti) => (
                                   <span key={ti} className="text-[11px] leading-none" title={RELATION_KOR[type] ?? type}>
                                     {RELATION_EMOJI[type] ?? '•'}
