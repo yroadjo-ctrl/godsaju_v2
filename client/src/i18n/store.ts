@@ -8,7 +8,7 @@ function detectBrowserLocale(): Locale {
     const code = lang.split('-')[0].toLowerCase()
     if (VALID.has(code)) return code as Locale
   }
-  return 'en'
+  return 'ko'
 }
 
 function getStored(): Locale {

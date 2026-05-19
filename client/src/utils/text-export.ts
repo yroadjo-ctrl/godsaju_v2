@@ -5,7 +5,7 @@ import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from '
 import { ZODIAC_SYMBOLS, PLANET_SYMBOLS, ASPECT_SYMBOLS, ROMAN, formatDegree } from '@core/natal'
 import { t as translate, getLocale } from '../i18n/index.ts'
 import { getYearGanzi, getTwelveMeteor, getTwelveSpirit, getRelation, getJeonggi, getStemRelation, getBranchRelation } from '@core/pillars'
-import { MONTHLY_DATA, isKongwang } from '@core/monthly-data'
+import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import type { Locale } from '../i18n/index.ts'
 
 /** 현재 로케일의 t() 래퍼 생성 */
@@ -15,7 +15,7 @@ function makeT(locale?: Locale) {
 }
 
 /** 사주 결과를 CLI 형식 텍스트로 변환 */
-export function sajuToText(result: SajuResult, locale?: Locale): string {
+export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: number): string {
   const t = makeT(locale)
   const { input, pillars, daewoon, relations, specialSals, gongmang } = result
   const lines: string[] = []
@@ -569,18 +569,18 @@ export function sajuToText(result: SajuResult, locale?: Locale): string {
     lines.push('')
     lines.push('月運')
     lines.push('')
-    
-    // 월운 데이터는 2026년 5월 ~ 2027년 4월로 고정
-    // MONTHLY_DATA는 하드코딩된 상수 (월두법에 따라 정확히 정의됨)
+
+    // 월운 데이터: 지정 연도(monthlyYear) 1월~12월 동적 생성
+    const targetMonthlyYear = monthlyYear ?? new Date().getFullYear()
     const monthlyData: any[] = []
-    
-    // 12개월 데이터 생성 (MONTHLY_DATA에서 직접 사용)
-    MONTHLY_DATA.forEach((m, index) => {
-      const year = m.year
-      const actualMonth = m.month
-      const ganzi = m.stem + m.branch
-      const stem = m.stem
-      const branch = m.branch
+
+    for (let monthIdx = 1; monthIdx <= 12; monthIdx++) {
+      const ganziStr = calculateMonthGanzi(targetMonthlyYear, monthIdx)
+      const year = targetMonthlyYear
+      const actualMonth = monthIdx
+      const ganzi = ganziStr
+      const stem = ganziStr[0]
+      const branch = ganziStr[1]
       
       // 공망 확인 (일주 지지 기준)
       const hasKongwang = isKongwang(pillars[1]?.pillar.branch, branch)
@@ -645,23 +645,15 @@ export function sajuToText(result: SajuResult, locale?: Locale): string {
         spirit,
         interactions: interArr.length > 0 ? interArr.join(' / ') : ''
       })
-    })
-    
-    // 월 레이블 (12개 시작 절기만 사용 - 소만, 대서 같은 중기 제외)
-    const monthLabels = ['입하', '망종', '소서', '입추', '백로', '한로', '입동', '대설', '소한', '입춘', '경칩', '청명']
-    const solarTermMap: Record<string, string> = {
-      '입하': '입하(入夏)',
-      '망종': '망종(芒種)',
-      '소서': '소서(小暑)',
-      '입추': '입추(立秋)',
-      '백로': '백로(白露)',
-      '한로': '한로(寒露)',
-      '입동': '입동(立冬)',
+    }
+
+    // 월별 절기 매핑 (1월~12월 고정)
+    const solarTermMap: Record<number, string> = {
+      1: '소한(小寒)', 2: '입춘(立春)', 3: '경칩(驚蟄)', 4: '청명(清明)',
+      5: '입하(入夏)', 6: '망종(芒種)', 7: '소서(小暑)', 8: '입추(立秋)',
+      9: '백로(白露)', 10: '한로(寒露)', 11: '입동(立冬)',
       '대설': '대설(大雪)',
-      '소한': '소한(小寒)',
-      '입춘': '입춘(立春)',
-      '경칩': '경칩(驚蟄)',
-      '청명': '청명(清明)'
+      12: '대설(大雪)',
     }
     const stemSipsinMap: Record<string, string> = {
       '正官': '정관(正官)',
@@ -698,9 +690,8 @@ export function sajuToText(result: SajuResult, locale?: Locale): string {
     lines.push(`| ${monthlySeparatorRow} |`)
     
     // 절기 행
-    const monthlySolarTermRow = ['절기', ...monthlyData.map((m, idx) => {
-      const solarTerm = monthLabels[idx]
-      return solarTermMap[solarTerm] || solarTerm
+    const monthlySolarTermRow = ['절기', ...monthlyData.map((m) => {
+      return solarTermMap[m.month] || `${m.month}월`
     })].join(' | ')
     lines.push(`| ${monthlySolarTermRow} |`)
     

@@ -59,6 +59,40 @@ export function getMonthGanzi(year: number, month: number): string | undefined {
 }
 
 /**
+ * 월두법으로 임의 연도/월의 간지를 계산
+ * @param calYear 양력 연도
+ * @param calMonth 양력 월 (1~12)
+ * @returns 월운 간지 (예: '癸巳')
+ */
+export function calculateMonthGanzi(calYear: number, calMonth: number): string {
+  const STEMS = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']
+  const BRANCHES = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
+
+  // 양력 월 → 지지 인덱스 (1월=丑, 2월=寅, ..., 12월=子)
+  const MONTH_TO_BRANCH_IDX: Record<number, number> = {
+    1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10, 11:11, 12:0
+  }
+  // 양력 월 → 사주 인월(寅月) 기준 월 인덱스 (인월=0, ..., 축월=11)
+  const MONTH_TO_SAJU_IDX: Record<number, number> = {
+    1:11, 2:0, 3:1, 4:2, 5:3, 6:4, 7:5, 8:6, 9:7, 10:8, 11:9, 12:10
+  }
+
+  // 1월은 입춘 이전이므로 전년도 사주년 기준
+  const sajuYear = calMonth === 1 ? calYear - 1 : calYear
+
+  // 사주년 천간 인덱스 (甲=0, ..., 癸=9)
+  const yearStemIdx = ((sajuYear - 4) % 10 + 10) % 10
+
+  // 인월(寅月) 천간 인덱스 (월두법)
+  const inwolStemIdx = (yearStemIdx * 2 + 2) % 10
+
+  // 해당 월의 천간 인덱스
+  const monthStemIdx = (inwolStemIdx + MONTH_TO_SAJU_IDX[calMonth]) % 10
+
+  return STEMS[monthStemIdx] + BRANCHES[MONTH_TO_BRANCH_IDX[calMonth]]
+}
+
+/**
  * 공망(空亡) 확인
  * 일주가 甲午인 경우, 공망은 辰(진)과 巳(사)입니다.
  * @param dayBranch 일주의 지지

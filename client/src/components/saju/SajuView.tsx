@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { calculateSaju } from '@core/saju'
 import PillarTable from './PillarTable.tsx'
 import SpecialSinsalTable from './SpecialSinsalTable.tsx'
@@ -24,6 +24,7 @@ export default function SajuView({ input }: Props) {
   const { t } = useLocale()
 
   const result = useMemo(() => calculateSaju(input), [input])
+  const [monthlyDisplayYear, setMonthlyDisplayYear] = useState(new Date().getFullYear())
 
   // DEBUG: pillars 배열 값 로깅
   useMemo(() => {
@@ -47,7 +48,7 @@ export default function SajuView({ input }: Props) {
           <h2 className="text-base font-medium text-gray-700 dark:text-gray-200">四柱八字</h2>
           <CopyButton 
             getText={async () => {
-              const sajuText = sajuToText(result);
+              const sajuText = sajuToText(result, undefined, monthlyDisplayYear);
               
               // 31일 고정 기간으로 일운 데이터 추출 (오늘부터 시작)
               const dailyText = generateDailyLuckTextNew(
@@ -120,6 +121,7 @@ export default function SajuView({ input }: Props) {
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           gongmangBranches={result.gongmang.branches}
+          onYearChange={setMonthlyDisplayYear}
         />
       </div>
 
