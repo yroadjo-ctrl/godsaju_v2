@@ -24,6 +24,23 @@ const BRANCH_KOREAN: Record<string, string> = {
   '申': '신', '酉': '유', '戌': '술', '亥': '해'
 }
 
+// 신살 한자 병기 매핑
+const SINSAL_HANJA: Record<string, string> = {
+  '현침살': '懸針殺', '백호대살': '白虎大殺', '괴강살': '魁罡殺',
+  '천을귀인': '天乙貴人', '태극귀인': '太極貴人', '월덕귀인': '月德貴人',
+  '천덕귀인': '天德貴人', '홍염살': '紅艶殺', '도화살': '桃花殺',
+  '양인살': '羊刃殺', '원진살': '怨嗔殺', '귀문관살': '鬼門關殺',
+  '천문성': '天門星', '역마살': '驛馬殺', '망신살': '亡身殺',
+  '장성살': '將星殺', '화개살': '華蓋殺', '겁살': '劫殺',
+  '재살': '災殺', '천살': '天殺', '지살': '地殺',
+  '연살': '年殺', '월살': '月殺', '일살': '日殺',
+  '시살': '時殺',
+}
+function sinsalLabel(name: string): string {
+  const hanja = SINSAL_HANJA[name]
+  return hanja ? `${name}(${hanja})` : name
+}
+
 export default function SpecialSinsalTable({
   pillars,
   dayStem,
@@ -58,7 +75,7 @@ export default function SpecialSinsalTable({
 
   return (
     <div className="mt-6">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+      <h3 className="text-base font-medium text-gray-700 mb-3">
         特殊神殺 (길성과 흉성)
       </h3>
       <table className="w-full border-collapse border border-gray-300 dark:border-gray-600" style={{ tableLayout: 'fixed' }}>
@@ -90,16 +107,11 @@ export default function SpecialSinsalTable({
                 className="px-3 py-3 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-center text-xs font-medium text-gray-600 dark:text-gray-400"
                 style={{ width: '25%' }}
               >
-                <div className="flex flex-col items-center gap-0.5">
-                  {i === 0 && unknownTime ? (
-                    <span>?</span>
-                  ) : (
-                    <>
-                      <span>{STEM_KOREAN[stem] || stem}</span>
-                      <span className="text-xs">{stem}</span>
-                    </>
-                  )}
-                </div>
+                {i === 0 && unknownTime ? (
+                  <span>?</span>
+                ) : (
+                  <span>{STEM_KOREAN[stem] || stem}({stem})</span>
+                )}
               </td>
             ))}
           </tr>
@@ -120,7 +132,7 @@ export default function SpecialSinsalTable({
                 ) : sinsals.length > 0 ? (
                   <div className="flex flex-col items-center gap-0.5">
                     {sinsals.map((s, idx) => (
-                      <span key={idx} className="whitespace-nowrap">{s.name}</span>
+                      <span key={idx} className="whitespace-nowrap">{sinsalLabel(s.name)}</span>
                     ))}
                   </div>
                 ) : (
@@ -141,16 +153,11 @@ export default function SpecialSinsalTable({
                 className="px-3 py-3 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-center text-xs font-medium text-gray-600 dark:text-gray-400"
                 style={{ width: '25%' }}
               >
-                <div className="flex flex-col items-center gap-0.5">
-                  {i === 0 && unknownTime ? (
-                    <span>?</span>
-                  ) : (
-                    <>
-                      <span>{BRANCH_KOREAN[branch] || branch}</span>
-                      <span className="text-xs">{branch}</span>
-                    </>
-                  )}
-                </div>
+                {i === 0 && unknownTime ? (
+                  <span>?</span>
+                ) : (
+                  <span>{BRANCH_KOREAN[branch] || branch}({branch})</span>
+                )}
               </td>
             ))}
           </tr>
@@ -171,7 +178,7 @@ export default function SpecialSinsalTable({
                 ) : sinsals.length > 0 ? (
                   <div className="flex flex-col items-center gap-0.5">
                     {sinsals.map((s, idx) => (
-                      <span key={idx} className="whitespace-nowrap">{s.name}</span>
+                      <span key={idx} className="whitespace-nowrap">{sinsalLabel(s.name)}</span>
                     ))}
                   </div>
                 ) : (
