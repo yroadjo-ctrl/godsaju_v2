@@ -32,9 +32,13 @@ function formatTag(r: RelationResult, char1: string, char2: string): { text: str
   }
 }
 
-// 기둥 표시 순서: 년(3) → 월(2) → 일(1) → 시(0)
-const COL_ORDER = [3, 2, 1, 0]
-const COL_LABELS = ['年柱', '月柱', '日柱', '時柱']
+// 열(좌→우): 時(0)→日(1)→月(2)→年(3) — 원국표와 동일 순서
+const COL_ORDER  = [0, 1, 2, 3]
+const COL_LABELS = ['時柱', '日柱', '月柱', '年柱']
+
+// 행(위→아래): 年(3)→月(2)→日(1)→時(0) — 기존 유지
+const ROW_ORDER  = [3, 2, 1, 0]
+const ROW_LABELS = ['年柱', '月柱', '日柱', '時柱']
 
 // 쌍 키는 항상 작은 인덱스,큰 인덱스 형태 (예: "0,3")
 function pairKey(a: number, b: number): string {
@@ -71,8 +75,8 @@ export default function RelationList({ relations, pillars }: Props) {
   }
 
   // 관계가 하나도 없으면 렌더링 안 함
-  const hasAny = COL_ORDER.some((ri, r) =>
-    COL_ORDER.some((ci, c) => c > r && getCellTags(ri, ci).length > 0)
+  const hasAny = ROW_ORDER.some(ri =>
+    COL_ORDER.some(ci => ri !== ci && getCellTags(ri, ci).length > 0)
   ) || multiTags.length > 0
   if (!hasAny) return null
 
@@ -80,64 +84,63 @@ export default function RelationList({ relations, pillars }: Props) {
     <section>
       <h3 className="text-base font-medium text-gray-700 mb-3">八字關係</h3>
 
-      {/* 매트릭스 표 */}
+      {/* 매트릭스 표 — 열: 時→日→月→年 / 행: 年→月→日→時 */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full border-collapse text-sm table-fixed">
+          <colgroup>
+            {/* 행 헤더 열: 고정 너비 */}
+            <col className="w-14" />
+            {/* 데이터 열 4개: 균등 너비 */}
+            {COL_ORDER.map((_, c) => <col key={c} />)}
+          </colgroup>
           <thead>
             <tr>
-              {/* 좌상단 빈 헤더 */}
-              <th className="w-16 border border-slate-200 bg-slate-50 p-1.5 text-center text-xs text-slate-500"></th>
-              {COL_LABELS.map((label, c) => (
+              <th className="border border-slate-200 bg-slate-50 p-1.5 text-center text-xs text-slate-400"></th>
+              {COL_ORDER.map((colPillarIdx, c) => (
                 <th
                   key={c}
-                  className="border border-slate-200 bg-slate-50 p-1.5 text-center text-xs font-semibold text-slate-600 whitespace-nowrap"
+                  className="border border-slate-200 bg-slate-50 p-1.5 text-center text-xs font-semibold text-slate-600"
                 >
-                  {label}
+                  {COL_LABELS[c]}
                   <div className="text-[10px] font-normal text-slate-400 mt-0.5">
-                    {pillars[COL_ORDER[c]]}
+                    {pillars[colPillarIdx]}
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {COL_ORDER.map((rowPillarIdx, r) => (
+            {ROW_ORDER.map((rowPillarIdx, r) => (
               <tr key={r}>
                 {/* 행 헤더 */}
                 <td className="border border-slate-200 bg-slate-50 p-1.5 text-center text-xs font-semibold text-slate-600 whitespace-nowrap">
-                  {COL_LABELS[r]}
+                  {ROW_LABELS[r]}
                   <div className="text-[10px] font-normal text-slate-400 mt-0.5">
                     {pillars[rowPillarIdx]}
                   </div>
                 </td>
                 {COL_ORDER.map((colPillarIdx, c) => {
-                  // 대각선 (자기 자신)
-                  if (c === r) {
+                  // 같은 기둥 (대각선)
+                  if (rowPillarIdx === colPillarIdx) {
                     return (
                       <td key={c} className="border border-slate-200 bg-slate-100 p-1.5 text-center text-slate-300">
                         —
                       </td>
                     )
                   }
-                  // 하삼각형: 상삼각형과 동일 데이터이므로 미러링
-                  const isUpper = c > r
-                  const riIdx = isUpper ? rowPillarIdx : colPillarIdx
-                  const ciIdx = isUpper ? colPillarIdx : rowPillarIdx
-                  const tags = getCellTags(riIdx, ciIdx)
+                  const tags = getCellTags(rowPillarIdx, colPillarIdx)
 
                   return (
                     <td
                       key={c}
-                      className={`border border-slate-200 p-1.5 text-center align-middle ${
-                        isUpper ? 'bg-white' : 'bg-slate-50'
-                      }`}
+                      className="border border-slate-200 bg-white p-1.5 text-center align-top"
                     >
                       {tags.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 justify-center">
+                        <div className="flex flex-col gap-0.5 items-center">
                           {tags.map((tag, ti) => (
                             <span
                               key={ti}
-                              className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-bold ${tag.style}`}
+                              className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-bold whitespace-nowrap ${tag.style}`}
                             >
                               {tag.text}
                             </span>
