@@ -54,10 +54,10 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
     '홍란귀인': '紅鸞',
   }
 
-  // 귀인 정보 추출 → 배열 반환
+  // 귀인 정보 추출 → 배열 반환 (없으면 ['-'])
   const getGuiinForPillar = (pillarIndex: number): string[] => {
     const pillar = pillars[pillarIndex] as any
-    if (pillar?.guiin && Array.isArray(pillar.guiin)) {
+    if (pillar?.guiin && Array.isArray(pillar.guiin) && pillar.guiin.length > 0) {
       return pillar.guiin.map((g: any) => {
         const hanja = GUIIN_HANJA[g.name]
         return hanja ? `${g.name}(${hanja})` : g.name
@@ -66,11 +66,12 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
     return ['-']
   }
 
-  // 여러 항목을 줄바꿈으로 표시하는 헬퍼
+  // 여러 항목을 줄바꿈으로 표시하는 헬퍼 (빈값은 '-' 표시)
   const multiLine = (value: string) => {
-    const parts = value.split(/, |,/)
-    if (parts.length <= 1) return <span>{value}</span>
-    return <>{parts.map((v, i) => <div key={i}>{v.trim()}</div>)}</>
+    if (!value || value.trim() === '') return <span>-</span>
+    const parts = value.split(/, |,/).map(v => v.trim()).filter(Boolean)
+    if (parts.length <= 1) return <span>{parts[0] ?? '-'}</span>
+    return <>{parts.map((v, i) => <div key={i}>{v}</div>)}</>
   }
 
   return (
@@ -206,7 +207,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
             {pillars.map((p, i) => {
               const hasGongmang = gongmang.pillarIndices.includes(i)
               return (
-                <td key={i} className={`px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs font-semibold ${hasGongmang ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-400 dark:text-gray-600'}`}>
+                <td key={i} className={`px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs font-semibold ${hasGongmang ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-600'}`}>
                   {hasGongmang
                     ? <>
                         <div className="font-bold">空亡</div>
