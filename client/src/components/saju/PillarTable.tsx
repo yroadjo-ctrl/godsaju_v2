@@ -43,25 +43,53 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
     '申': '陽金', '酉': '陰金', '戌': '陽土', '亥': '陰水',
   }
 
-  // 귀인 정보 추출 (pillars[i].guiin 있으면 사용)
-  const getGuiinForPillar = (pillarIndex: number): string => {
+  // 귀인 한자 병기 매핑 (귀인 제외)
+  const GUIIN_HANJA: Record<string, string> = {
+    '천을귀인': '天乙',
+    '천덕귀인': '天德',
+    '월덕귀인': '月德',
+    '태극귀인': '太極',
+    '문창귀인': '文昌',
+    '복성귀인': '福星',
+    '홍란귀인': '紅鸞',
+  }
+
+  // 귀인 정보 추출 → 배열 반환
+  const getGuiinForPillar = (pillarIndex: number): string[] => {
     const pillar = pillars[pillarIndex] as any
     if (pillar?.guiin && Array.isArray(pillar.guiin)) {
-      return pillar.guiin.map((g: any) => g.name).join(', ')
+      return pillar.guiin.map((g: any) => {
+        const hanja = GUIIN_HANJA[g.name]
+        return hanja ? `${g.name}(${hanja})` : g.name
+      })
     }
-    return '-'
+    return ['-']
+  }
+
+  // 여러 항목을 줄바꿈으로 표시하는 헬퍼
+  const multiLine = (value: string) => {
+    const parts = value.split(/, |,/)
+    if (parts.length <= 1) return <span>{value}</span>
+    return <>{parts.map((v, i) => <div key={i}>{v.trim()}</div>)}</>
   }
 
   return (
     <div className="overflow-x-auto border border-gray-300 dark:border-gray-600 rounded-lg">
-      <table className="w-full text-center text-sm border-collapse">
+      <table className="w-full text-center text-sm border-collapse table-fixed">
+        <colgroup>
+          <col className="w-14" />
+          <col />
+          <col />
+          <col />
+          <col />
+        </colgroup>
         <thead>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 font-semibold text-gray-700 dark:text-gray-300 w-16 whitespace-nowrap">구분</td>
-            <td className="flex-1 px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">時柱</div><div className="text-xs text-gray-600 dark:text-gray-400">말년운 (60세~)<br/>자녀운, 결실</div></td>
-            <td className="flex-1 px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">日柱</div><div className="text-xs text-gray-600 dark:text-gray-400">중년운 (40~60세)<br/>정체성, 자아</div></td>
-            <td className="flex-1 px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">月柱</div><div className="text-xs text-gray-600 dark:text-gray-400">청년운 (20~40세)<br/>부모, 사회상</div></td>
-            <td className="flex-1 px-3 py-2"><div className="font-semibold">年柱</div><div className="text-xs text-gray-600 dark:text-gray-400">초년운 (0~20세)<br/>조상, 시대상</div></td>
+            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">구분</td>
+            <td className="px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">時柱</div><div className="text-xs text-gray-600 dark:text-gray-400">말년운 (60세~)<br/>자녀운, 결실</div></td>
+            <td className="px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">日柱</div><div className="text-xs text-gray-600 dark:text-gray-400">중년운 (40~60세)<br/>정체성, 자아</div></td>
+            <td className="px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">月柱</div><div className="text-xs text-gray-600 dark:text-gray-400">청년운 (20~40세)<br/>부모, 사회상</div></td>
+            <td className="px-3 py-2"><div className="font-semibold">年柱</div><div className="text-xs text-gray-600 dark:text-gray-400">초년운 (0~20세)<br/>조상, 시대상</div></td>
           </tr>
         </thead>
         
@@ -138,7 +166,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
             <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">지장간</td>
             {pillars.map((p, i) => (
               <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400">
-                {i === 0 && unknownTime ? '?' : p.jigang}
+                {i === 0 && unknownTime ? '?' : multiLine(p.jigang)}
               </td>
             ))}
           </tr>
@@ -147,7 +175,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
             <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">12운성</td>
             {pillars.map((p, i) => (
               <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400">
-                {i === 0 && unknownTime ? '?' : p.unseong}
+                {i === 0 && unknownTime ? '?' : multiLine(p.unseong)}
               </td>
             ))}
           </tr>
@@ -156,20 +184,21 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
             <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">12신살</td>
             {pillars.map((p, i) => (
               <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400">
-                {i === 0 && unknownTime ? '?' : p.sinsal}
+                {i === 0 && unknownTime ? '?' : multiLine(p.sinsal)}
               </td>
             ))}
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
             <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">귀인</td>
-            {pillars.map((p, i) => (
-              <td key={i} className="flex-1 px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0">
-                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                  {i === 0 && unknownTime ? '?' : getGuiinForPillar(i)}
-                </div>
-              </td>
-            ))}
+            {pillars.map((p, i) => {
+              const guiinList = i === 0 && unknownTime ? ['?'] : getGuiinForPillar(i)
+              return (
+                <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                  {guiinList.map((name, j) => <div key={j}>{name}</div>)}
+                </td>
+              )
+            })}
           </tr>
 
           <tr>
@@ -178,7 +207,9 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
               const hasGongmang = gongmang.pillarIndices.includes(i)
               return (
                 <td key={i} className={`px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs font-semibold ${hasGongmang ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-400 dark:text-gray-600'}`}>
-                  {hasGongmang ? `${gongmang.branches[0]}, ${gongmang.branches[1]}` : '-'}
+                  {hasGongmang
+                    ? <><div>{gongmang.branches[0]}</div><div>{gongmang.branches[1]}</div></>
+                    : '-'}
                 </td>
               )
             })}
