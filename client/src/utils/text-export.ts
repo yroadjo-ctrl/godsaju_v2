@@ -278,25 +278,83 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 신살 목록 제거 - 특수신살 표에서 모두 표시됨
 
-  // 좌법
+  // 坐法 · 引從法 통합 마크다운 표
   if (result.jwabeop) {
-    lines.push(`坐法 (${t('saju.janggan')} → ${t('saju.unseong')})`)
-    lines.push('─────')
-    const pillarLabels = ['時柱', '日柱', '月柱', '年柱']
-    result.jwabeop.forEach((entries, i) => {
-      if (i === 0 && input.unknownTime) return
-      const parts = entries.map(e => `${e.stem}(${e.sipsin}·${e.unseong}坐)`).join(' ')
-      lines.push(`${pillarLabels[i]}: ${parts}`)
-    })
+    const dayBranch = result.pillars[1].pillar.branch
+    lines.push(`坐法 · 引從法 (日支 ${dayBranch} 기준 지장간 12운성)`)
     lines.push('')
-  }
 
-  // 인종법
-  if (result.injongbeop && result.injongbeop.length > 0) {
-    lines.push(`引從法 (${t('saju.injong.desc').replace(/^— /, '')})`)
-    lines.push('─────')
-    const parts = result.injongbeop.map(e => `${e.yangStem} ${e.category} → ${e.unseong}從`)
-    lines.push(parts.join(' · '))
+    const CATEGORIES_EXPORT = ['比劫', '食傷', '財星', '官星', '印星'] as const
+    type CatExport = (typeof CATEGORIES_EXPORT)[number]
+    const CATEGORY_KOR_EXPORT: Record<CatExport, string> = {
+      比劫: '비겁', 食傷: '식상', 財星: '재성', 官星: '관성', 印星: '인성',
+    }
+    const SIPSIN_TO_CAT_EXPORT: Record<string, CatExport> = {
+      比肩: '比劫', 劫財: '比劫', 食神: '食傷', 傷官: '食傷',
+      偏財: '財星', 正財: '財星', 偏官: '官星', 正官: '官星',
+      偏印: '印星', 正印: '印星',
+    }
+    const SIPSIN_KOR_EXPORT: Record<string, string> = {
+      比肩: '비견', 劫財: '겁재', 食神: '식신', 傷官: '상관',
+      偏財: '편재', 正財: '정재', 偏官: '편관', 正官: '정관',
+      偏印: '편인', 正印: '정인',
+    }
+
+    // 카테고리별 맵: pillarIdx → category → entries
+    const catMap: Record<number, Partial<Record<CatExport, typeof result.jwabeop[0]>>> = {}
+    result.jwabeop.forEach((entries, pi) => {
+      catMap[pi] = {}
+      entries.forEach(entry => {
+        const cat = SIPSIN_TO_CAT_EXPORT[entry.sipsin]
+        if (cat) {
+          const arr = catMap[pi][cat]
+          if (arr) arr.push(entry)
+          else catMap[pi][cat] = [entry]
+        }
+      })
+    })
+
+    // 인종법 맵
+    const injongMap: Partial<Record<CatExport, typeof result.injongbeop[0]>> = {}
+    result.injongbeop.forEach(e => { injongMap[e.category as CatExport] = e })
+
+    // 표 헤더: 십성 | 年柱(branch) | 月柱(branch) | 日柱(branch) | 時柱(branch) | 引從法
+    const yearBranch = result.pillars[3].pillar.branch
+    const monthBranch = result.pillars[2].pillar.branch
+    const dayBranchCol = result.pillars[1].pillar.branch
+    const hourBranch = input.unknownTime ? '?' : result.pillars[0].pillar.branch
+    lines.push(`| 십성 | 年柱(${yearBranch}) | 月柱(${monthBranch}) | 日柱(${dayBranchCol}) | 時柱(${hourBranch}) | 引從法 |`)
+    lines.push('|------|---------|---------|---------|---------|--------|')
+
+    // 표시 순서: 年=3, 月=2, 日=1, 時=0
+    const PILLAR_EXPORT = [
+      { idx: 3, isUnknown: false },
+      { idx: 2, isUnknown: false },
+      { idx: 1, isUnknown: false },
+      { idx: 0, isUnknown: !!input.unknownTime },
+    ]
+
+    for (const cat of CATEGORIES_EXPORT) {
+      const rowLabel = `${CATEGORY_KOR_EXPORT[cat]}(${cat})`
+      const cells = PILLAR_EXPORT.map(({ idx, isUnknown }) => {
+        if (isUnknown) return '-'
+        const entries = catMap[idx]?.[cat] ?? []
+        if (entries.length === 0) return '-'
+        return entries
+          .map(e => {
+            const sipsinLabel = SIPSIN_KOR_EXPORT[e.sipsin]
+              ? `${SIPSIN_KOR_EXPORT[e.sipsin]}(${e.sipsin})`
+              : e.sipsin
+            return `${e.stem} ${sipsinLabel} ${e.unseong}坐`
+          })
+          .join(' / ')
+      })
+      const injong = injongMap[cat]
+      const injongCell = injong ? `${injong.yangStem} ${injong.unseong}從` : '-'
+      lines.push(`| ${rowLabel} | ${cells.join(' | ')} | ${injongCell} |`)
+    }
+    lines.push('')
+    lines.push('※ 坐: 지장간이 일지에서의 12운성 · 從: 사주에 없는 십성이 일지에서의 12운성')
     lines.push('')
   }
 

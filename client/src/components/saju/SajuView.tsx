@@ -4,8 +4,7 @@ import PillarTable from './PillarTable.tsx'
 import SpecialSinsalTable from './SpecialSinsalTable.tsx'
 import RelationList from './RelationList.tsx'
 import SinsalList from './SinsalList.tsx'
-import JwabeopChart from './JwabeopChart.tsx'
-import InjongbeopChart from './InjongbeopChart.tsx'
+import JwaInjongTable from './JwaInjongTable.tsx'
 import DaewoonTable from './DaewoonTable.tsx'
 import MonthlyTable from './MonthlyTable.tsx'
 import DailyCalendar from './DailyCalendar.tsx'
@@ -83,9 +82,13 @@ export default function SajuView({ input }: Props) {
       </div>
 
       {/* 좌법 · 인종법 */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-        <JwabeopChart jwabeop={result.jwabeop} pillars={result.pillars} unknownTime={input.unknownTime} />
-        <InjongbeopChart injongbeop={result.injongbeop} pillars={result.pillars} />
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <JwaInjongTable
+          jwabeop={result.jwabeop}
+          injongbeop={result.injongbeop}
+          pillars={result.pillars}
+          unknownTime={input.unknownTime}
+        />
       </div>
 
       {/* 대운 */}
