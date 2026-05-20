@@ -67,10 +67,18 @@ export default function JwaInjongTable({ jwabeop, injongbeop, pillars, unknownTi
         日支 <span className="font-hanja font-medium text-gray-600 dark:text-gray-300">{dayBranch}</span> 기준 지장간 12운성
       </p>
       <div className="overflow-x-auto">
-        <table className="w-full text-center text-xs border-collapse">
+        <table className="w-full text-center text-xs border-collapse table-fixed">
+          <colgroup>
+            <col className="w-14" />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500">
-              <th className="py-1.5 px-2 text-center font-medium border border-gray-200 dark:border-gray-700 w-16">
+              <th className="py-1.5 px-2 text-center font-medium border border-gray-200 dark:border-gray-700">
                 십성
               </th>
               {PILLAR_DISPLAY.map(({ label, idx }) => {
@@ -85,7 +93,7 @@ export default function JwaInjongTable({ jwabeop, injongbeop, pillars, unknownTi
                   </th>
                 )
               })}
-              <th className="py-1.5 px-1 font-medium text-blue-500 border border-gray-200 dark:border-gray-700 w-20">
+              <th className="py-1.5 px-1 font-medium text-blue-500 border border-gray-200 dark:border-gray-700">
                 引從法
               </th>
             </tr>

@@ -66,11 +66,27 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       .replace(/水/, '수')
   }
   
-  // 귀인 정보 추출 함수 (PillarTable.tsx와 동일)
+  // 귀인 한자 병기 매핑 (PillarTable.tsx와 동일, 귀인 제외)
+  const GUIIN_HANJA: Record<string, string> = {
+    '천을귀인': '天乙',
+    '천덕귀인': '天德',
+    '월덕귀인': '月德',
+    '태극귀인': '太極',
+    '문창귀인': '文昌',
+    '복성귀인': '福星',
+    '홍란귀인': '紅鸞',
+  }
+
+  // 귀인 정보 추출 (PillarTable.tsx와 동일)
   const getGuiinForPillar = (pillarIndex: number): string => {
     const pillar = pillars[pillarIndex] as any
-    if (pillar?.guiin && Array.isArray(pillar.guiin)) {
-      return pillar.guiin.map((g: any) => g.name).join(', ')
+    if (pillar?.guiin && Array.isArray(pillar.guiin) && pillar.guiin.length > 0) {
+      return pillar.guiin
+        .map((g: any) => {
+          const hanja = GUIIN_HANJA[g.name]
+          return hanja ? `${g.name}(${hanja})` : g.name
+        })
+        .join(' / ')
     }
     return '-'
   }
@@ -162,11 +178,13 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 귀인 행
   lines.push(`| 귀인 | ${pillars.map((p, i) => i === 0 && q ? '?' : getGuiinForPillar(i)).join(' | ')} |`)
 
-  // 공망 행
+  // 공망 행 (UI와 동일: 空亡 + 공망지지)
   lines.push(`| 공망 | ${pillars.map((p, i) => {
     if (i === 0 && q) return '?'
     const hasGongmang = gongmang.pillarIndices.includes(i)
-    return hasGongmang ? `${gongmang.branches[0]}, ${gongmang.branches[1]}` : '-'
+    return hasGongmang
+      ? `空亡 (${gongmang.branches[0]}${gongmang.branches[1]})`
+      : '-'
   }).join(' | ')} |`)
 
   lines.push('')
@@ -351,7 +369,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       })
       const injong = injongMap[cat]
       const injongCell = injong
-        ? `${injong.yangStem} ${CATEGORY_KOR_EXPORT[injong.category as CatExport]}(${injong.category}) ${injong.unseong}從`
+        ? `${injong.yangStem} ${CATEGORY_KOR_EXPORT[injong.category as CatExport]}(${injong.category}) / ${injong.unseong}從`
         : '-'
       lines.push(`| ${rowLabel} | ${cells.join(' | ')} | ${injongCell} |`)
     }
