@@ -1,6 +1,7 @@
 import type { OhaengSipsinStats } from './ohaeng-analysis.ts';
 import type { SinGangYakStats } from './singang-analysis.ts';
 import type { YongsinStats } from './yongsin-analysis.ts';
+import type { DaewoonMeta } from './daewoon-meta.ts';
 
 /** 오행 (Five Elements) */
 export type Element = 'tree' | 'fire' | 'earth' | 'metal' | 'water';
@@ -8,6 +9,7 @@ export type Element = 'tree' | 'fire' | 'earth' | 'metal' | 'water';
 export type { OhaengSipsinStats, ElementStat, SipsinStat, BalanceStatus } from './ohaeng-analysis.ts';
 export type { SinGangYakStats, SinGangLevel, DeungFlag } from './singang-analysis.ts';
 export type { YongsinStats, YongsinElementInfo } from './yongsin-analysis.ts';
+export type { DaewoonMeta } from './daewoon-meta.ts';
 
 /** 음양 (Yin-Yang) */
 export type YinYang = '+' | '-';
@@ -101,6 +103,8 @@ export interface PillarDetail {
   sinsal: string;
   /** 지장간 */
   jigang: string;
+  /** 納音 (예: 해중금(海中金)) */
+  nayeon: string;
 }
 
 /** 대운 항목 */
@@ -190,6 +194,8 @@ export interface SajuResult {
   pillars: PillarDetail[];
   /** 대운 */
   daewoon: DaewoonItem[];
+  /** 대운수·順逆行 */
+  daewoonMeta: DaewoonMeta;
   /** 팔자 관계 */
   relations: AllRelations;
   /** 신살 */

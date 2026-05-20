@@ -6,7 +6,7 @@ import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from '
 import { ZODIAC_SYMBOLS, PLANET_SYMBOLS, ASPECT_SYMBOLS, ROMAN, formatDegree } from '@core/natal'
 import { t as translate, getLocale } from '../i18n/index.ts'
 import { getYearGanzi, getTwelveMeteor, getTwelveSpirit, getRelation, getJeonggi, getStemRelation, getBranchRelation } from '@core/pillars'
-import { formatHelpSipsinRatio } from '@core/index'
+import { formatHelpSipsinRatio, buildSinsalSummaryLine, buildRelationsSummaryLine } from '@core/index'
 import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import type { Locale } from '../i18n/index.ts'
 
@@ -19,7 +19,7 @@ function makeT(locale?: Locale) {
 /** 사주 결과를 CLI 형식 텍스트로 변환 */
 export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: number): string {
   const t = makeT(locale)
-  const { input, pillars, daewoon, relations, specialSals, gongmang, ohaengSipsin, sinGangYak, yongsin } = result
+  const { input, pillars, daewoon, daewoonMeta, relations, specialSals, gongmang, ohaengSipsin, sinGangYak, yongsin } = result
   const lines: string[] = []
   const genderChar = input.gender === 'M' ? '男' : '女'
 
@@ -172,6 +172,9 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 12운성 행
   lines.push(`| 12운성 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.unseong).join(' | ')} |`)
+
+  // 納音 행
+  lines.push(`| 納音 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.nayeon).join(' | ')} |`)
 
   // 12신살 행
   lines.push(`| 12신살 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.sinsal).join(' | ')} |`)
@@ -335,6 +338,8 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       return names.length > 0 ? names.join(' / ') : '-'
     })
     lines.push('特殊神殺 (길성과 흉성)')
+    const ssSummary = buildSinsalSummaryLine(result.godSinsal, input.unknownTime)
+    if (ssSummary) lines.push(`- **요약**: ${ssSummary}`)
     lines.push(`| 구분 | ${headerLabels.join(' | ')} |`)
     lines.push('|---|---|---|---|---|')
     lines.push(`| 天干 | ${ssStemCells.join(' | ')} |`)
@@ -346,6 +351,8 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 合沖刑破害(四柱原局) — 특수신살 뒤에 배치
   lines.push('合沖刑破害(四柱原局)')
+  const relSummary = buildRelationsSummaryLine(relations, bzGanzis)
+  if (relSummary) lines.push(`- **요약**: ${relSummary}`)
   lines.push(bzHeader)
   lines.push(bzDivider)
   bzRows.forEach(row => lines.push(row))
@@ -441,6 +448,15 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 대운 (마크단운 표 형식, 가로 배열)
   if (daewoon.length > 0) {
     lines.push(input.unknownTime ? `大運 (${t('saju.unknownTimeWarning')})` : '大運')
+    const dm = daewoonMeta
+    if (dm) {
+      lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanziKor}) (정밀 ${dm.daewoonSu})`)
+      lines.push(`- **順逆行**: ${dm.directionKor}(${dm.direction})`)
+      lines.push(`- **절기 기준**: ${dm.termLabel} (출생→절기 ${dm.daysToTerm}일, 3일=1년)`)
+      if (dm.firstGanzi) {
+        lines.push(`- **1運**: ${dm.firstGanzi} · ${dm.firstStartDate.getFullYear()}년부터`)
+      }
+    }
     lines.push('')
     
     // 역순 정렬 (10운부터 0운까지)

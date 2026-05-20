@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import type { DaewoonItem } from '@core/types'
+import type { DaewoonItem, DaewoonMeta } from '@core/types'
 import { getYearGanzi, getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
 
 interface Props {
   daewoon: DaewoonItem[]
+  daewoonMeta: DaewoonMeta
   unknownTime?: boolean
   birthYear: number
   dayStem: string
@@ -167,7 +168,7 @@ function buildSewoonItems(
 }
 
 export default function DaewoonTable({
-  daewoon, unknownTime, birthYear, dayStem, yearBranch, gongmangBranches, pillars,
+  daewoon, daewoonMeta, unknownTime, birthYear, dayStem, yearBranch, gongmangBranches, pillars,
 }: Props) {
   const { t } = useLocale()
 
@@ -217,7 +218,25 @@ export default function DaewoonTable({
     <section className="space-y-6">
       {/* 대운 테이블 */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">대운(大運)</h3>
+        <h3 className="text-lg font-semibold mb-1">대운(大運)</h3>
+        <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
+          <span className="font-medium text-gray-700 dark:text-gray-200">
+            대운수 : {daewoonMeta.daewoonSuDisplay}({daewoonMeta.monthGanziKor})
+          </span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
+            (정밀 {daewoonMeta.daewoonSu})
+          </span>
+          <span className="text-gray-500 dark:text-gray-400 mx-2">·</span>
+          <span className="text-gray-600 dark:text-gray-300">
+            {daewoonMeta.directionKor}({daewoonMeta.direction})
+          </span>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {daewoonMeta.termLabel} · 절기까지 {daewoonMeta.daysToTerm}일 (3일=1년)
+            {daewoonMeta.firstGanzi && (
+              <> · 1運 {daewoonMeta.firstGanzi}({daewoonMeta.firstStartDate.getFullYear()}년~)</>
+            )}
+          </p>
+        </div>
         {unknownTime && (
           <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
             {t('saju.unknownTimeWarning')}

@@ -1,4 +1,5 @@
 import { getPillarSinsals } from '@core/saju'
+import { buildSinsalSummaryLine } from '@core/index'
 import type { Pillar } from '@core/types'
 
 interface Props {
@@ -73,11 +74,26 @@ export default function SpecialSinsalTable({
   const hasAnySinsal = pillarSinsals.some(sinsals => sinsals.length > 0)
   if (!hasAnySinsal) return null
 
+  const summaryLine = godSinsal
+    ? buildSinsalSummaryLine(godSinsal, unknownTime)
+    : buildSinsalSummaryLine(
+        pillarSinsals.flatMap((sinsals, pillarIndex) =>
+          sinsals.map(s => ({ name: s.name, position: s.position, pillarIndex })),
+        ),
+        unknownTime,
+      )
+
   return (
     <div className="mt-6">
-      <h3 className="text-base font-medium text-gray-700 mb-3">
+      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
         特殊神殺 (길성과 흉성)
       </h3>
+      {summaryLine && (
+        <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed break-words">
+          <span className="font-medium text-gray-500 dark:text-gray-500">요약 </span>
+          {summaryLine}
+        </p>
+      )}
       <table className="w-full border-collapse border border-gray-300 dark:border-gray-600" style={{ tableLayout: 'fixed' }}>
         <tbody>
           {/* 헤더 행 */}

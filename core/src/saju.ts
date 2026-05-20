@@ -11,6 +11,8 @@ import { STEM_INFO } from './constants.ts';
 import { calculateOhaengSipsinStats } from './ohaeng-analysis.ts';
 import { calculateSinGangYak } from './singang-analysis.ts';
 import { calculateYongsin } from './yongsin-analysis.ts';
+import { calculateDaewoonMeta } from './daewoon-meta.ts';
+import { formatNayeon } from './nayeon.ts';
 import {
   adjustBirthInputToSolarTime,
   adjustBirthInputToKstWallClock,
@@ -549,6 +551,7 @@ export function calculateSaju(input: BirthInput): SajuResult {
       unseong,
       sinsal,
       jigang,
+      nayeon: formatNayeon(pillar.ganzi),
       // 확장 필드
       stemYinYangElement,
       branchYinYangElement,
@@ -562,6 +565,10 @@ export function calculateSaju(input: BirthInput): SajuResult {
   const dwHour = input.unknownTime ? 12 : hour;
   const dwMinute = input.unknownTime ? 0 : minute;
   const rawDaewoon = getDaewoon(isMale, year, month, day, dwHour, dwMinute, input.jasiMethod);
+  const birthForDaewoon = new Date(year, month - 1, day, dwHour, dwMinute);
+  const daewoonMeta = calculateDaewoonMeta(
+    isMale, year, month, day, dwHour, dwMinute, input.jasiMethod, rawDaewoon[0],
+  );
   const yearBranch = yp[1];
   // 공망 계산
   const gmBranches = getGongmang(dp);
@@ -580,6 +587,7 @@ export function calculateSaju(input: BirthInput): SajuResult {
     }
   });
   const daewoon: DaewoonItem[] = rawDaewoon.map((dw, i) => {
+    // 칸 헤더 나이: 대운 시작 연도 기준 10년 단위 (0·10·20…)
     const age = dw.startDate.getFullYear() - year;
     const dwStem = dw.ganzi[0];
     const dwBranch = dw.ganzi[1];
@@ -635,5 +643,6 @@ export function calculateSaju(input: BirthInput): SajuResult {
     ohaengSipsin,
     sinGangYak,
     yongsin,
+    daewoonMeta,
   };
 }

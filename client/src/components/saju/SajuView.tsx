@@ -26,17 +26,6 @@ export default function SajuView({ input }: Props) {
   const result = useMemo(() => calculateSaju(input), [input])
   const [monthlyDisplayYear, setMonthlyDisplayYear] = useState(new Date().getFullYear())
 
-  // DEBUG: pillars 배열 값 로깅
-  useMemo(() => {
-    if (typeof window !== 'undefined') {
-      console.log('=== DEBUG pillars ===')
-      result.pillars.forEach((p, i) => {
-        const names = ['時柱', '日柱', '月柱', '年柱']
-        console.log(`${names[i]}: ${p.pillar.ganzi}`)
-      })
-    }
-  }, [result])
-
   const ganzis = result.pillars.map(p => p.pillar.ganzi)
   const natalPillars = ganzis // [시, 일, 월, 년]
 
@@ -108,6 +97,7 @@ export default function SajuView({ input }: Props) {
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <DaewoonTable
           daewoon={result.daewoon}
+          daewoonMeta={result.daewoonMeta}
           unknownTime={input.unknownTime}
           birthYear={input.year}
           dayStem={result.pillars[1].pillar.stem}

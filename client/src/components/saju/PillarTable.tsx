@@ -182,6 +182,15 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
+            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">納音</td>
+            {pillars.map((p, i) => (
+              <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                {i === 0 && unknownTime ? '?' : p.nayeon}
+              </td>
+            ))}
+          </tr>
+
+          <tr className="border-b border-gray-300 dark:border-gray-600">
             <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">12신살</td>
             {pillars.map((p, i) => (
               <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400">
