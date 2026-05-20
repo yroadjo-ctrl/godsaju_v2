@@ -318,20 +318,20 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     const injongMap: Partial<Record<CatExport, typeof result.injongbeop[0]>> = {}
     result.injongbeop.forEach(e => { injongMap[e.category as CatExport] = e })
 
-    // 표 헤더: 십성 | 年柱(branch) | 月柱(branch) | 日柱(branch) | 時柱(branch) | 引從法
+    // 표 헤더: 십성 | 時柱(branch) | 日柱(branch) | 月柱(branch) | 年柱(branch) | 引從法
     const yearBranch = result.pillars[3].pillar.branch
     const monthBranch = result.pillars[2].pillar.branch
     const dayBranchCol = result.pillars[1].pillar.branch
     const hourBranch = input.unknownTime ? '?' : result.pillars[0].pillar.branch
-    lines.push(`| 십성 | 年柱(${yearBranch}) | 月柱(${monthBranch}) | 日柱(${dayBranchCol}) | 時柱(${hourBranch}) | 引從法 |`)
+    lines.push(`| 십성 | 時柱(${hourBranch}) | 日柱(${dayBranchCol}) | 月柱(${monthBranch}) | 年柱(${yearBranch}) | 引從法 |`)
     lines.push('|------|---------|---------|---------|---------|--------|')
 
-    // 표시 순서: 年=3, 月=2, 日=1, 時=0
+    // 표시 순서: 時=0, 日=1, 月=2, 年=3
     const PILLAR_EXPORT = [
-      { idx: 3, isUnknown: false },
-      { idx: 2, isUnknown: false },
-      { idx: 1, isUnknown: false },
       { idx: 0, isUnknown: !!input.unknownTime },
+      { idx: 1, isUnknown: false },
+      { idx: 2, isUnknown: false },
+      { idx: 3, isUnknown: false },
     ]
 
     for (const cat of CATEGORIES_EXPORT) {

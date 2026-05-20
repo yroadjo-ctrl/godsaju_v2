@@ -3,7 +3,6 @@ import { calculateSaju } from '@core/saju'
 import PillarTable from './PillarTable.tsx'
 import SpecialSinsalTable from './SpecialSinsalTable.tsx'
 import RelationList from './RelationList.tsx'
-import SinsalList from './SinsalList.tsx'
 import JwaInjongTable from './JwaInjongTable.tsx'
 import DaewoonTable from './DaewoonTable.tsx'
 import MonthlyTable from './MonthlyTable.tsx'
@@ -76,12 +75,6 @@ export default function SajuView({ input }: Props) {
         <RelationList relations={result.relations} pillars={ganzis} />
       </div>
 
-      {/* 신살 - 데이터 있을 때만 표시 */}
-      {(result.specialSals.cheonul.length > 0 || result.specialSals.cheonduk.length > 0 || result.specialSals.munchang.length > 0 || result.specialSals.geumyeo.length > 0 || result.specialSals.baekho || result.specialSals.goegang) && (
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-          <SinsalList sals={result.specialSals} />
-        </div>
-      )}
 
       {/* 좌법 · 인종법 */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">

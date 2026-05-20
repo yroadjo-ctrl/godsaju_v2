@@ -31,12 +31,12 @@ const SIPSIN_KOR: Record<string, string> = {
   偏印: '편인', 正印: '정인',
 }
 
-// 표시 순서: 年→月→日→時 (jwabeop 인덱스: 년=3, 월=2, 일=1, 시=0)
+// 표시 순서: 時→日→月→年 (짧은 운 → 긴 운, jwabeop 인덱스: 시=0, 일=1, 월=2, 년=3)
 const PILLAR_DISPLAY = [
-  { label: '年柱', idx: 3 },
-  { label: '月柱', idx: 2 },
-  { label: '日柱', idx: 1 },
   { label: '時柱', idx: 0 },
+  { label: '日柱', idx: 1 },
+  { label: '月柱', idx: 2 },
+  { label: '年柱', idx: 3 },
 ] as const
 
 export default function JwaInjongTable({ jwabeop, injongbeop, pillars, unknownTime }: Props) {
@@ -70,7 +70,7 @@ export default function JwaInjongTable({ jwabeop, injongbeop, pillars, unknownTi
         <table className="w-full text-center text-xs border-collapse">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500">
-              <th className="py-1.5 px-2 text-left font-medium border border-gray-200 dark:border-gray-700 w-16">
+              <th className="py-1.5 px-2 text-center font-medium border border-gray-200 dark:border-gray-700 w-16">
                 십성
               </th>
               {PILLAR_DISPLAY.map(({ label, idx }) => {
@@ -95,7 +95,7 @@ export default function JwaInjongTable({ jwabeop, injongbeop, pillars, unknownTi
               const injong = injongMap[cat]
               return (
                 <tr key={cat}>
-                  <td className="py-2 px-2 text-left border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                  <td className="py-2 px-2 text-center border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     <div className="font-medium text-gray-700 dark:text-gray-300">{CATEGORY_KOR[cat]}</div>
                     <div className="font-hanja text-gray-400 dark:text-gray-500">({cat})</div>
                   </td>
