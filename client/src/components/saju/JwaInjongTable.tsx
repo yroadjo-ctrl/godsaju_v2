@@ -132,7 +132,13 @@ export default function JwaInjongTable({ jwabeop, injongbeop, pillars, unknownTi
                   <td className="py-2 px-1 border border-gray-200 dark:border-gray-700">
                     {injong ? (
                       <div className="leading-snug">
-                        <span className={`font-hanja font-semibold ${stemColorClass(injong.yangStem)}`}>{injong.yangStem}</span>
+                        <div>
+                          <span className={`font-hanja font-semibold ${stemColorClass(injong.yangStem)}`}>{injong.yangStem}</span>
+                          {' '}
+                          <span className="text-gray-500 dark:text-gray-400">
+                            {CATEGORY_KOR[injong.category as Category]}({injong.category})
+                          </span>
+                        </div>
                         <div className="text-blue-500 font-hanja">{injong.unseong}從</div>
                       </div>
                     ) : (

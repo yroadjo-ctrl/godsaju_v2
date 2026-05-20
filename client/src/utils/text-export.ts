@@ -350,7 +350,9 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
           .join(' / ')
       })
       const injong = injongMap[cat]
-      const injongCell = injong ? `${injong.yangStem} ${injong.unseong}從` : '-'
+      const injongCell = injong
+        ? `${injong.yangStem} ${CATEGORY_KOR_EXPORT[injong.category as CatExport]}(${injong.category}) ${injong.unseong}從`
+        : '-'
       lines.push(`| ${rowLabel} | ${cells.join(' | ')} | ${injongCell} |`)
     }
     lines.push('')
