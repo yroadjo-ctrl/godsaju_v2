@@ -208,7 +208,10 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
               return (
                 <td key={i} className={`px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs font-semibold ${hasGongmang ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'text-gray-400 dark:text-gray-600'}`}>
                   {hasGongmang
-                    ? <><div>{gongmang.branches[0]}</div><div>{gongmang.branches[1]}</div></>
+                    ? <>
+                        <div className="font-bold">空亡</div>
+                        <div className="text-xs opacity-70">({gongmang.branches[0]}{gongmang.branches[1]})</div>
+                      </>
                     : '-'}
                 </td>
               )
