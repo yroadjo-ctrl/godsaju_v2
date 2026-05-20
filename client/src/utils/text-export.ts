@@ -6,6 +6,7 @@ import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from '
 import { ZODIAC_SYMBOLS, PLANET_SYMBOLS, ASPECT_SYMBOLS, ROMAN, formatDegree } from '@core/natal'
 import { t as translate, getLocale } from '../i18n/index.ts'
 import { getYearGanzi, getTwelveMeteor, getTwelveSpirit, getRelation, getJeonggi, getStemRelation, getBranchRelation } from '@core/pillars'
+import { formatHelpSipsinRatio } from '@core/index'
 import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import type { Locale } from '../i18n/index.ts'
 
@@ -18,7 +19,7 @@ function makeT(locale?: Locale) {
 /** 사주 결과를 CLI 형식 텍스트로 변환 */
 export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: number): string {
   const t = makeT(locale)
-  const { input, pillars, daewoon, relations, specialSals, gongmang } = result
+  const { input, pillars, daewoon, relations, specialSals, gongmang, ohaengSipsin, sinGangYak, yongsin } = result
   const lines: string[] = []
   const genderChar = input.gender === 'M' ? '男' : '女'
 
@@ -188,6 +189,65 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   }).join(' | ')} |`)
 
   lines.push('')
+
+  // 오행·십성 분석
+  if (ohaengSipsin) {
+    const os = ohaengSipsin
+    lines.push(`오행·십성 분석 (일간 ${os.dayStemKor}(${os.dayStem}) ${os.dayElementLabel}, 원국 ${os.totalCharSlots}글자 기준)`)
+    lines.push('')
+    lines.push('| 오행 | 비율 | 상태 |')
+    lines.push('|------|------|------|')
+    for (const el of os.elements) {
+      const pct = el.percent > 0 ? `${el.percent}%` : '-'
+      const status = el.status === '없음' ? '-' : el.status
+      lines.push(`| ${el.label}(${el.hanja}) | ${pct} | ${status} |`)
+    }
+    lines.push('')
+    lines.push('| 십성 | 비율 | 상태 |')
+    lines.push('|------|------|------|')
+    for (const s of os.sipsin) {
+      const pct = s.percent > 0 ? `${s.percent}%` : '-'
+      const status = s.status === '없음' ? '-' : s.status
+      lines.push(`| ${s.hangul}(${s.hanja}) | ${pct} | ${status} |`)
+    }
+    lines.push('')
+    lines.push('※ 발달(20%↑)·적정(10~20%)·부족(10%↓). 지장간·합화·조후 보정 미포함.')
+    lines.push('')
+  }
+
+  // 신강·신약
+  if (sinGangYak) {
+    const sg = sinGangYak
+    lines.push(`신강·신약 (일간 ${sg.dayStemKor}(${sg.dayStem}))`)
+    lines.push('')
+    lines.push(`| 항목 | 판정 |`)
+    lines.push(`|------|------|`)
+    for (const f of sg.flags) {
+      lines.push(`| ${f.label}(${f.hanja}) | ${f.ok ? '○' : '×'} |`)
+    }
+    lines.push('')
+    lines.push(`- **결론**: ${sg.level} — ${sg.conclusion}`)
+    lines.push(`- **득력**: ${sg.score}/4 (득령·득지·득시·득세)`)
+    lines.push(`- **일간 세력 비율**: ${formatHelpSipsinRatio(sg.helpCount, sg.totalCount)} → 약 ${sg.strengthPercent}% (일간 제외 원국 십성 칸 중 인성·비겁 해당)`)
+    lines.push('')
+    lines.push('※ 득지=일지, 득시=시지. 조후·합화 보정 미포함.')
+    lines.push('')
+  }
+
+  // 용신
+  if (yongsin) {
+    const ys = yongsin
+    lines.push(`용신 (일간 ${ys.dayStemKor}(${ys.dayStem}), ${ys.method}/${ys.methodHanja}, 신강약 ${ys.sinGangLevel})`)
+    lines.push('')
+    lines.push(`- **용신(用神)**: ${ys.primary.label}(${ys.primary.hanja}) · ${ys.primary.sipsinRole}(${ys.primary.sipsinHanja}) · 원국 ${ys.primary.percent > 0 ? `${ys.primary.percent}%` : '-'}`)
+    lines.push(`- **희신(喜神)**: ${ys.secondary.label}(${ys.secondary.hanja}) · ${ys.secondary.sipsinRole}(${ys.secondary.sipsinHanja}) · 원국 ${ys.secondary.percent > 0 ? `${ys.secondary.percent}%` : '-'}`)
+    lines.push(`- **기신(忌神)**: ${ys.avoid.map(a => `${a.label}(${a.hanja})`).join(' · ')}`)
+    lines.push(`- **요약**: ${ys.summary}`)
+    lines.push(`- **설명**: ${ys.explanation}`)
+    lines.push('')
+    lines.push('※ 억부용신 기준. 조후·통관·합화·격국 보정 미포함.')
+    lines.push('')
+  }
 
   // 八字關係 — 마크다운 매트릭스 표
   // 열(좌→우): 時(0)→日(1)→月(2)→年(3)  /  행(위→아래): 年(3)→月(2)→日(1)→時(0)

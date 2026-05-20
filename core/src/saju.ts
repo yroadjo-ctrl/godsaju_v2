@@ -8,6 +8,9 @@ import {
   calculateJwabeop, calculateInjongbeop, getGongmang,
 } from './pillars.ts';
 import { STEM_INFO } from './constants.ts';
+import { calculateOhaengSipsinStats } from './ohaeng-analysis.ts';
+import { calculateSinGangYak } from './singang-analysis.ts';
+import { calculateYongsin } from './yongsin-analysis.ts';
 import {
   adjustBirthInputToSolarTime,
   adjustBirthInputToKstWallClock,
@@ -616,6 +619,9 @@ export function calculateSaju(input: BirthInput): SajuResult {
   const dayBranch = dp[1];
   const jwabeop = calculateJwabeop(dayStem, branches, dayBranch);
   const injongbeop = calculateInjongbeop(dayStem, dayBranch);
+  const ohaengSipsin = calculateOhaengSipsinStats(pillars as PillarDetail[], input.unknownTime);
+  const sinGangYak = calculateSinGangYak(pillars as PillarDetail[], input.unknownTime);
+  const yongsin = calculateYongsin(sinGangYak, ohaengSipsin);
   return {
     input,
     pillars: pillars as any, // PillarDetailExtended는 PillarDetail의 확장
@@ -626,5 +632,8 @@ export function calculateSaju(input: BirthInput): SajuResult {
     gongmang,
     jwabeop,
     injongbeop,
+    ohaengSipsin,
+    sinGangYak,
+    yongsin,
   };
 }

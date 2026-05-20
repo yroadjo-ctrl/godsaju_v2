@@ -1,5 +1,13 @@
+import type { OhaengSipsinStats } from './ohaeng-analysis.ts';
+import type { SinGangYakStats } from './singang-analysis.ts';
+import type { YongsinStats } from './yongsin-analysis.ts';
+
 /** 오행 (Five Elements) */
 export type Element = 'tree' | 'fire' | 'earth' | 'metal' | 'water';
+
+export type { OhaengSipsinStats, ElementStat, SipsinStat, BalanceStatus } from './ohaeng-analysis.ts';
+export type { SinGangYakStats, SinGangLevel, DeungFlag } from './singang-analysis.ts';
+export type { YongsinStats, YongsinElementInfo } from './yongsin-analysis.ts';
 
 /** 음양 (Yin-Yang) */
 export type YinYang = '+' | '-';
@@ -194,6 +202,12 @@ export interface SajuResult {
   jwabeop: JwaEntry[][];
   /** 인종법 (일지에 없는 십성 카테고리 인종) */
   injongbeop: InjongEntry[];
+  /** 오행·십성 비율 (원국 8글자 기준) */
+  ohaengSipsin: OhaengSipsinStats;
+  /** 신강·신약 (득령·득지·득시·득세) */
+  sinGangYak: SinGangYakStats;
+  /** 용신 (억부용신) */
+  yongsin: YongsinStats;
 }
 
 // =============================================

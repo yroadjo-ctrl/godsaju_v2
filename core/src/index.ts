@@ -1,5 +1,11 @@
 // 사주 (四柱八字)
 export { calculateSaju, getPillarSinsals } from './saju.ts'
+export { calculateOhaengSipsinStats } from './ohaeng-analysis.ts'
+export { calculateSinGangYak, SINGANG_LEVELS, HELP_SIPSIN_LABEL, formatHelpSipsinRatio } from './singang-analysis.ts'
+export { calculateYongsin } from './yongsin-analysis.ts'
+export type { YongsinStats, YongsinElementInfo } from './yongsin-analysis.ts'
+export type { OhaengSipsinStats, ElementStat, SipsinStat, BalanceStatus } from './ohaeng-analysis.ts'
+export type { SinGangYakStats, SinGangLevel, DeungFlag } from './singang-analysis.ts'
 
 // 자미두수 (紫微斗數)
 export { createChart, calculateLiunian, getDaxianList } from './ziwei.ts'

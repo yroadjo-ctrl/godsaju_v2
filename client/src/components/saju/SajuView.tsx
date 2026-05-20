@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { calculateSaju } from '@core/saju'
 import PillarTable from './PillarTable.tsx'
+import OhaengSipsinSection from './OhaengSipsinSection.tsx'
+import SinGangSection from './SinGangSection.tsx'
+import YongsinSection from './YongsinSection.tsx'
 import SpecialSinsalTable from './SpecialSinsalTable.tsx'
 import RelationList from './RelationList.tsx'
 import JwaInjongTable from './JwaInjongTable.tsx'
@@ -54,6 +57,21 @@ export default function SajuView({ input }: Props) {
           gongmang={result.gongmang} 
           godSinsal={result.godSinsal} 
         />
+      </section>
+
+      {/* 오행·십성 분석 */}
+      <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <OhaengSipsinSection stats={result.ohaengSipsin} />
+      </section>
+
+      {/* 신강·신약 */}
+      <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <SinGangSection stats={result.sinGangYak} />
+      </section>
+
+      {/* 용신 */}
+      <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <YongsinSection yongsin={result.yongsin} />
       </section>
 
       {/* 특수신살 표 */}
