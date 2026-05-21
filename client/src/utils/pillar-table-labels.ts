@@ -7,7 +7,7 @@ export interface PillarRowLabel {
 export const PILLAR_TABLE_LABELS = {
   category: { kor: '구분', hanja: '區分' },
   stem: { kor: '천간', hanja: '天干' },
-  sipsin: { kor: '십성', hanja: '十神' },
+  sipsin: { kor: '십성', hanja: '十星' },
   branch: { kor: '지지', hanja: '地支' },
   jigang: { kor: '지장간', hanja: '地藏干' },
   unseong: { kor: '12운성', hanja: '十二運星' },

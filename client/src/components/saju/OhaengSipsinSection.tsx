@@ -95,7 +95,7 @@ export default function OhaengSipsinSection({ stats }: Props) {
         {/* 십성 */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300">
-            십성(十神)
+            십성 <span className="font-hanja">(十星)</span>
           </div>
           <table className="w-full text-xs">
             <thead>

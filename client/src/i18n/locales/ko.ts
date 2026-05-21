@@ -153,7 +153,7 @@ const ko: Record<string, string> = {
   'profile.importError': '파일을 읽을 수 없습니다. 올바른 JSON 파일인지 확인해주세요.',
 
   // Saju - PillarTable
-  'saju.sipsin': '십신',
+  'saju.sipsin': '십성',
   'saju.cheongan': '천간',
   'saju.jiji': '지지',
   'saju.unseong': '운성',

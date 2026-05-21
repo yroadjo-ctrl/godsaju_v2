@@ -3,7 +3,7 @@ const zh: Record<string, string> = {
   'app.subtitle1': '无需服务器，在浏览器中运行的',
   'app.subtitle.tool': '四柱八字 · 紫微斗数 · 西洋占星术',
   'app.subtitle2': '计算器',
-  'app.subtitle3': '十神、大运、命盘、四化、出生星盘一次搞定',
+  'app.subtitle3': '十星、大运、命盘、四化、出生星盘一次搞定',
   'app.profileManage': '档案管理',
   'app.tab.saju': '四柱八字',
   'app.tab.ziwei': '紫微斗数',
@@ -152,7 +152,7 @@ const zh: Record<string, string> = {
   'profile.importError': '无法读取文件，请确认是否为有效的 JSON 文件。',
 
   // Saju - PillarTable
-  'saju.sipsin': '十神',
+  'saju.sipsin': '十星',
   'saju.cheongan': '天干',
   'saju.jiji': '地支',
   'saju.unseong': '运星',
@@ -196,7 +196,7 @@ const zh: Record<string, string> = {
 
   // Saju - InjongbeopChart
   'saju.injong.jijanggan': '藏干',
-  'saju.injong.desc': '— 缺失十神的阳干引种',
+  'saju.injong.desc': '— 缺失十星的阳干引种',
 
   // Ziwei
   'ziwei.needTime': '紫微斗数需要出生时间。',

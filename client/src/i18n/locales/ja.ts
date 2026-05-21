@@ -3,7 +3,7 @@ const ja: Record<string, string> = {
   'app.subtitle1': 'サーバー不要、ブラウザで動作する',
   'app.subtitle.tool': '四柱八字 · 紫微斗数 · 西洋占星術',
   'app.subtitle2': '計算機',
-  'app.subtitle3': '十神、大運、命盤、四化、出生チャートまで一度に',
+  'app.subtitle3': '十星、大運、命盤、四化、出生チャートまで一度に',
   'app.profileManage': 'プロフィール管理',
   'app.tab.saju': '四柱八字',
   'app.tab.ziwei': '紫微斗数',
@@ -152,7 +152,7 @@ const ja: Record<string, string> = {
   'profile.importError': 'ファイルを読み込めません。正しい JSON ファイルか確認してください。',
 
   // Saju - PillarTable
-  'saju.sipsin': '十神',
+  'saju.sipsin': '十星',
   'saju.cheongan': '天干',
   'saju.jiji': '地支',
   'saju.unseong': '運星',
@@ -196,7 +196,7 @@ const ja: Record<string, string> = {
 
   // Saju - InjongbeopChart
   'saju.injong.jijanggan': '蔵干',
-  'saju.injong.desc': '— 欠落十神の陽干引種',
+  'saju.injong.desc': '— 欠落十星の陽干引種',
 
   // Ziwei
   'ziwei.needTime': '紫微斗数には出生時間が必須です。',

@@ -238,7 +238,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       lines.push(`| ${el.label}(${el.hanja}) | ${pct} | ${status} |`)
     }
     lines.push('')
-    lines.push('| 십성 | 비율 | 상태 |')
+    lines.push('| 십성 (十星) | 비율 | 상태 |')
     lines.push('|------|------|------|')
     for (const s of os.sipsin) {
       const pct = s.percent > 0 ? `${s.percent}%` : '-'

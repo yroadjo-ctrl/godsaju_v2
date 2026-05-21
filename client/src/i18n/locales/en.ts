@@ -152,7 +152,7 @@ const en: Record<string, string> = {
   'profile.importError': 'Unable to read the file. Please check that it is a valid JSON file.',
 
   // Saju - PillarTable
-  'saju.sipsin': '十神',
+  'saju.sipsin': '十星',
   'saju.cheongan': '天干',
   'saju.jiji': '地支',
   'saju.unseong': '運星',
@@ -196,7 +196,7 @@ const en: Record<string, string> = {
 
   // Saju - InjongbeopChart
   'saju.injong.jijanggan': 'Hidden Stems',
-  'saju.injong.desc': '— Yang stem seeding for missing Ten Gods',
+  'saju.injong.desc': '— Yang stem seeding for missing Ten Stars',
 
   // Ziwei
   'ziwei.needTime': 'Ziwei Doushu requires the time of birth.',
