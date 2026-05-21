@@ -13,11 +13,7 @@ import { calculateSinGangYak } from './singang-analysis.ts';
 import { calculateYongsin } from './yongsin-analysis.ts';
 import { calculateDaewoonMeta } from './daewoon-meta.ts';
 import { formatNayeon } from './nayeon.ts';
-import {
-  adjustBirthInputToSolarTime,
-  adjustBirthInputToKstWallClock,
-  DEFAULT_TIMEZONE,
-} from './timezone.ts';
+import { getAdjustedBirthDateTime } from './birth-calendar.ts';
 import type {
   BirthInput, SajuResult, PillarDetail, PillarDetailExtended, Pillar, DaewoonItem, Gongmang,
   YinYangElement, FamilyRelation, GuiinInfo, SpecialSinsal,
@@ -495,10 +491,7 @@ function getGodSinsal(dayStem: string, stems: string[], branches: string[], dayP
 
 /** BirthInput → SajuResult (확장 버전) */
 export function calculateSaju(input: BirthInput): SajuResult {
-  const useSolarTime = input.timezone != null && input.timezone !== DEFAULT_TIMEZONE;
-  const { year, month, day, hour, minute } = useSolarTime
-    ? adjustBirthInputToSolarTime(input)
-    : adjustBirthInputToKstWallClock(input);
+  const { year, month, day, hour, minute } = getAdjustedBirthDateTime(input);
   const { gender } = input;
   const isMale = gender === 'M';
 

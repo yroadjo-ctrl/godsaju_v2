@@ -1,9 +1,6 @@
 /**
  * 자미두수 (紫微斗數) 계산 엔진
  */
-// @ts-expect-error lunar-javascript has no type declarations
-import { Solar } from 'lunar-javascript'
-
 import {
   TIAN_GAN, DI_ZHI, PALACE_NAMES,
   WU_XING_JU_MAP, NAYIN_TABLE,
@@ -14,13 +11,10 @@ import {
 } from './constants.ts'
 import type {
   WuXingJu, ZiweiStar, ZiweiPalace, ZiweiChart,
-  LiuYueInfo, LiuNianInfo,
+  LiuYueInfo, LiuNianInfo, BirthInput,
 } from './types.ts'
-import {
-  adjustBirthInputToSolarTime,
-  adjustBirthInputToKstWallClock,
-  DEFAULT_TIMEZONE,
-} from './timezone.ts'
+import { getAdjustedBirthDateTime } from './birth-calendar.ts'
+import { solarToLunar } from './lunar-calendar.ts'
 
 // =============================================
 // 유틸리티
@@ -46,24 +40,6 @@ function ganAt(index: number): string {
 function hourZhiIndex(hour: number): number {
   if (hour === 23 || hour === 0) return 0
   return Math.floor((hour + 1) / 2) % 12
-}
-
-// =============================================
-// 음력 변환 (lunar-javascript 사용)
-// =============================================
-
-function solarToLunar(year: number, month: number, day: number): {
-  lunarYear: number; lunarMonth: number; lunarDay: number; isLeap: boolean
-} {
-  const solar = Solar.fromYmd(year, month, day)
-  const lunar = solar.getLunar()
-  const rawMonth = lunar.getMonth()
-  return {
-    lunarYear: lunar.getYear(),
-    lunarMonth: Math.abs(rawMonth),
-    lunarDay: lunar.getDay(),
-    isLeap: rawMonth < 0,
-  }
 }
 
 // =============================================
@@ -245,34 +221,9 @@ function getBrightness(star: string, zhi: string): string {
 // 메인 명반 생성
 // =============================================
 
-export function createChart(
-  year: number, month: number, day: number,
-  hour: number, minute: number, isMale: boolean, timezone?: string, longitude?: number,
-): ZiweiChart {
-  // Asia/Seoul(또는 미지정) 출생은 KST(+9) 벽시계를 기준으로 하는 한국 사주 관례에 맞춰
-  // 경도 기반 진태양시 보정을 건너뛰고, IANA Asia/Seoul 오프셋을 이용한 KST 벽시계 정규화만
-  // 적용한다 (1948-1951 KDT, 1954-1961 UTC+8:30/+9:30, 1987-1988 KDT 자동 포함).
-  if (timezone != null && timezone !== DEFAULT_TIMEZONE) {
-    const adjusted = adjustBirthInputToSolarTime({
-      year,
-      month,
-      day,
-      hour,
-      minute,
-      gender: isMale ? 'M' : 'F',
-      timezone,
-      ...(longitude != null ? { longitude } : {}),
-    })
-    year = adjusted.year; month = adjusted.month; day = adjusted.day
-    hour = adjusted.hour; minute = adjusted.minute
-  } else {
-    const kst = adjustBirthInputToKstWallClock({
-      year, month, day, hour, minute,
-      gender: isMale ? 'M' : 'F',
-    })
-    year = kst.year; month = kst.month; day = kst.day
-    hour = kst.hour; minute = kst.minute
-  }
+export function createChart(input: BirthInput): ZiweiChart {
+  const { year, month, day, hour, minute } = getAdjustedBirthDateTime(input)
+  const isMale = input.gender === 'M'
 
   // 1. 음력 변환
   const { lunarYear, lunarMonth, lunarDay, isLeap } = solarToLunar(year, month, day)

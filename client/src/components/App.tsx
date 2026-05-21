@@ -124,14 +124,7 @@ function AppContent() {
                     const saju = calculateSaju(birthInput)
                     const parts = [sajuToText(saju)]
                     if (!birthInput.unknownTime) {
-                      const chart = createChart(
-                        birthInput.year, birthInput.month, birthInput.day,
-                        birthInput.hour,
-                        birthInput.minute,
-                        birthInput.gender === 'M',
-                        birthInput.timezone,
-                        birthInput.longitude,
-                      )
+                      const chart = createChart(birthInput)
                       parts.push(ziweiToText(chart))
                     }
                     const natal = await calculateNatal(birthInput)

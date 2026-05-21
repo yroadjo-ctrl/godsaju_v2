@@ -10,6 +10,7 @@ import type {
 } from './types.ts'
 import { julday, calcPlanet, calcHouses } from './ephemeris/index.ts'
 import { birthInputToUtcDate, getBirthTimezone } from './timezone.ts'
+import { resolveSolarBirthDateTime } from './lunar-calendar.ts'
 
 export { isKoreanDaylightTime } from './kdt.ts'
 export { isKoreanHistoricalTimeAnomaly } from './timezone.ts'
@@ -191,8 +192,9 @@ export async function calculateNatal(input: BirthInput, houseSystem = 'P'): Prom
   const minute = unknownTime ? 0 : input.minute
   const timezone = getBirthTimezone(input)
 
+  const solar = resolveSolarBirthDateTime({ ...input, hour, minute })
   const utcDate = birthInputToUtcDate(
-    input.year, input.month, input.day, hour, minute, timezone,
+    solar.year, solar.month, solar.day, solar.hour, solar.minute, timezone,
   )
   const utYear = utcDate.getUTCFullYear()
   const utMonth = utcDate.getUTCMonth() + 1

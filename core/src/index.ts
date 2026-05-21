@@ -28,6 +28,20 @@ export {
   ROMAN, HOUSE_SYSTEMS,
 } from './natal.ts'
 
+// 달력 · 출생 시각 정규화
+export {
+  getLunarLeapMonth,
+  solarToLunar,
+  lunarToSolar,
+  validateLunarCalendarInput,
+  resolveSolarBirthDateTime,
+  normalizeCalendarType,
+  calendarTypeLabel,
+  LunarConversionError,
+} from './lunar-calendar.ts'
+export type { LunarConversionErrorCode } from './lunar-calendar.ts'
+export { getAdjustedBirthDateTime } from './birth-calendar.ts'
+
 // 타임존 · DST 유틸리티
 export {
   DEFAULT_TIMEZONE,
@@ -77,7 +91,7 @@ export type { City } from './cities.ts'
 
 // 타입
 export type {
-  Element, YinYang, Gender, JasiMethod, BirthInput,
+  Element, YinYang, Gender, CalendarType, JasiMethod, BirthInput,
   StemInfo, Relation, Meteor, Spirit, SpecialSinsal,
   Pillar, PillarDetail, DaewoonItem,
   RelationResult, PairRelation, AllRelations,

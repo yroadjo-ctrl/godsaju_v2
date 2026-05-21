@@ -4,6 +4,7 @@ import { loadProfiles, addProfile, updateProfile, deleteProfile, exportProfiles,
 import type { Profile } from '../utils/profiles.ts'
 import { toHangul } from '@core/pillars'
 import { calculateSaju } from '@core/saju'
+import { calendarTypeLabel } from '@core/index'
 import { useLocale } from '../i18n/index.ts'
 import { inferTimeZoneFromCoordinates } from '../utils/timezones.ts'
 
@@ -15,7 +16,8 @@ interface Props {
 }
 
 function formatSummary(data: SavedFormState, t: (key: string) => string): string {
-  const date = `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`
+  const cal = calendarTypeLabel(data.calendarType ?? 'solar')
+  const date = `${cal} ${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`
   const time = data.unknownTime
     ? t('profile.timeUnknown')
     : `${String(data.hour).padStart(2, '0')}:${String(data.minute).padStart(2, '0')}`
@@ -33,6 +35,7 @@ function formatSummary(data: SavedFormState, t: (key: string) => string): string
       hour: data.hour,
       minute: data.minute,
       gender: data.gender,
+      calendarType: data.calendarType ?? 'solar',
       unknownTime: data.unknownTime,
       jasiMethod: data.jasiMethod,
       latitude: data.latitude,

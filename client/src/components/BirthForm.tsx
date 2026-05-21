@@ -1,5 +1,11 @@
 import { useState, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react'
-import type { BirthInput, Gender, JasiMethod } from '@core/types'
+import type { BirthInput, CalendarType, Gender, JasiMethod } from '@core/types'
+import {
+  getLunarLeapMonth,
+  resolveSolarBirthDateTime,
+  validateLunarCalendarInput,
+  LunarConversionError,
+} from '@core/index'
 import { isKoreanDaylightTime, isKoreanHistoricalTimeAnomaly } from '@core/natal'
 import type { City } from '@core/cities'
 import { SEOUL, formatCityName } from '@core/cities'
@@ -17,7 +23,7 @@ import {
   parseCoordinateDraft,
   stepCoordinate,
 } from '../utils/coordinate-input.ts'
-const logo = '/manus-storage/icon-512_d5024332.png'
+import GodsajuLogo from './GodsajuLogo.tsx'
 
 export interface BirthFormHandle {
   getCurrentState(): SavedFormState
@@ -38,6 +44,7 @@ export interface SavedFormState {
   hour: number
   minute: number
   gender: Gender
+  calendarType: CalendarType
   unknownTime: boolean
   jasiMethod: JasiMethod
   city: City | null
@@ -89,6 +96,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   const [hour, setHour] = useState(saved?.hour ?? DEFAULT_HOUR)
   const [minute, setMinute] = useState(saved?.minute ?? DEFAULT_MINUTE)
   const [gender, setGender] = useState<Gender>(saved?.gender ?? 'M')
+  const [calendarType, setCalendarType] = useState<CalendarType>(saved?.calendarType ?? 'solar')
   const [unknownTime, setUnknownTime] = useState(saved?.unknownTime ?? false)
   const [jasiMethod, setJasiMethod] = useState<JasiMethod>(saved?.jasiMethod ?? 'unified')
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -99,6 +107,33 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   const [latitudeInput, setLatitudeInput] = useState(() => formatCoordinate(initialLatitude))
   const [longitudeInput, setLongitudeInput] = useState(() => formatCoordinate(initialLongitude))
   const [timezoneError, setTimezoneError] = useState<string | null>(null)
+  const [calendarError, setCalendarError] = useState<string | null>(null)
+
+  const leapMonth = useMemo(() => getLunarLeapMonth(year), [year])
+
+  const solarForTz = useMemo(() => {
+    try {
+      return resolveSolarBirthDateTime({
+        year,
+        month,
+        day,
+        hour: unknownTime ? 12 : hour,
+        minute: unknownTime ? 0 : minute,
+        unknownTime,
+        calendarType,
+      })
+    } catch {
+      return null
+    }
+  }, [year, month, day, hour, minute, unknownTime, calendarType])
+
+  useEffect(() => {
+    if (calendarType === 'lunarLeap' && leapMonth == null) {
+      setCalendarType('lunar')
+    } else if (calendarType === 'lunarLeap' && leapMonth != null && month !== leapMonth) {
+      setMonth(leapMonth)
+    }
+  }, [year, calendarType, leapMonth, month])
 
   const inferredTimezone = useMemo(
     () => inferTimeZoneFromCoordinates(latitude, longitude),
@@ -114,23 +149,44 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     return `${t('form.latitude')} ${latitude.toFixed(4)} · ${t('form.longitude')} ${longitude.toFixed(4)}`
   }, [manualCoords, selectedCity, latitude, longitude, t])
   const timezoneDisplayLabel = useMemo(() => {
-    if (!inferredTimezone) return null
+    if (!inferredTimezone || !solarForTz) return null
     return getTimeZoneDisplayLabelAtLocalTime(
       inferredTimezone,
-      year,
-      month,
-      day,
-      unknownTime ? 12 : hour,
-      unknownTime ? 0 : minute,
+      solarForTz.year,
+      solarForTz.month,
+      solarForTz.day,
+      solarForTz.hour,
+      solarForTz.minute,
     )
-  }, [inferredTimezone, year, month, day, hour, minute, unknownTime])
+  }, [inferredTimezone, solarForTz])
 
   function getTimezoneValidationError(state: SavedFormState): string | null {
-    const effectiveHour = state.unknownTime ? 12 : state.hour
-    const effectiveMinute = state.unknownTime ? 0 : state.minute
+    let solarY = state.year
+    let solarM = state.month
+    let solarD = state.day
+    let effectiveHour = state.unknownTime ? 12 : state.hour
+    let effectiveMinute = state.unknownTime ? 0 : state.minute
+    try {
+      const solar = resolveSolarBirthDateTime({
+        year: state.year,
+        month: state.month,
+        day: state.day,
+        hour: effectiveHour,
+        minute: effectiveMinute,
+        unknownTime: state.unknownTime,
+        calendarType: state.calendarType ?? 'solar',
+      })
+      solarY = solar.year
+      solarM = solar.month
+      solarD = solar.day
+      effectiveHour = solar.hour
+      effectiveMinute = solar.minute
+    } catch {
+      return null
+    }
     const result = validateBirthLocalTime(
       state.latitude, state.longitude,
-      state.year, state.month, state.day,
+      solarY, solarM, solarD,
       effectiveHour, effectiveMinute,
     )
     if (result.ok) return null
@@ -138,7 +194,42 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     return t('form.timezoneAutoDetectFailed')
   }
 
+  function calendarErrorMessage(code: string): string {
+    if (code === 'NO_LEAP_YEAR') return t('form.lunarConversion.noLeapYear')
+    if (code === 'NOT_LEAP_MONTH') return t('form.lunarConversion.notLeapMonth')
+    return t('form.lunarConversion.invalidDate')
+  }
+
   function buildBirthInput(state: SavedFormState): BirthInput | null {
+    const lunarErr = validateLunarCalendarInput(
+      state.calendarType,
+      state.year,
+      state.month,
+      state.day,
+    )
+    if (lunarErr) {
+      setCalendarError(calendarErrorMessage(lunarErr))
+      return null
+    }
+    try {
+      resolveSolarBirthDateTime({
+        year: state.year,
+        month: state.month,
+        day: state.day,
+        hour: state.unknownTime ? 12 : state.hour,
+        minute: state.unknownTime ? 0 : state.minute,
+        unknownTime: state.unknownTime,
+        calendarType: state.calendarType,
+      })
+    } catch (err) {
+      if (err instanceof LunarConversionError) {
+        setCalendarError(calendarErrorMessage(err.code))
+      } else {
+        setCalendarError(t('form.lunarConversion.invalidDate'))
+      }
+      return null
+    }
+
     const effectiveStateTimezone = inferTimeZoneFromCoordinates(state.latitude, state.longitude)
     if (getTimezoneValidationError(state)) return null
     if (!effectiveStateTimezone) return null
@@ -149,6 +240,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
       hour: state.unknownTime ? 12 : state.hour,
       minute: state.unknownTime ? 0 : state.minute,
       gender: state.gender,
+      calendarType: state.calendarType,
       unknownTime: state.unknownTime,
       ...(!state.unknownTime && { jasiMethod: state.jasiMethod }),
       latitude: state.latitude,
@@ -159,7 +251,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
 
   useImperativeHandle(ref, () => ({
     getCurrentState: (): SavedFormState => ({
-      year, month, day, hour, minute, gender, unknownTime, jasiMethod,
+      year, month, day, hour, minute, gender, calendarType, unknownTime, jasiMethod,
       city: selectedCity, manualCoords, latitude, longitude,
     }),
   }))
@@ -220,6 +312,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     setHour(s.hour)
     setMinute(s.minute)
     setGender(s.gender)
+    setCalendarType(s.calendarType ?? 'solar')
     setUnknownTime(s.unknownTime)
     setJasiMethod(s.jasiMethod)
     setSelectedCity(s.city)
@@ -231,26 +324,30 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     if (birthInput) onSubmit(birthInput)
   }, [externalState]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const tzYear = solarForTz?.year ?? year
+  const tzMonth = solarForTz?.month ?? month
+  const tzDay = solarForTz?.day ?? day
+
   const isKDT = useMemo(
-    () => inferredTimezone === 'Asia/Seoul' && isKoreanDaylightTime(year, month, day),
-    [inferredTimezone, year, month, day],
+    () => inferredTimezone === 'Asia/Seoul' && isKoreanDaylightTime(tzYear, tzMonth, tzDay),
+    [inferredTimezone, tzYear, tzMonth, tzDay],
   )
   const isKstHistoricalAnomaly = useMemo(
-    () => inferredTimezone === 'Asia/Seoul' && isKoreanHistoricalTimeAnomaly(year, month, day),
-    [inferredTimezone, year, month, day],
+    () => inferredTimezone === 'Asia/Seoul' && isKoreanHistoricalTimeAnomaly(tzYear, tzMonth, tzDay),
+    [inferredTimezone, tzYear, tzMonth, tzDay],
   )
   const isDstActive = useMemo(() => {
     if (!inferredTimezone) return false
     if (isKDT || isKstHistoricalAnomaly) return false
     return isDaylightSavingInEffect(
       inferredTimezone,
-      year,
-      month,
-      day,
-      unknownTime ? 12 : hour,
-      unknownTime ? 0 : minute,
+      tzYear,
+      tzMonth,
+      tzDay,
+      unknownTime ? 12 : (solarForTz?.hour ?? hour),
+      unknownTime ? 0 : (solarForTz?.minute ?? minute),
     )
-  }, [inferredTimezone, isKDT, isKstHistoricalAnomaly, year, month, day, hour, minute, unknownTime])
+  }, [inferredTimezone, isKDT, isKstHistoricalAnomaly, tzYear, tzMonth, tzDay, hour, minute, unknownTime, solarForTz])
 
   function handleCitySelect(city: City) {
     setSelectedCity(city)
@@ -272,9 +369,10 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     if (manualCoords) syncCoordinates(resolvedLatitude, resolvedLongitude)
 
     const state: SavedFormState = {
-      year, month, day, hour, minute, gender, unknownTime, jasiMethod,
+      year, month, day, hour, minute, gender, calendarType, unknownTime, jasiMethod,
       city: selectedCity, manualCoords, latitude: resolvedLatitude, longitude: resolvedLongitude,
     }
+    setCalendarError(null)
     const validationError = getTimezoneValidationError(state)
     if (validationError) {
       setTimezoneError(validationError)
@@ -289,23 +387,39 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
 
   return (
     <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm dark:shadow-none">
-      <div className="flex flex-col items-center md:flex-row md:items-start gap-5">
-        {/* 로고 */}
-        <div className="flex flex-col items-center shrink-0">
-          <img
-            src={logo}
-            alt="갓사주"
-            className="w-48 md:w-64"
-          />
-          <span className="text-base text-yellow-500 dark:text-yellow-400 font-semibold -mt-1">갓사주</span>
+      <div className="grid grid-cols-10 gap-3 items-start">
+        {/* 로고 30% */}
+        <div className="col-span-3 flex justify-center pt-0.5">
+          <GodsajuLogo className="w-full max-w-[5.5rem] h-auto aspect-square" />
         </div>
 
-        {/* 폼 필드 전체 */}
-        <div className="w-full min-w-0">
+        {/* 입력 폼 70% */}
+        <div className="col-span-7 min-w-0">
           {/* 생년월일 */}
           <fieldset>
             <legend className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{t('form.birthDate')}</legend>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-2">
+              <select
+                value={calendarType}
+                onChange={e => {
+                  setCalendarType(e.target.value as CalendarType)
+                  setCalendarError(null)
+                }}
+                className={`${selectClass} w-full sm:max-w-[11rem]`}
+                aria-label={t('form.calendarType')}
+              >
+                <option value="solar">{t('form.calendar.solar')}</option>
+                <option value="lunar">{t('form.calendar.lunar')}</option>
+                <option
+                  value="lunarLeap"
+                  disabled={leapMonth == null}
+                >
+                  {leapMonth != null
+                    ? t('form.calendar.lunarLeap')
+                    : t('form.calendar.lunarLeapDisabled')}
+                </option>
+              </select>
+              <div className="grid grid-cols-3 gap-2">
               <select
                 value={year}
                 onChange={e => setYear(Number(e.target.value))}
@@ -334,8 +448,20 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                   <option key={i + 1} value={i + 1}>{`${i + 1}${t('form.daySuffix')}`}</option>
                 ))}
               </select>
+              </div>
             </div>
+            {calendarType !== 'solar' && leapMonth != null && calendarType === 'lunar' && (
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                {t('form.lunarLeapHint').replace('{month}', String(leapMonth))}
+              </p>
+            )}
           </fieldset>
+
+          {calendarError && (
+            <div className="mt-2 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400 leading-relaxed">
+              {calendarError}
+            </div>
+          )}
 
           {isKDT && (
             <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-400 leading-relaxed">

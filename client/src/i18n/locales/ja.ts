@@ -13,7 +13,16 @@ const ja: Record<string, string> = {
   'app.intro': '紹介',
 
   // BirthForm
-  'form.birthDate': '生年月日（新暦）',
+  'form.birthDate': '生年月日時',
+  'form.calendarType': '暦',
+  'form.calendar.solar': '新暦',
+  'form.calendar.lunar': '旧暦',
+  'form.calendar.lunarLeap': '旧暦(閏月)',
+  'form.calendar.lunarLeapDisabled': '旧暦(閏なし)',
+  'form.lunarLeapHint': 'この年の閏月は{month}月です。閏月生まれは「旧暦(閏月)」を選んでください。',
+  'form.lunarConversion.noLeapYear': 'この旧暦年に閏月はありません。新暦または旧暦を選んでください。',
+  'form.lunarConversion.notLeapMonth': '旧暦(閏月)はその年の閏月のみ選択できます。',
+  'form.lunarConversion.invalidDate': '旧暦の日付が正しくありません。年月日を確認してください。',
   'form.yearSuffix': '年',
   'form.monthSuffix': '月',
   'form.daySuffix': '日',

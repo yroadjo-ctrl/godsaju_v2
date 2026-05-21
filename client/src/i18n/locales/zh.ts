@@ -13,7 +13,16 @@ const zh: Record<string, string> = {
   'app.intro': '简介',
 
   // BirthForm
-  'form.birthDate': '出生日期（公历）',
+  'form.birthDate': '出生日期时间',
+  'form.calendarType': '历法',
+  'form.calendar.solar': '阳历',
+  'form.calendar.lunar': '阴历',
+  'form.calendar.lunarLeap': '阴历(闰月)',
+  'form.calendar.lunarLeapDisabled': '阴历(无闰月)',
+  'form.lunarLeapHint': '该年闰月为{month}月。闰月出生请选择「阴历(闰月)」。',
+  'form.lunarConversion.noLeapYear': '该农历年无闰月，请选择阳历或阴历。',
+  'form.lunarConversion.notLeapMonth': '阴历(闰月)只能选择该年的闰月。',
+  'form.lunarConversion.invalidDate': '阴历日期无效，请检查年月日。',
   'form.yearSuffix': '年',
   'form.monthSuffix': '月',
   'form.daySuffix': '日',

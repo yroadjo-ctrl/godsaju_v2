@@ -17,6 +17,9 @@ export type YinYang = '+' | '-';
 /** 성별 */
 export type Gender = 'M' | 'F';
 
+/** 생년월일 입력 달력 (양력 / 음력 / 음력 윤달) */
+export type CalendarType = 'solar' | 'lunar' | 'lunarLeap';
+
 /** 자시법 (子時法) — 23:00~01:00 구간 일주 처리 방식 */
 export type JasiMethod = 'split' | 'unified';
 // 'split'    = 야자시 인정: 23:00~24:00 일주 당일 유지
@@ -30,6 +33,11 @@ export interface BirthInput {
   hour: number;
   minute: number;
   gender: Gender;
+  /**
+   * 입력 달력 종류. 기본값 `solar`(양력).
+   * `lunar`·`lunarLeap`이면 year/month/day는 음력 기준이며, 계산 전 양력으로 변환한다.
+   */
+  calendarType?: CalendarType;
   /** 시간 모름 여부 */
   unknownTime?: boolean;
   /** 자시법 (기본값: 'unified' 통자시) */

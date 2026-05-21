@@ -6,7 +6,13 @@ import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from '
 import { ZODIAC_SYMBOLS, PLANET_SYMBOLS, ASPECT_SYMBOLS, ROMAN, formatDegree } from '@core/natal'
 import { t as translate, getLocale } from '../i18n/index.ts'
 import { getYearGanzi, getTwelveMeteor, getTwelveSpirit, getRelation, getJeonggi, getStemRelation, getBranchRelation } from '@core/pillars'
-import { formatHelpSipsinRatio, buildSinsalSummaryLine, buildRelationsSummaryLine } from '@core/index'
+import {
+  formatHelpSipsinRatio,
+  buildSinsalSummaryLine,
+  buildRelationsSummaryLine,
+  calendarTypeLabel,
+  resolveSolarBirthDateTime,
+} from '@core/index'
 import { PILLAR_TABLE_LABELS, pillarLabelForExport } from './pillar-table-labels.ts'
 import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import type { Locale } from '../i18n/index.ts'
@@ -132,6 +138,26 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   }
 
   lines.push(`四柱原局 (${genderChar})`)
+  const calLabel = calendarTypeLabel(input.calendarType)
+  const enteredDate = `${input.year}-${String(input.month).padStart(2, '0')}-${String(input.day).padStart(2, '0')}`
+  const enteredTime = input.unknownTime
+    ? '시간모름'
+    : `${String(input.hour).padStart(2, '0')}:${String(input.minute).padStart(2, '0')}`
+  let birthLine = `입력 달력: ${calLabel} · ${enteredDate} ${enteredTime}`
+  if (input.calendarType && input.calendarType !== 'solar') {
+    try {
+      const solar = resolveSolarBirthDateTime(input)
+      birthLine += `\n계산 기준(양력 변환): ${solar.year}-${String(solar.month).padStart(2, '0')}-${String(solar.day).padStart(2, '0')} ${String(solar.hour).padStart(2, '0')}:${String(solar.minute).padStart(2, '0')}`
+      if (input.calendarType === 'lunarLeap') {
+        birthLine += ' (음력 윤달 입력)'
+      }
+    } catch {
+      birthLine += '\n(양력 변환 실패 — 입력값 확인 필요)'
+    }
+  } else {
+    birthLine += '\n계산 기준: 위 양력 시각 그대로 (KST/출생지 타임존 보정 후 사주·대운 계산)'
+  }
+  lines.push(birthLine)
   lines.push('')
 
   const headerLabels = ['時柱', '日柱', '月柱', '年柱']

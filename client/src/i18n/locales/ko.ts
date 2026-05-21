@@ -14,7 +14,16 @@ const ko: Record<string, string> = {
   'app.intro': '갓사주',
 
   // BirthForm
-  'form.birthDate': '생년월일시 (양력)',
+  'form.birthDate': '생년월일시',
+  'form.calendarType': '달력',
+  'form.calendar.solar': '양력',
+  'form.calendar.lunar': '음력',
+  'form.calendar.lunarLeap': '음력(윤달)',
+  'form.calendar.lunarLeapDisabled': '음력(윤달 없음)',
+  'form.lunarLeapHint': '이 해의 윤달은 {month}월입니다. 윤달 생일은 「음력(윤달)」을 선택하세요.',
+  'form.lunarConversion.noLeapYear': '선택한 연도에는 윤달이 없습니다. 음력 또는 양력을 선택해 주세요.',
+  'form.lunarConversion.notLeapMonth': '음력(윤달)은 해당 연도의 윤달 월만 선택할 수 있습니다.',
+  'form.lunarConversion.invalidDate': '음력 날짜가 올바르지 않습니다. 연·월·일을 확인해 주세요.',
   'form.yearSuffix': '년',
   'form.monthSuffix': '월',
   'form.daySuffix': '일',

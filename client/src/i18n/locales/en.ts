@@ -13,7 +13,16 @@ const en: Record<string, string> = {
   'app.intro': 'About',
 
   // BirthForm
-  'form.birthDate': 'Date of Birth (Solar)',
+  'form.birthDate': 'Date & Time of Birth',
+  'form.calendarType': 'Calendar',
+  'form.calendar.solar': 'Solar',
+  'form.calendar.lunar': 'Lunar',
+  'form.calendar.lunarLeap': 'Lunar (leap month)',
+  'form.calendar.lunarLeapDisabled': 'Lunar (no leap month)',
+  'form.lunarLeapHint': 'Leap month this year: month {month}. Use “Lunar (leap month)” for birthdays in the leap month.',
+  'form.lunarConversion.noLeapYear': 'This lunar year has no leap month. Choose Solar or Lunar.',
+  'form.lunarConversion.notLeapMonth': 'Lunar (leap month) requires the leap month of that year.',
+  'form.lunarConversion.invalidDate': 'Invalid lunar date. Please check year, month, and day.',
   'form.yearSuffix': '',
   'form.monthSuffix': '',
   'form.daySuffix': '',
