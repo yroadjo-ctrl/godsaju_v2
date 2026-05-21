@@ -10,14 +10,19 @@ import {
 import { useLocale } from '../../i18n/index.ts'
 import { PILLAR_TABLE_LABELS, type PillarRowLabel } from '../../utils/pillar-table-labels.ts'
 
+/** 구분 열 고정 너비 — 12운성(十二運星) 등 한 줄 표기 */
+const LABEL_COL_WIDTH = '85px'
+const pillarColWidth = `calc((100% - ${LABEL_COL_WIDTH}) / 4)`
+
+const rowLabelCellClass =
+  'px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-bold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 align-middle'
+
 function RowLabelCell({ label }: { label: PillarRowLabel }) {
   return (
-    <td className="px-1 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 align-middle w-[70px]">
-      <div className="flex flex-col items-center justify-center leading-tight gap-0.5 w-full max-w-[70px] mx-auto">
-        <span className="text-[11px] leading-none">{label.kor}</span>
-        <span className="text-[9px] font-normal text-gray-500 dark:text-gray-400 font-hanja leading-none">
-          ({label.hanja})
-        </span>
+    <td className={rowLabelCellClass}>
+      <div className="flex flex-col items-center justify-center leading-tight gap-0.5 mx-auto">
+        <span className="leading-none whitespace-nowrap">{label.kor}</span>
+        <span className="font-hanja leading-none whitespace-nowrap">({label.hanja})</span>
       </div>
     </td>
   )
@@ -92,20 +97,18 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
     <div className="overflow-x-auto border border-gray-300 dark:border-gray-600 rounded-lg">
       <table className="w-full text-center text-sm border-collapse table-fixed">
         <colgroup>
-          <col className="w-[70px]" />
-          <col />
-          <col />
-          <col />
-          <col />
+          <col style={{ width: LABEL_COL_WIDTH }} />
+          <col style={{ width: pillarColWidth }} />
+          <col style={{ width: pillarColWidth }} />
+          <col style={{ width: pillarColWidth }} />
+          <col style={{ width: pillarColWidth }} />
         </colgroup>
         <thead>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
-            <td className="px-1 py-2 border-r border-gray-300 dark:border-gray-600 font-semibold text-gray-700 dark:text-gray-300 align-middle w-[70px]">
-              <div className="flex flex-col items-center justify-center leading-tight gap-0.5 w-full max-w-[70px] mx-auto">
-                <span className="text-[11px] leading-none">{PILLAR_TABLE_LABELS.category.kor}</span>
-                <span className="text-[9px] font-normal text-gray-500 dark:text-gray-400 font-hanja leading-none">
-                  ({PILLAR_TABLE_LABELS.category.hanja})
-                </span>
+            <td className={rowLabelCellClass}>
+              <div className="flex flex-col items-center justify-center leading-tight gap-0.5 mx-auto">
+                <span className="leading-none whitespace-nowrap">{PILLAR_TABLE_LABELS.category.kor}</span>
+                <span className="font-hanja leading-none whitespace-nowrap">({PILLAR_TABLE_LABELS.category.hanja})</span>
               </div>
             </td>
             <td className="px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">時柱</div><div className="text-xs text-gray-600 dark:text-gray-400">말년운 (60세~)<br/>자녀운, 결실</div></td>
