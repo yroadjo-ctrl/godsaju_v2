@@ -7,6 +7,7 @@ import { ZODIAC_SYMBOLS, PLANET_SYMBOLS, ASPECT_SYMBOLS, ROMAN, formatDegree } f
 import { t as translate, getLocale } from '../i18n/index.ts'
 import { getYearGanzi, getTwelveMeteor, getTwelveSpirit, getRelation, getJeonggi, getStemRelation, getBranchRelation } from '@core/pillars'
 import { formatHelpSipsinRatio, buildSinsalSummaryLine, buildRelationsSummaryLine } from '@core/index'
+import { PILLAR_TABLE_LABELS, pillarLabelForExport } from './pillar-table-labels.ts'
 import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import type { Locale } from '../i18n/index.ts'
 
@@ -138,13 +139,16 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   const headerDesc2 = ['자녀운, 결실', '정체성, 자아', '부모, 사회상', '조상, 시대상']
   const q = input.unknownTime
 
-  lines.push(`| 구분 | ${headerLabels.join(' | ')} |`)
+  const L = PILLAR_TABLE_LABELS
+  const cat = pillarLabelForExport(L.category)
+
+  lines.push(`| ${cat} | ${headerLabels.join(' | ')} |`)
   lines.push(`|  | ${headerDesc1.join(' | ')} |`)
   lines.push(`|  | ${headerDesc2.join(' | ')} |`)
   lines.push('|---|---|---|---|---|')
 
   // 천간 행
-  lines.push(`| 천간 | ${pillars.map((p, i) => {
+  lines.push(`| ${pillarLabelForExport(L.stem)} | ${pillars.map((p, i) => {
     if (i === 0 && q) return '?'
     const stem = p.pillar.stem
     const yinYang = formatYinYang(stemYinYangMap[stem] || '')
@@ -153,10 +157,10 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   }).join(' | ')} |`)
 
   // 십성(천간) 행
-  lines.push(`| 십성 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.stemSipsin).join(' | ')} |`)
+  lines.push(`| ${pillarLabelForExport(L.sipsin)} | ${pillars.map((p, i) => i === 0 && q ? '?' : p.stemSipsin).join(' | ')} |`)
 
   // 지지 행
-  lines.push(`| 지지 | ${pillars.map((p, i) => {
+  lines.push(`| ${pillarLabelForExport(L.branch)} | ${pillars.map((p, i) => {
     if (i === 0 && q) return '?'
     const branch = p.pillar.branch
     const yinYang = formatYinYang(branchYinYangMap[branch] || '')
@@ -165,25 +169,25 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   }).join(' | ')} |`)
 
   // 십성(지지) 행
-  lines.push(`| 십성 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.branchSipsin).join(' | ')} |`)
+  lines.push(`| ${pillarLabelForExport(L.sipsin)} | ${pillars.map((p, i) => i === 0 && q ? '?' : p.branchSipsin).join(' | ')} |`)
 
   // 지장간 행
-  lines.push(`| 지장간 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.jigang).join(' | ')} |`)
+  lines.push(`| ${pillarLabelForExport(L.jigang)} | ${pillars.map((p, i) => i === 0 && q ? '?' : p.jigang).join(' | ')} |`)
 
   // 12운성 행
-  lines.push(`| 12운성 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.unseong).join(' | ')} |`)
-
-  // 納音 행
-  lines.push(`| 納音 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.nayeon).join(' | ')} |`)
+  lines.push(`| ${pillarLabelForExport(L.unseong)} | ${pillars.map((p, i) => i === 0 && q ? '?' : p.unseong).join(' | ')} |`)
 
   // 12신살 행
-  lines.push(`| 12신살 | ${pillars.map((p, i) => i === 0 && q ? '?' : p.sinsal).join(' | ')} |`)
+  lines.push(`| ${pillarLabelForExport(L.sinsal)} | ${pillars.map((p, i) => i === 0 && q ? '?' : p.sinsal).join(' | ')} |`)
+
+  // 나음 행
+  lines.push(`| ${pillarLabelForExport(L.nayeon)} | ${pillars.map((p, i) => i === 0 && q ? '?' : p.nayeon).join(' | ')} |`)
 
   // 귀인 행
-  lines.push(`| 귀인 | ${pillars.map((p, i) => i === 0 && q ? '?' : getGuiinForPillar(i)).join(' | ')} |`)
+  lines.push(`| ${pillarLabelForExport(L.guiin)} | ${pillars.map((p, i) => i === 0 && q ? '?' : getGuiinForPillar(i)).join(' | ')} |`)
 
   // 공망 행 (UI와 동일: 空亡 + 공망지지)
-  lines.push(`| 공망 | ${pillars.map((p, i) => {
+  lines.push(`| ${pillarLabelForExport(L.gongmang)} | ${pillars.map((p, i) => {
     if (i === 0 && q) return '?'
     const hasGongmang = gongmang.pillarIndices.includes(i)
     return hasGongmang

@@ -8,6 +8,20 @@ import {
   stemElement,
 } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
+import { PILLAR_TABLE_LABELS, type PillarRowLabel } from '../../utils/pillar-table-labels.ts'
+
+function RowLabelCell({ label }: { label: PillarRowLabel }) {
+  return (
+    <td className="px-1 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 align-middle w-[70px]">
+      <div className="flex flex-col items-center justify-center leading-tight gap-0.5 w-full max-w-[70px] mx-auto">
+        <span className="text-[11px] leading-none">{label.kor}</span>
+        <span className="text-[9px] font-normal text-gray-500 dark:text-gray-400 font-hanja leading-none">
+          ({label.hanja})
+        </span>
+      </div>
+    </td>
+  )
+}
 
 interface Props {
   pillars: PillarDetail[]
@@ -78,7 +92,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
     <div className="overflow-x-auto border border-gray-300 dark:border-gray-600 rounded-lg">
       <table className="w-full text-center text-sm border-collapse table-fixed">
         <colgroup>
-          <col className="w-14" />
+          <col className="w-[70px]" />
           <col />
           <col />
           <col />
@@ -86,7 +100,14 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
         </colgroup>
         <thead>
           <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">구분</td>
+            <td className="px-1 py-2 border-r border-gray-300 dark:border-gray-600 font-semibold text-gray-700 dark:text-gray-300 align-middle w-[70px]">
+              <div className="flex flex-col items-center justify-center leading-tight gap-0.5 w-full max-w-[70px] mx-auto">
+                <span className="text-[11px] leading-none">{PILLAR_TABLE_LABELS.category.kor}</span>
+                <span className="text-[9px] font-normal text-gray-500 dark:text-gray-400 font-hanja leading-none">
+                  ({PILLAR_TABLE_LABELS.category.hanja})
+                </span>
+              </div>
+            </td>
             <td className="px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">時柱</div><div className="text-xs text-gray-600 dark:text-gray-400">말년운 (60세~)<br/>자녀운, 결실</div></td>
             <td className="px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">日柱</div><div className="text-xs text-gray-600 dark:text-gray-400">중년운 (40~60세)<br/>정체성, 자아</div></td>
             <td className="px-3 py-2 border-r border-gray-300 dark:border-gray-600"><div className="font-semibold">月柱</div><div className="text-xs text-gray-600 dark:text-gray-400">청년운 (20~40세)<br/>부모, 사회상</div></td>
@@ -96,7 +117,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
         
         <tbody className="font-hanja">
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-4 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">천간</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.stem} />
             {pillars.map((p, i) => (
               <td key={i} className="flex-1 px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0">
                 <div className="flex flex-col items-center gap-1">
@@ -121,7 +142,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">십성</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.sipsin} />
             {pillars.map((p, i) => (
               <td key={i} className={`px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-sm font-semibold ${stemColorClass(p.pillar.stem)}`}>
                 {i === 0 && unknownTime ? '?' : p.stemSipsin}
@@ -130,7 +151,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">지지</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.branch} />
             {pillars.map((p, i) => (
               <td key={i} className="flex-1 px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0">
                 <div className="flex flex-col items-center gap-1">
@@ -155,7 +176,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">십성</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.sipsin} />
             {pillars.map((p, i) => (
               <td key={i} className={`px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-sm font-semibold ${branchColorClass(p.pillar.branch)}`}>
                 {i === 0 && unknownTime ? '?' : p.branchSipsin}
@@ -164,7 +185,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">지장간</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.jigang} />
             {pillars.map((p, i) => (
               <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400">
                 {i === 0 && unknownTime ? '?' : multiLine(p.jigang)}
@@ -173,7 +194,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">12운성</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.unseong} />
             {pillars.map((p, i) => (
               <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400">
                 {i === 0 && unknownTime ? '?' : multiLine(p.unseong)}
@@ -182,16 +203,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">納音</td>
-            {pillars.map((p, i) => (
-              <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400 font-medium">
-                {i === 0 && unknownTime ? '?' : p.nayeon}
-              </td>
-            ))}
-          </tr>
-
-          <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">12신살</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.sinsal} />
             {pillars.map((p, i) => (
               <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400">
                 {i === 0 && unknownTime ? '?' : multiLine(p.sinsal)}
@@ -200,7 +212,16 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr className="border-b border-gray-300 dark:border-gray-600">
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">귀인</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.nayeon} />
+            {pillars.map((p, i) => (
+              <td key={i} className="px-3 py-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                {i === 0 && unknownTime ? '?' : p.nayeon}
+              </td>
+            ))}
+          </tr>
+
+          <tr className="border-b border-gray-300 dark:border-gray-600">
+            <RowLabelCell label={PILLAR_TABLE_LABELS.guiin} />
             {pillars.map((p, i) => {
               const guiinList = i === 0 && unknownTime ? ['?'] : getGuiinForPillar(i)
               return (
@@ -212,7 +233,7 @@ export default function PillarTable({ pillars, unknownTime, gongmang, godSinsal 
           </tr>
 
           <tr>
-            <td className="px-2 py-2 border-r border-gray-300 dark:border-gray-600 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">공망</td>
+            <RowLabelCell label={PILLAR_TABLE_LABELS.gongmang} />
             {pillars.map((p, i) => {
               const hasGongmang = gongmang.pillarIndices.includes(i)
               return (

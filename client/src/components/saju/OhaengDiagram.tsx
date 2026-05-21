@@ -208,8 +208,8 @@ export default function OhaengDiagram({ stats }: Props) {
                 cy={y}
                 r={CIRCLE_R}
                 fill="none"
-                stroke="#d1d5db"
-                strokeWidth="1"
+                stroke={ELEMENT_FILL[node.element]}
+                strokeWidth="4"
               />
               <text
                 x={x}

@@ -133,7 +133,7 @@ export default function RelationList({ relations, pillars }: Props) {
       </h3>
       {summaryLine && (
         <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed break-words">
-          <span className="font-medium text-gray-500 dark:text-gray-500">요약 </span>
+          <span className="font-medium text-gray-500 dark:text-gray-500">[요약] </span>
           {summaryLine}
         </p>
       )}
@@ -199,7 +199,7 @@ export default function RelationList({ relations, pillars }: Props) {
                     {COL_ORDER.map((colPillarIdx, c) => {
                       if (rowPillarIdx === colPillarIdx) {
                         return (
-                          <td key={c} className="border border-slate-200 bg-slate-100 p-1.5 text-center text-slate-300 dark:bg-slate-900">
+                          <td key={c} className="border border-slate-200 bg-slate-100 p-1.5 text-center align-middle text-slate-300 dark:bg-slate-900">
                             —
                           </td>
                         )
@@ -208,7 +208,7 @@ export default function RelationList({ relations, pillars }: Props) {
                       return (
                         <td
                           key={c}
-                          className="border border-slate-200 bg-white p-1.5 text-center align-top dark:bg-slate-900"
+                          className="border border-slate-200 bg-white p-1.5 text-center align-middle dark:bg-slate-900"
                         >
                           {tags.length > 0 ? (
                             <div className="flex flex-col gap-0.5 items-center">
