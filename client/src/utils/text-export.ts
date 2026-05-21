@@ -184,12 +184,12 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       if (input.calendarType === 'lunarLeap') {
         lines.push('(음력 윤달 입력)')
       }
-      lines.push('계산 기준: 위 출생정보 생년월일시 시각을 양력 변환 후 (KST/출생지 타임존 보정) 사주·대운 계산')
+      lines.push('계산 기준: 위 출생정보 음력 시각을 양력 변환 후 (KST/출생지 타임존 보정) 사주·대운 계산')
     } catch {
       lines.push('(양력 변환 실패 — 입력값 확인 필요)')
     }
   } else {
-    lines.push('계산 기준: 위 출생정보 생년월일시 시각 그대로 (KST/출생지 타임존 보정 후 사주·대운 계산)')
+    lines.push('계산 기준: 위 출생정보 양력 시각 그대로 (KST/출생지 타임존 보정 후 사주·대운 계산)')
   }
   lines.push('')
 
