@@ -121,7 +121,7 @@ export default function CityCombobox({ selectedCity, onSelect }: Props) {
 
     if (koreanResults.length > 0) {
       items.push(
-        <li key="header-kr" className="px-3 pt-1.5 pb-1 text-sm font-medium text-gray-400 dark:text-gray-500" role="presentation">
+        <li key="header-kr" className="px-3 pt-1.5 pb-1 text-base font-normal text-gray-500 dark:text-gray-400" role="presentation">
           {t('city.korea')}
         </li>
       )
@@ -138,7 +138,7 @@ export default function CityCombobox({ selectedCity, onSelect }: Props) {
         )
       }
       items.push(
-        <li key="header-world" className="px-3 pt-1.5 pb-1 text-sm font-medium text-gray-400 dark:text-gray-500" role="presentation">
+        <li key="header-world" className="px-3 pt-1.5 pb-1 text-base font-normal text-gray-500 dark:text-gray-400" role="presentation">
           {t('city.world')}
         </li>
       )

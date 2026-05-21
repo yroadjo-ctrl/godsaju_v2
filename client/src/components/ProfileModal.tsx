@@ -44,9 +44,11 @@ function formatSummary(data: SavedFormState, t: (key: string) => string): string
     })
     const dp = saju.pillars[1].pillar.ganzi
     const ilju = toHangul(dp[0]) + toHangul(dp[1]) + t('profile.ilju')
-    return `${date} ${time} ${gender} ${city}${timezone} ${ilju}`
+    const namePrefix = data.personName?.trim() ? `${data.personName.trim()} · ` : ''
+    return `${namePrefix}${date} ${time} ${gender} ${city}${timezone} ${ilju}`
   } catch {
-    return `${date} ${time} ${gender} ${city}${timezone}`
+    const namePrefix = data.personName?.trim() ? `${data.personName.trim()} · ` : ''
+    return `${namePrefix}${date} ${time} ${gender} ${city}${timezone}`
   }
 }
 

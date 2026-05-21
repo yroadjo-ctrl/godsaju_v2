@@ -143,7 +143,9 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   const enteredTime = input.unknownTime
     ? '시간모름'
     : `${String(input.hour).padStart(2, '0')}:${String(input.minute).padStart(2, '0')}`
-  let birthLine = `입력 달력: ${calLabel} · ${enteredDate} ${enteredTime}`
+  let birthLine = input.personName?.trim()
+    ? `이름: ${input.personName.trim()}\n입력 달력: ${calLabel} · ${enteredDate} ${enteredTime}`
+    : `입력 달력: ${calLabel} · ${enteredDate} ${enteredTime}`
   if (input.calendarType && input.calendarType !== 'solar') {
     try {
       const solar = resolveSolarBirthDateTime(input)

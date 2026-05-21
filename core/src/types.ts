@@ -27,6 +27,8 @@ export type JasiMethod = 'split' | 'unified';
 
 /** 생년월일시 입력 */
 export interface BirthInput {
+  /** 표시용 이름 (선택, 계산에는 미사용) */
+  personName?: string;
   year: number;
   month: number;
   day: number;

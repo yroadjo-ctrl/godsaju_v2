@@ -24,6 +24,14 @@ import {
   stepCoordinate,
 } from '../utils/coordinate-input.ts'
 import GodsajuLogo from './GodsajuLogo.tsx'
+import { formatShiChenHint, SHICHEN_LEGEND_ROWS } from '../utils/shichen-time.ts'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog.tsx'
 
 export interface BirthFormHandle {
   getCurrentState(): SavedFormState
@@ -38,6 +46,7 @@ interface Props {
 const STORAGE_KEY = 'orrery-birth-input'
 
 export interface SavedFormState {
+  personName: string
   year: number
   month: number
   day: number
@@ -87,9 +96,18 @@ const inputClass =
   'w-full h-10 px-3 border border-gray-200 dark:border-gray-700 rounded-lg text-base text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-900 ' +
   'focus:outline-none focus:ring-2 focus:ring-gray-800/20 dark:focus:ring-gray-200/20 focus:border-gray-400 dark:focus:border-gray-500 transition-all'
 
+/** 섹션 타이틀(생년월일시·시간·출생 위치)만 굵게, 나머지는 동일 크기·일반 굵기 */
+const sectionTitleClass = 'text-base font-bold text-gray-900 dark:text-gray-100'
+const sectionMutedClass = 'text-base font-normal text-gray-500 dark:text-gray-400'
+const segmentBtnActive =
+  'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm font-normal'
+const segmentBtnInactive =
+  'font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+
 
 const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubmit, externalState, onExternalStateConsumed }, ref) {
   const { t } = useLocale()
+  const [personName, setPersonName] = useState(saved?.personName ?? '')
   const [year, setYear] = useState(saved?.year ?? DEFAULT_YEAR)
   const [month, setMonth] = useState(saved?.month ?? DEFAULT_MONTH)
   const [day, setDay] = useState(saved?.day ?? DEFAULT_DAY)
@@ -99,7 +117,6 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   const [calendarType, setCalendarType] = useState<CalendarType>(saved?.calendarType ?? 'solar')
   const [unknownTime, setUnknownTime] = useState(saved?.unknownTime ?? false)
   const [jasiMethod, setJasiMethod] = useState<JasiMethod>(saved?.jasiMethod ?? 'unified')
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const [selectedCity, setSelectedCity] = useState<City | null>(saved?.city ?? SEOUL)
   const [manualCoords, setManualCoords] = useState(saved?.manualCoords ?? false)
   const [latitude, setLatitude] = useState(initialLatitude)
@@ -110,6 +127,11 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   const [calendarError, setCalendarError] = useState<string | null>(null)
 
   const leapMonth = useMemo(() => getLunarLeapMonth(year), [year])
+
+  const shichenHint = useMemo(
+    () => (unknownTime ? null : formatShiChenHint(hour, minute)),
+    [unknownTime, hour, minute],
+  )
 
   const solarForTz = useMemo(() => {
     try {
@@ -234,6 +256,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     if (getTimezoneValidationError(state)) return null
     if (!effectiveStateTimezone) return null
     return {
+      ...(state.personName.trim() && { personName: state.personName.trim() }),
       year: state.year,
       month: state.month,
       day: state.day,
@@ -251,6 +274,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
 
   useImperativeHandle(ref, () => ({
     getCurrentState: (): SavedFormState => ({
+      personName,
       year, month, day, hour, minute, gender, calendarType, unknownTime, jasiMethod,
       city: selectedCity, manualCoords, latitude, longitude,
     }),
@@ -306,6 +330,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   useEffect(() => {
     if (!externalState) return
     const s = externalState
+    setPersonName(s.personName ?? '')
     setYear(s.year)
     setMonth(s.month)
     setDay(s.day)
@@ -394,10 +419,26 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
         </div>
 
         {/* 입력 폼 70% */}
-        <div className="col-span-7 min-w-0">
+        <div className="col-span-7 min-w-0 text-base">
+          {/* 이름 */}
+          <div className="mb-4">
+            <label htmlFor="birth-person-name" className={`block ${sectionTitleClass} mb-2`}>
+              {t('form.personName')}
+            </label>
+            <input
+              id="birth-person-name"
+              type="text"
+              value={personName}
+              onChange={e => setPersonName(e.target.value)}
+              className={inputClass}
+              autoComplete="name"
+              spellCheck={false}
+            />
+          </div>
+
           {/* 생년월일 */}
           <fieldset>
-            <legend className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{t('form.birthDate')}</legend>
+            <legend className={`${sectionTitleClass} mb-2`}>{t('form.birthDate')}</legend>
             <div className="flex flex-col gap-2">
               <select
                 value={calendarType}
@@ -451,34 +492,78 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
               </div>
             </div>
             {calendarType !== 'solar' && leapMonth != null && calendarType === 'lunar' && (
-              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              <p className={`mt-1.5 ${sectionMutedClass}`}>
                 {t('form.lunarLeapHint').replace('{month}', String(leapMonth))}
               </p>
             )}
           </fieldset>
 
           {calendarError && (
-            <div className="mt-2 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400 leading-relaxed">
+            <div className="mt-2 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-base font-normal text-red-700 dark:text-red-400 leading-relaxed">
               {calendarError}
             </div>
           )}
 
           {isKDT && (
-            <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-400 leading-relaxed">
+            <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-base font-normal text-amber-700 dark:text-amber-400 leading-relaxed">
               {t('form.kdt')}
             </div>
           )}
           {!isKDT && isKstHistoricalAnomaly && (
-            <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-400 leading-relaxed">
+            <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-base font-normal text-amber-700 dark:text-amber-400 leading-relaxed">
               {t('form.kstHistoricalOffset')}
             </div>
           )}
 
           {/* 시간 + 성별 */}
           <fieldset className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <legend className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('form.time')}</legend>
-              <label className="flex items-center gap-1.5 cursor-pointer">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <legend className={`${sectionTitleClass} shrink-0`}>{t('form.time')}</legend>
+                {!unknownTime && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className={`flex items-center gap-1 ${sectionMutedClass} hover:text-blue-700 dark:hover:text-blue-400 transition-colors shrink-0`}
+                        aria-label={t('form.shichenHelpAria')}
+                      >
+                        <span>{t('form.shichenHelpLink')}</span>
+                        <span className="text-base leading-none" aria-hidden="true">🔎</span>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto bg-white border-gray-200 text-gray-800 shadow-xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-blue-700">{t('form.shichenHelpTitle')}</DialogTitle>
+                      </DialogHeader>
+                      <p className="text-sm text-gray-600 leading-relaxed -mt-2">
+                        {t('form.shichenHelpIntro')}
+                      </p>
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="py-2 pr-4 text-left font-medium text-blue-700">
+                              {t('form.shichen.colBranch')}
+                            </th>
+                            <th className="py-2 text-left font-medium text-blue-700">
+                              {t('form.shichen.colTime')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {SHICHEN_LEGEND_ROWS.map(row => (
+                            <tr key={row.labelKey} className="border-b border-gray-100">
+                              <td className="py-2 pr-4 font-medium text-gray-800">{t(row.labelKey)}</td>
+                              <td className="py-2 text-gray-600">{t(row.rangeKey)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+              <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
                 <input
                   type="checkbox"
                   checked={unknownTime}
@@ -486,7 +571,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                   className="sr-only peer"
                 />
                 <div className="w-8 h-[18px] bg-gray-200 dark:bg-gray-700 rounded-full peer-checked:bg-gray-800 dark:peer-checked:bg-gray-200 relative transition-colors after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:w-3 after:h-3 after:bg-white after:rounded-full after:transition-transform peer-checked:after:translate-x-3.5" />
-                <span className="text-sm text-gray-500 dark:text-gray-400">{t('form.unknown')}</span>
+                <span className={sectionMutedClass}>{t('form.unknown')}</span>
               </label>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
@@ -520,9 +605,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                       type="button"
                       onClick={() => setGender(g)}
                       className={`px-4 text-base rounded-md transition-all ${
-                        gender === g
-                          ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm font-medium'
-                          : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                        gender === g ? segmentBtnActive : segmentBtnInactive
                       }`}
                     >
                       {g === 'M' ? t('form.male') : t('form.female')}
@@ -531,11 +614,82 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                 </div>
               </div>
             </div>
+
+            {!unknownTime && shichenHint && (
+              <p className={`mt-1.5 ${sectionMutedClass}`}>
+                {shichenHint}
+              </p>
+            )}
+
+            {!unknownTime && (
+              <div className="mt-2">
+                <div className="flex items-center gap-1 mb-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className={`flex items-center gap-1 ${sectionMutedClass} hover:text-blue-700 dark:hover:text-blue-400 transition-colors`}
+                        aria-label={t('form.jasiHelpAria')}
+                      >
+                        <span>{t('form.jasiMethod')}</span>
+                        <span className="text-base leading-none" aria-hidden="true">🔎</span>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto bg-white border-gray-200 text-gray-800 shadow-xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-blue-700">{t('form.jasiHelpTitle')}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
+                        <p>{t('form.jasiHelpIntro')}</p>
+                        <div>
+                          <h4 className="font-semibold text-blue-700 mb-1">
+                            {t('form.unified')}
+                          </h4>
+                          <p>{t('form.jasiHelpUnifiedBody')}</p>
+                          <p className="mt-1.5 text-gray-500">
+                            {t('form.jasiHelpUnifiedExample')}
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-700 mb-1">
+                            {t('form.split')}
+                          </h4>
+                          <p>{t('form.jasiHelpSplitBody')}</p>
+                          <p className="mt-1.5 text-gray-500">
+                            {t('form.jasiHelpSplitExample')}
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium text-green-800">
+                          {t('form.jasiHelpNote')}
+                        </p>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <div className="inline-flex h-10 rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
+                  {([
+                    { value: 'unified' as const, label: t('form.unified') },
+                    { value: 'split' as const, label: t('form.split') },
+                  ]).map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setJasiMethod(opt.value)}
+                      className={`px-4 text-base rounded-md transition-all ${
+                        jasiMethod === opt.value ? segmentBtnActive : segmentBtnInactive
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </fieldset>
 
           {/* 위치 */}
           <fieldset className="mt-4">
-            <legend className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{t('form.birthPlace')}</legend>
+            <legend className={`${sectionTitleClass} mb-2`}>{t('form.birthPlace')}</legend>
             <div className="inline-flex h-10 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 mb-2">
               <button
                 type="button"
@@ -547,9 +701,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                   }
                 }}
                 className={`px-4 text-base rounded-md transition-all ${
-                  !manualCoords
-                    ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm font-medium'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  !manualCoords ? segmentBtnActive : segmentBtnInactive
                 }`}
               >
                 {t('form.citySearch')}
@@ -561,9 +713,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                   setTimezoneError(null)
                 }}
                 className={`px-4 text-base rounded-md transition-all ${
-                  manualCoords
-                    ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm font-medium'
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  manualCoords ? segmentBtnActive : segmentBtnInactive
                 }`}
               >
                 {t('form.coordInput')}
@@ -572,7 +722,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
             {manualCoords ? (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm text-gray-400 dark:text-gray-500 mb-1">{t('form.latitude')}</label>
+                  <label className={`block ${sectionMutedClass} mb-1`}>{t('form.latitude')}</label>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -586,7 +736,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 dark:text-gray-500 mb-1">{t('form.longitude')}</label>
+                  <label className={`block ${sectionMutedClass} mb-1`}>{t('form.longitude')}</label>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -603,93 +753,42 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
             ) : (
               <>
                 <CityCombobox selectedCity={selectedCity} onSelect={handleCitySelect} />
-                <p className="mt-1.5 text-sm text-gray-400 dark:text-gray-500 leading-relaxed">
+                <p className={`mt-1.5 ${sectionMutedClass} leading-relaxed`}>
                   {locationSummary}
                 </p>
               </>
             )}
             {manualCoords && (
-              <p className="mt-1.5 text-sm text-gray-400 dark:text-gray-500 leading-relaxed">
+              <p className={`mt-1.5 ${sectionMutedClass} leading-relaxed`}>
                 {locationSummary}
               </p>
             )}
             {timezoneDisplayLabel && (
-              <p className="mt-1.5 text-sm text-gray-400 dark:text-gray-500 leading-relaxed">
+              <p className={`mt-1.5 ${sectionMutedClass} leading-relaxed`}>
                 {t('form.timezoneDefault')} {timezoneDisplayLabel}
                 {isDstActive && (
-                  <span className="block text-xs mt-0.5">
+                  <span className="block mt-0.5">
                     ↳ {t('form.dstActive')}
                   </span>
                 )}
               </p>
             )}
             {timezoneError && (
-              <div className="mt-2 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400 leading-relaxed">
+              <div className="mt-2 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-base font-normal text-red-700 dark:text-red-400 leading-relaxed">
                 {timezoneError}
               </div>
             )}
           </fieldset>
 
-          {/* 고급 설정 */}
-          {!unknownTime && (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(v => !v)}
-                className="flex items-center gap-1 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                <svg
-                  className={`w-3 h-3 transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-                {t('form.advanced')}
-              </button>
-              {showAdvanced && (
-                <fieldset className="mt-2">
-                  <legend className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{t('form.jasiMethod')}</legend>
-                  <div className="inline-flex h-10 rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
-                    {([
-                      { value: 'unified' as const, label: t('form.unified') },
-                      { value: 'split' as const, label: t('form.split') },
-                    ]).map(opt => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setJasiMethod(opt.value)}
-                        className={`px-4 text-base rounded-md transition-all ${
-                          jasiMethod === opt.value
-                            ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm font-medium'
-                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-1.5 text-sm text-gray-400 dark:text-gray-500 leading-relaxed">
-                    {jasiMethod === 'unified'
-                      ? t('form.unifiedDesc')
-                      : t('form.splitDesc')}
-                  </p>
-                </fieldset>
-              )}
-            </div>
-          )}
-
           {/* 계산 버튼 */}
           <button
             type="submit"
-            className="mt-5 w-full h-11 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-base font-medium rounded-lg hover:bg-gray-700 dark:hover:bg-gray-300 active:scale-[0.98] transition-all"
+            className="mt-5 w-full h-11 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-base font-normal rounded-lg hover:bg-gray-700 dark:hover:bg-gray-300 active:scale-[0.98] transition-all"
           >
             {t('form.calculate')}
           </button>
 
-          <p className="mt-3 text-center text-sm text-gray-400 dark:text-gray-500 leading-relaxed">
+          <p className={`mt-3 text-center ${sectionMutedClass} leading-relaxed`}>
             🔒 {t('form.privacy1')}<br />
             {t('form.privacy2')}
           </p>
