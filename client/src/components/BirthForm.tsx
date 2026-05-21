@@ -256,7 +256,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     if (getTimezoneValidationError(state)) return null
     if (!effectiveStateTimezone) return null
     return {
-      ...(state.personName.trim() && { personName: state.personName.trim() }),
+      ...((state.personName ?? '').trim() && { personName: (state.personName ?? '').trim() }),
       year: state.year,
       month: state.month,
       day: state.day,
@@ -394,6 +394,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     if (manualCoords) syncCoordinates(resolvedLatitude, resolvedLongitude)
 
     const state: SavedFormState = {
+      personName,
       year, month, day, hour, minute, gender, calendarType, unknownTime, jasiMethod,
       city: selectedCity, manualCoords, latitude: resolvedLatitude, longitude: resolvedLongitude,
     }
