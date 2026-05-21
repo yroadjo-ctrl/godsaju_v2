@@ -175,7 +175,7 @@ export default function DaewoonTable({
   if (daewoon.length === 0) {
     return (
       <section>
-        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-2">
+        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-2">
           대운 <span className="font-hanja">(大運)</span>
         </h3>
         <p className="text-base text-gray-400 dark:text-gray-500">{t('saju.noData')}</p>
@@ -220,7 +220,7 @@ export default function DaewoonTable({
     <section className="space-y-6">
       {/* 대운 테이블 */}
       <div>
-        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
+        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
           대운 <span className="font-hanja">(大運)</span>
         </h3>
         <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
@@ -379,7 +379,7 @@ export default function DaewoonTable({
       {/* 세운 테이블 */}
       {selectedIdx >= 0 && sewoonItems.length > 0 && (
         <div>
-          <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-3">
+          <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-3">
             세운 <span className="font-hanja">(歲運)</span>
           </h3>
           <div ref={sewoonScrollRef} className="overflow-x-auto border rounded-lg">

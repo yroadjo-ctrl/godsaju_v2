@@ -47,7 +47,7 @@ function ElementRow({
 export default function YongsinSection({ yongsin }: Props) {
   return (
     <section>
-      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
+      <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
         용신 <span className="font-hanja">(用神)</span>
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">

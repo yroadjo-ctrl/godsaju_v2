@@ -138,7 +138,7 @@ export default function MonthlyTable({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200">
+        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">
           월운 <span className="font-hanja">(月運)</span>
         </h3>
         <div className="flex items-center gap-3 text-sm">

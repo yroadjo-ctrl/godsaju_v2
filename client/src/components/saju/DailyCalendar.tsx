@@ -359,7 +359,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
     <div className="w-full mt-6">
       {/* 일운 타이틀 */}
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200">
+        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">
           일운 <span className="font-hanja">(日運)</span>
         </h3>
       </div>
