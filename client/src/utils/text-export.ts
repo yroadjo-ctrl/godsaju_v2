@@ -1,5 +1,5 @@
 import { Solar } from 'lunar-javascript'
-import type { SajuResult, ZiweiChart, LiuNianInfo, NatalChart } from '@core/types'
+import type { BirthInput, JasiMethod, SajuResult, ZiweiChart, LiuNianInfo, NatalChart } from '@core/types'
 import { ELEMENT_HANJA, PILLAR_NAMES, PALACE_NAMES, MAIN_STAR_NAMES, JIJANGGAN, GONGMANG_TABLE, HGANJI } from '@core/constants'
 import { getDaxianList } from '@core/ziwei'
 import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from './format.ts'
@@ -14,8 +14,40 @@ import {
   resolveSolarBirthDateTime,
 } from '@core/index'
 import { PILLAR_TABLE_LABELS, pillarLabelForExport } from './pillar-table-labels.ts'
+import { getShiChenBranchIndex } from './shichen-time.ts'
 import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import type { Locale } from '../i18n/index.ts'
+
+const SHICHEN_KOR = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'] as const
+
+function jasiMethodLabel(method?: JasiMethod): string {
+  return method === 'split' ? '야자시' : '통자시'
+}
+
+/** AI 복사 섹션 제목 (■ 접두) */
+function sectionTitle(title: string): string {
+  return `■ ${title}`
+}
+
+/** AI 복사용 출생정보 표 행 */
+function formatBirthInfoRow(input: BirthInput): string {
+  const name = input.personName?.trim() || '-'
+  const calLabel = calendarTypeLabel(input.calendarType)
+  const birthDate = `${calLabel} ${input.year}년 ${input.month}월 ${input.day}일`
+  const gender = input.gender === 'M' ? '남성' : '여성'
+  let timeCol: string
+  if (input.unknownTime) {
+    timeCol = `모름 / - / ${gender}`
+  } else {
+    const hh = String(input.hour).padStart(2, '0')
+    const mm = String(input.minute).padStart(2, '0')
+    const shiIdx = getShiChenBranchIndex(input.hour, input.minute)
+    const shichen = `${SHICHEN_KOR[shiIdx]}시`
+    timeCol = `${hh}:${mm} (${shichen}) / ${jasiMethodLabel(input.jasiMethod)} / ${gender}`
+  }
+  const location = input.birthLocation ?? '-'
+  return `| ${name} | ${birthDate} | ${timeCol} | ${location} |`
+}
 
 /** 현재 로케일의 t() 래퍼 생성 */
 function makeT(locale?: Locale) {
@@ -28,7 +60,6 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   const t = makeT(locale)
   const { input, pillars, daewoon, daewoonMeta, relations, specialSals, gongmang, ohaengSipsin, sinGangYak, yongsin } = result
   const lines: string[] = []
-  const genderChar = input.gender === 'M' ? '男' : '女'
 
   // 음양오행 변환 맵 (PillarTable.tsx와 동일)
   const stemKoreanMap: Record<string, string> = {
@@ -137,29 +168,29 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     return line
   }
 
-  lines.push(`사주원국 (四柱原局) (${genderChar})`)
-  const calLabel = calendarTypeLabel(input.calendarType)
-  const enteredDate = `${input.year}-${String(input.month).padStart(2, '0')}-${String(input.day).padStart(2, '0')}`
-  const enteredTime = input.unknownTime
-    ? '시간모름'
-    : `${String(input.hour).padStart(2, '0')}:${String(input.minute).padStart(2, '0')}`
-  let birthLine = input.personName?.trim()
-    ? `이름: ${input.personName.trim()}\n입력 달력: ${calLabel} · ${enteredDate} ${enteredTime}`
-    : `입력 달력: ${calLabel} · ${enteredDate} ${enteredTime}`
+  lines.push(sectionTitle('출생정보'))
+  lines.push('')
+  lines.push('| 이름 | 생년월일시 | 시간(12간지) / 통자시·야자시 / 성별 | 출생위치 |')
+  lines.push('| --- | --- | --- | --- |')
+  lines.push(formatBirthInfoRow(input))
+  lines.push('')
+
+  lines.push(sectionTitle('사주원국 (四柱原局)'))
+  lines.push('')
   if (input.calendarType && input.calendarType !== 'solar') {
     try {
       const solar = resolveSolarBirthDateTime(input)
-      birthLine += `\n계산 기준(양력 변환): ${solar.year}-${String(solar.month).padStart(2, '0')}-${String(solar.day).padStart(2, '0')} ${String(solar.hour).padStart(2, '0')}:${String(solar.minute).padStart(2, '0')}`
+      lines.push(`계산 기준(양력 변환): ${solar.year}-${String(solar.month).padStart(2, '0')}-${String(solar.day).padStart(2, '0')} ${String(solar.hour).padStart(2, '0')}:${String(solar.minute).padStart(2, '0')}`)
       if (input.calendarType === 'lunarLeap') {
-        birthLine += ' (음력 윤달 입력)'
+        lines.push('(음력 윤달 입력)')
       }
+      lines.push('계산 기준: 위 출생정보 생년월일시 시각을 양력 변환 후 (KST/출생지 타임존 보정) 사주·대운 계산')
     } catch {
-      birthLine += '\n(양력 변환 실패 — 입력값 확인 필요)'
+      lines.push('(양력 변환 실패 — 입력값 확인 필요)')
     }
   } else {
-    birthLine += '\n계산 기준: 위 양력 시각 그대로 (KST/출생지 타임존 보정 후 사주·대운 계산)'
+    lines.push('계산 기준: 위 출생정보 생년월일시 시각 그대로 (KST/출생지 타임존 보정 후 사주·대운 계산)')
   }
-  lines.push(birthLine)
   lines.push('')
 
   const headerLabels = ['時柱', '日柱', '月柱', '年柱']
@@ -228,7 +259,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 오행·십성 분석
   if (ohaengSipsin) {
     const os = ohaengSipsin
-    lines.push(`오행 · 십성 (五行 · 十星) 분석 (일간 ${os.dayStemKor}(${os.dayStem}) ${os.dayElementLabel}, 원국 ${os.totalCharSlots}글자 기준)`)
+    lines.push(sectionTitle(`오행 · 십성 (五行 · 十星) 분석 (일간 ${os.dayStemKor}(${os.dayStem}) ${os.dayElementLabel}, 원국 ${os.totalCharSlots}글자 기준)`))
     lines.push('')
     lines.push('| 오행 | 비율 | 상태 |')
     lines.push('|------|------|------|')
@@ -253,7 +284,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 신강·신약
   if (sinGangYak) {
     const sg = sinGangYak
-    lines.push(`신강·신약 (일간 ${sg.dayStemKor}(${sg.dayStem}))`)
+    lines.push(sectionTitle(`신강·신약 (身強·身弱) (일간 ${sg.dayStemKor}(${sg.dayStem}))`))
     lines.push('')
     lines.push(`| 항목 | 판정 |`)
     lines.push(`|------|------|`)
@@ -272,7 +303,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 용신
   if (yongsin) {
     const ys = yongsin
-    lines.push(`용신 (用神) (일간 ${ys.dayStemKor}(${ys.dayStem}), ${ys.method}/${ys.methodHanja}, 신강약 ${ys.sinGangLevel})`)
+    lines.push(sectionTitle(`용신 (用神) (일간 ${ys.dayStemKor}(${ys.dayStem}), ${ys.method}/${ys.methodHanja}, 신강약 ${ys.sinGangLevel})`))
     lines.push('')
     lines.push(`- **용신(用神)**: ${ys.primary.label}(${ys.primary.hanja}) · ${ys.primary.sipsinRole}(${ys.primary.sipsinHanja}) · 원국 ${ys.primary.percent > 0 ? `${ys.primary.percent}%` : '-'}`)
     lines.push(`- **희신(喜神)**: ${ys.secondary.label}(${ys.secondary.hanja}) · ${ys.secondary.sipsinRole}(${ys.secondary.sipsinHanja}) · 원국 ${ys.secondary.percent > 0 ? `${ys.secondary.percent}%` : '-'}`)
@@ -369,7 +400,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       const names = result.godSinsal?.filter(s => s.position === 'earth' && s.pillarIndex === i).map(s => ssSinsalLabel(s.name)) ?? []
       return names.length > 0 ? names.join(' / ') : '-'
     })
-    lines.push('특수신살 (特殊神殺) (길성과 흉성)')
+    lines.push(sectionTitle('특수신살 (特殊神殺) (길성과 흉성)'))
     const ssSummary = buildSinsalSummaryLine(result.godSinsal, input.unknownTime)
     if (ssSummary) lines.push(`- **요약**: ${ssSummary}`)
     lines.push(`| 구분 | ${headerLabels.join(' | ')} |`)
@@ -382,7 +413,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   }
 
   // 合沖刑破害(四柱原局) — 특수신살 뒤에 배치
-  lines.push('합충형파해 (合沖刑破害)')
+  lines.push(sectionTitle('합충형파해 (合沖刑破害)'))
   const relSummary = buildRelationsSummaryLine(relations, bzGanzis)
   if (relSummary) lines.push(`- **요약**: ${relSummary}`)
   lines.push(bzHeader)
@@ -398,7 +429,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 坐法 · 引從法 통합 마크다운 표
   if (result.jwabeop) {
     const dayBranch = result.pillars[1].pillar.branch
-    lines.push(`좌법 · 인종법 (坐法 · 引從法) (日支 ${dayBranch} 기준 지장간 12운성)`)
+    lines.push(sectionTitle(`좌법 · 인종법 (坐法 · 引從法) (日支 ${dayBranch} 기준 지장간 12운성)`))
     lines.push('')
 
     const CATEGORIES_EXPORT = ['比劫', '食傷', '財星', '官星', '印星'] as const
@@ -479,7 +510,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 대운 (마크단운 표 형식, 가로 배열)
   if (daewoon.length > 0) {
-    lines.push(input.unknownTime ? `대운 (大運) (${t('saju.unknownTimeWarning')})` : '대운 (大運)')
+    lines.push(sectionTitle(input.unknownTime ? `대운 (大運) (${t('saju.unknownTimeWarning')})` : '대운 (大運)'))
     const dm = daewoonMeta
     if (dm) {
       lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanziKor}) (정밀 ${dm.daewoonSu})`)
@@ -602,7 +633,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   
   if (dayStem && yearBranch) {
     lines.push('') // 빈 줄
-    lines.push('세운 (歲運)')
+    lines.push(sectionTitle('세운 (歲運)'))
     lines.push('')
     
     // 공망 계산
@@ -754,7 +785,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     
     // 월운 섹션
     lines.push('')
-    lines.push('월운 (月運)')
+    lines.push(sectionTitle('월운 (月運)'))
     lines.push('')
 
     // 월운 데이터: 지정 연도(monthlyYear) 1월~12월 동적 생성
@@ -926,7 +957,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 일운 (日運) - 오늘 ~ 다음달 오늘-1일
   lines.push('')
-  lines.push('일운 (日運)')
+  lines.push(sectionTitle('일운 (日運)'))
   lines.push('')
 
   const dlToday = new Date()
@@ -1263,7 +1294,7 @@ export function dailyCalendarToText(
   const lines: string[] = []
 
   // 제목
-  lines.push(`日運 (${year}년 ${String(month).padStart(2, '0')}월)`)
+  lines.push(sectionTitle(`일운 (日運) (${year}년 ${String(month).padStart(2, '0')}월)`))
   lines.push('')
 
   // 테이블 헤더
@@ -1499,7 +1530,7 @@ export function dailyDataToText(
 ): string {
   const lines: string[] = [];
 
-  lines.push(`日運 (${year}년 ${String(month).padStart(2, '0')}월)`);
+  lines.push(sectionTitle(`일운 (日運) (${year}년 ${String(month).padStart(2, '0')}월)`));
   lines.push('');
   lines.push('| 날짜(음력) | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 |');
   lines.push('|---|---|---|---|---|---|---|');

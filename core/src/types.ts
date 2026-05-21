@@ -29,6 +29,8 @@ export type JasiMethod = 'split' | 'unified';
 export interface BirthInput {
   /** 표시용 이름 (선택, 계산에는 미사용) */
   personName?: string;
+  /** 출생 위치 표시명 (AI 복사·UI용, 예: 서울, 부산) */
+  birthLocation?: string;
   year: number;
   month: number;
   day: number;

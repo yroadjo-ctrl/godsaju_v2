@@ -255,8 +255,14 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
     const effectiveStateTimezone = inferTimeZoneFromCoordinates(state.latitude, state.longitude)
     if (getTimezoneValidationError(state)) return null
     if (!effectiveStateTimezone) return null
+    const birthLocation = state.manualCoords
+      ? `위도 ${state.latitude.toFixed(4)}, 경도 ${state.longitude.toFixed(4)}`
+      : state.city
+        ? formatCityName(state.city)
+        : undefined
     return {
       ...((state.personName ?? '').trim() && { personName: (state.personName ?? '').trim() }),
+      ...(birthLocation && { birthLocation }),
       year: state.year,
       month: state.month,
       day: state.day,
