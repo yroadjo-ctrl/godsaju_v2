@@ -62,7 +62,9 @@ export default function JwaInjongTable({ jwabeop, injongbeop, pillars, unknownTi
 
   return (
     <section>
-      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">坐法 · 引從法</h3>
+      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
+        좌법 · 인종법 <span className="font-hanja">(坐法 · 引從法)</span>
+      </h3>
       <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
         日支 <span className="font-hanja font-medium text-gray-600 dark:text-gray-300">{dayBranch}</span> 기준 지장간 12운성
       </p>

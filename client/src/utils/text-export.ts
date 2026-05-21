@@ -137,7 +137,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     return line
   }
 
-  lines.push(`四柱原局 (${genderChar})`)
+  lines.push(`사주원국 (四柱原局) (${genderChar})`)
   const calLabel = calendarTypeLabel(input.calendarType)
   const enteredDate = `${input.year}-${String(input.month).padStart(2, '0')}-${String(input.day).padStart(2, '0')}`
   const enteredTime = input.unknownTime
@@ -228,7 +228,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 오행·십성 분석
   if (ohaengSipsin) {
     const os = ohaengSipsin
-    lines.push(`오행·십성 분석 (일간 ${os.dayStemKor}(${os.dayStem}) ${os.dayElementLabel}, 원국 ${os.totalCharSlots}글자 기준)`)
+    lines.push(`오행 · 십성 (五行 · 十星) 분석 (일간 ${os.dayStemKor}(${os.dayStem}) ${os.dayElementLabel}, 원국 ${os.totalCharSlots}글자 기준)`)
     lines.push('')
     lines.push('| 오행 | 비율 | 상태 |')
     lines.push('|------|------|------|')
@@ -272,7 +272,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 용신
   if (yongsin) {
     const ys = yongsin
-    lines.push(`용신 (일간 ${ys.dayStemKor}(${ys.dayStem}), ${ys.method}/${ys.methodHanja}, 신강약 ${ys.sinGangLevel})`)
+    lines.push(`용신 (用神) (일간 ${ys.dayStemKor}(${ys.dayStem}), ${ys.method}/${ys.methodHanja}, 신강약 ${ys.sinGangLevel})`)
     lines.push('')
     lines.push(`- **용신(用神)**: ${ys.primary.label}(${ys.primary.hanja}) · ${ys.primary.sipsinRole}(${ys.primary.sipsinHanja}) · 원국 ${ys.primary.percent > 0 ? `${ys.primary.percent}%` : '-'}`)
     lines.push(`- **희신(喜神)**: ${ys.secondary.label}(${ys.secondary.hanja}) · ${ys.secondary.sipsinRole}(${ys.secondary.sipsinHanja}) · 원국 ${ys.secondary.percent > 0 ? `${ys.secondary.percent}%` : '-'}`)
@@ -369,7 +369,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       const names = result.godSinsal?.filter(s => s.position === 'earth' && s.pillarIndex === i).map(s => ssSinsalLabel(s.name)) ?? []
       return names.length > 0 ? names.join(' / ') : '-'
     })
-    lines.push('特殊神殺 (길성과 흉성)')
+    lines.push('특수신살 (特殊神殺) (길성과 흉성)')
     const ssSummary = buildSinsalSummaryLine(result.godSinsal, input.unknownTime)
     if (ssSummary) lines.push(`- **요약**: ${ssSummary}`)
     lines.push(`| 구분 | ${headerLabels.join(' | ')} |`)
@@ -382,7 +382,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   }
 
   // 合沖刑破害(四柱原局) — 특수신살 뒤에 배치
-  lines.push('合沖刑破害(四柱原局)')
+  lines.push('합충형파해 (合沖刑破害)')
   const relSummary = buildRelationsSummaryLine(relations, bzGanzis)
   if (relSummary) lines.push(`- **요약**: ${relSummary}`)
   lines.push(bzHeader)
@@ -398,7 +398,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   // 坐法 · 引從法 통합 마크다운 표
   if (result.jwabeop) {
     const dayBranch = result.pillars[1].pillar.branch
-    lines.push(`坐法 · 引從法 (日支 ${dayBranch} 기준 지장간 12운성)`)
+    lines.push(`좌법 · 인종법 (坐法 · 引從法) (日支 ${dayBranch} 기준 지장간 12운성)`)
     lines.push('')
 
     const CATEGORIES_EXPORT = ['比劫', '食傷', '財星', '官星', '印星'] as const
@@ -479,7 +479,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 대운 (마크단운 표 형식, 가로 배열)
   if (daewoon.length > 0) {
-    lines.push(input.unknownTime ? `大運 (${t('saju.unknownTimeWarning')})` : '大運')
+    lines.push(input.unknownTime ? `대운 (大運) (${t('saju.unknownTimeWarning')})` : '대운 (大運)')
     const dm = daewoonMeta
     if (dm) {
       lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanziKor}) (정밀 ${dm.daewoonSu})`)
@@ -602,7 +602,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   
   if (dayStem && yearBranch) {
     lines.push('') // 빈 줄
-    lines.push('歲運')
+    lines.push('세운 (歲運)')
     lines.push('')
     
     // 공망 계산
@@ -754,7 +754,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     
     // 월운 섹션
     lines.push('')
-    lines.push('月運')
+    lines.push('월운 (月運)')
     lines.push('')
 
     // 월운 데이터: 지정 연도(monthlyYear) 1월~12월 동적 생성
@@ -926,7 +926,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   // 일운 (日運) - 오늘 ~ 다음달 오늘-1일
   lines.push('')
-  lines.push('日運')
+  lines.push('일운 (日運)')
   lines.push('')
 
   const dlToday = new Date()

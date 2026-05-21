@@ -110,7 +110,7 @@ export default function SpecialSinsalTable({
   return (
     <div className="mt-6">
       <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
-        特殊神殺 (길성과 흉성)
+        특수신살 <span className="font-hanja">(特殊神殺)</span> (길성과 흉성)
       </h3>
       {summaryLine && (
         <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed break-words">

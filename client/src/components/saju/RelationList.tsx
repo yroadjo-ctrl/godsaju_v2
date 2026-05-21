@@ -129,7 +129,7 @@ export default function RelationList({ relations, pillars }: Props) {
   return (
     <section>
       <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
-        合沖刑破害(四柱原局)
+        합충형파해 <span className="font-hanja">(合沖刑破害)</span>
       </h3>
       {summaryLine && (
         <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed break-words">
