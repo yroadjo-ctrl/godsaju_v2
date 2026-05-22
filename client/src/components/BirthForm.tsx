@@ -5,6 +5,7 @@ import {
   resolveSolarBirthDateTime,
   validateLunarCalendarInput,
   LunarConversionError,
+  getBirthTimeAdjustmentInfo,
 } from '@core/index'
 import { isKoreanDaylightTime, isKoreanHistoricalTimeAnomaly } from '@core/natal'
 import type { City } from '@core/cities'
@@ -24,6 +25,7 @@ import {
   stepCoordinate,
 } from '../utils/coordinate-input.ts'
 import GodsajuLogo from './GodsajuLogo.tsx'
+import BirthTimeAdjustmentNotice from './BirthTimeAdjustmentNotice.tsx'
 import { formatShiChenHint, SHICHEN_LEGEND_ROWS } from '../utils/shichen-time.ts'
 import {
   Dialog,
@@ -181,6 +183,31 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
       solarForTz.minute,
     )
   }, [inferredTimezone, solarForTz])
+
+  const timeAdjustmentPreview = useMemo(() => {
+    if (!inferredTimezone || !solarForTz) return null
+    try {
+      return getBirthTimeAdjustmentInfo({
+        year,
+        month,
+        day,
+        hour: unknownTime ? 12 : hour,
+        minute: unknownTime ? 0 : minute,
+        gender,
+        calendarType,
+        unknownTime,
+        ...(!unknownTime && { jasiMethod }),
+        latitude,
+        longitude,
+        timezone: inferredTimezone,
+      })
+    } catch {
+      return null
+    }
+  }, [
+    year, month, day, hour, minute, gender, calendarType, unknownTime, jasiMethod,
+    latitude, longitude, inferredTimezone, solarForTz,
+  ])
 
   function getTimezoneValidationError(state: SavedFormState): string | null {
     let solarY = state.year
@@ -779,6 +806,13 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                   </span>
                 )}
               </p>
+            )}
+            {timeAdjustmentPreview && !timezoneError && (
+              <BirthTimeAdjustmentNotice
+                info={timeAdjustmentPreview}
+                unknownTime={unknownTime}
+                className="mt-2"
+              />
             )}
             {timezoneError && (
               <div className="mt-2 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-base font-normal text-red-700 dark:text-red-400 leading-relaxed">

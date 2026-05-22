@@ -10,6 +10,7 @@ interface Props {
 
 const inputClass =
   'w-full h-10 px-3 border border-gray-200 dark:border-gray-700 rounded-lg text-base text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-900 ' +
+  'placeholder:italic placeholder:text-gray-400 dark:placeholder:text-gray-500 ' +
   'focus:outline-none focus:ring-2 focus:ring-gray-800/20 dark:focus:ring-gray-200/20 focus:border-gray-400 dark:focus:border-gray-500 transition-all'
 
 /** 포커스 시 보여줄 기본 도시 목록 (한국 주요 도시) */

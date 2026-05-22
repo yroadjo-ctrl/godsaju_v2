@@ -207,9 +207,56 @@ function getEquationOfTimeMinutes(year: number, month: number, day: number): num
   return 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
 }
 
+/** 타임존 표준 자오선(도, 동경 +). offset_minutes × 15 / 60 */
+export function getTimezoneStandardMeridianDegrees(date: Date, timezone: string): number {
+  return (getTimezoneOffsetMinutes(date, timezone) / 60) * 15;
+}
+
+/** 벽시계에 분을 더해 달·일 넘김 처리 */
+export function shiftLocalDateTime(
+  year: number, month: number, day: number,
+  hour: number, minute: number,
+  deltaMinutes: number,
+): { year: number; month: number; day: number; hour: number; minute: number } {
+  const ms = Date.UTC(year, month - 1, day, hour, minute) + deltaMinutes * 60_000;
+  const d = new Date(ms);
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth() + 1,
+    day: d.getUTCDate(),
+    hour: d.getUTCHours(),
+    minute: d.getUTCMinutes(),
+  };
+}
+
+export function getLocalSolarTimeCorrectionMinutes(
+  utcDate: Date,
+  timezone: string,
+  longitude: number | undefined,
+  year: number,
+  month: number,
+  day: number,
+): {
+  standardMeridianDegrees: number;
+  longitudeCorrectionMinutes: number;
+  equationOfTimeMinutes: number;
+  totalCorrectionMinutes: number;
+} {
+  const standardMeridianDegrees = getTimezoneStandardMeridianDegrees(utcDate, timezone);
+  const lon = longitude ?? DEFAULT_LONGITUDE;
+  const longitudeCorrectionMinutes = (lon - standardMeridianDegrees) * 4;
+  const equationOfTimeMinutes = getEquationOfTimeMinutes(year, month, day);
+  return {
+    standardMeridianDegrees,
+    longitudeCorrectionMinutes,
+    equationOfTimeMinutes,
+    totalCorrectionMinutes: longitudeCorrectionMinutes + equationOfTimeMinutes,
+  };
+}
+
 /**
- * 비-한국 출생 경로: 경도 × 4분 + 균시차(EoT) 보정을 적용해 지역 진태양시로 변환한다.
- * 내부에서 `resolveLocalDateTimeToUtc`를 호출하므로 전 세계 DST가 자동 반영된다.
+ * 해외 출생: 현지 벽시계 + (출생경도 − 타임존 표준경선)×4분 + 균시차.
+ * DST는 입력 벽시계( IANA )에 이미 반영 — 추가로 DST를 빼지 않음.
  */
 export function adjustBirthInputToSolarTime(input: BirthInput): {
   year: number;
@@ -222,17 +269,13 @@ export function adjustBirthInputToSolarTime(input: BirthInput): {
   const utcDate = resolveLocalDateTimeToUtc(
     input.year, input.month, input.day, input.hour, input.minute, timezone,
   );
-  const equationOfTime = getEquationOfTimeMinutes(input.year, input.month, input.day);
-  const longitude = input.longitude ?? DEFAULT_LONGITUDE;
-  const solarDate = new Date(utcDate.getTime() + (longitude * 4 + equationOfTime) * 60_000);
-
-  return {
-    year: solarDate.getUTCFullYear(),
-    month: solarDate.getUTCMonth() + 1,
-    day: solarDate.getUTCDate(),
-    hour: solarDate.getUTCHours(),
-    minute: solarDate.getUTCMinutes(),
-  };
+  const { totalCorrectionMinutes } = getLocalSolarTimeCorrectionMinutes(
+    utcDate, timezone, input.longitude, input.year, input.month, input.day,
+  );
+  return shiftLocalDateTime(
+    input.year, input.month, input.day, input.hour, input.minute,
+    totalCorrectionMinutes,
+  );
 }
 
 /**

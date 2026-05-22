@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { calculateSaju } from '@core/saju'
+import { calculateSaju } from '@core/index'
 import PillarTable from './PillarTable.tsx'
 import OhaengSipsinSection from './OhaengSipsinSection.tsx'
 import SinGangSection from './SinGangSection.tsx'
@@ -42,7 +42,7 @@ export default function SajuView({ input }: Props) {
             label={t('copy.aiCopy')}
           />
         </div>
-          <PillarTable 
+        <PillarTable
           pillars={result.pillars} 
           unknownTime={input.unknownTime} 
           gongmang={result.gongmang} 

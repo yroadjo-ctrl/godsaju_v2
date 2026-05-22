@@ -41,6 +41,12 @@ export {
 } from './lunar-calendar.ts'
 export type { LunarConversionErrorCode } from './lunar-calendar.ts'
 export { getAdjustedBirthDateTime } from './birth-calendar.ts'
+export {
+  getBirthTimeAdjustmentInfo,
+  formatClockTime,
+  formatSignedMinutes,
+} from './birth-time-adjustment.ts'
+export type { BirthTimeAdjustmentInfo, BirthTimeAdjustmentMode } from './birth-time-adjustment.ts'
 
 // 타임존 · DST 유틸리티
 export {
@@ -51,6 +57,9 @@ export {
   adjustBirthInputToKstWallClock,
   getBirthTimezone,
   birthInputToUtcDate,
+  getTimezoneStandardMeridianDegrees,
+  getLocalSolarTimeCorrectionMinutes,
+  shiftLocalDateTime,
 } from './timezone.ts'
 export type { ResolveLocalDateTimeToUtcResult } from './timezone.ts'
 

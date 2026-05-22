@@ -12,9 +12,13 @@ import {
   buildRelationsSummaryLine,
   calendarTypeLabel,
   resolveSolarBirthDateTime,
+  getBirthTimeAdjustmentInfo,
+  formatClockTime,
+  formatSignedMinutes,
 } from '@core/index'
 import { PILLAR_TABLE_LABELS, pillarLabelForExport } from './pillar-table-labels.ts'
 import { getShiChenBranchIndex } from './shichen-time.ts'
+import { isDaylightSavingInEffect } from './timezones.ts'
 import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import type { Locale } from '../i18n/index.ts'
 
@@ -47,6 +51,71 @@ function formatBirthInfoRow(input: BirthInput): string {
   }
   const location = input.birthLocation ?? '-'
   return `| ${name} | ${birthDate} | ${timeCol} | ${location} |`
+}
+
+function formatIsoDateTime(y: number, m: number, d: number, h: number, min: number): string {
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${formatClockTime(h, min)}`
+}
+
+function formatShichenLabel(hour: number, minute: number): string {
+  return `${SHICHEN_KOR[getShiChenBranchIndex(hour, minute)]}시`
+}
+
+/** AI 복사용 사주원국 계산 기준 설명 */
+function formatCalculationBasisLines(input: BirthInput): string[] {
+  const lines: string[] = []
+
+  if (input.calendarType && input.calendarType !== 'solar') {
+    try {
+      const solar = resolveSolarBirthDateTime(input)
+      lines.push(`양력 변환: ${formatIsoDateTime(solar.year, solar.month, solar.day, solar.hour, solar.minute)}`)
+      if (input.calendarType === 'lunarLeap') {
+        lines.push('(음력 윤달 입력)')
+      }
+    } catch {
+      lines.push('(양력 변환 실패 — 입력값 확인 필요)')
+      return lines
+    }
+  }
+
+  if (input.unknownTime) {
+    lines.push('계산 기준: 출생 시각 미입력 — 일·월·년주·대운 기준 (시주 제외)')
+    return lines
+  }
+
+  try {
+    const info = getBirthTimeAdjustmentInfo(input)
+    const wall = info.wallClock
+    const adj = info.adjusted
+    const wallTime = formatIsoDateTime(wall.year, wall.month, wall.day, wall.hour, wall.minute)
+    const adjTime = formatIsoDateTime(adj.year, adj.month, adj.day, adj.hour, adj.minute)
+    const adjShichen = formatShichenLabel(adj.hour, adj.minute)
+
+    if (info.mode === 'kst') {
+      lines.push('계산 기준: KST 벽시계 (경도 보정 없음)')
+      const sameMoment = wall.year === adj.year && wall.month === adj.month && wall.day === adj.day
+        && wall.hour === adj.hour && wall.minute === adj.minute
+      if (sameMoment) {
+        lines.push(`사주·대운 적용 시각: ${adjTime} (${adjShichen}, 입력 시각 그대로)`)
+      } else {
+        lines.push(`입력 ${wallTime} → KST 적용 ${adjTime} (${adjShichen})`)
+      }
+    } else {
+      const dstNote = isDaylightSavingInEffect(
+        info.timezone, wall.year, wall.month, wall.day, wall.hour, wall.minute,
+      ) ? ', 서머타임 반영' : ''
+      lines.push(`계산 기준: 현지 진태양시 (${info.timezone})`)
+      lines.push(`입력 벽시계: ${wallTime}${dstNote}`)
+      lines.push(
+        `경도 보정 (출생경도 − 표준경선)×4분: ${formatSignedMinutes(info.longitudeCorrectionMinutes ?? 0)} · 균시차: ${formatSignedMinutes(info.equationOfTimeMinutes ?? 0)} · 합계: ${formatSignedMinutes(info.totalCorrectionMinutes ?? 0)}`,
+      )
+      lines.push(`사주·대운 적용 시각: ${adjTime} (${adjShichen})`)
+    }
+  } catch {
+    lines.push('(시간 보정 정보를 계산할 수 없습니다)')
+  }
+
+  return lines
 }
 
 /** 현재 로케일의 t() 래퍼 생성 */
@@ -177,19 +246,8 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
 
   lines.push(sectionTitle('사주원국 (四柱原局)'))
   lines.push('')
-  if (input.calendarType && input.calendarType !== 'solar') {
-    try {
-      const solar = resolveSolarBirthDateTime(input)
-      lines.push(`계산 기준(양력 변환): ${solar.year}-${String(solar.month).padStart(2, '0')}-${String(solar.day).padStart(2, '0')} ${String(solar.hour).padStart(2, '0')}:${String(solar.minute).padStart(2, '0')}`)
-      if (input.calendarType === 'lunarLeap') {
-        lines.push('(음력 윤달 입력)')
-      }
-      lines.push('계산 기준: 위 출생정보 음력 시각을 양력 변환 후 (KST/출생지 타임존 보정) 사주·대운 계산')
-    } catch {
-      lines.push('(양력 변환 실패 — 입력값 확인 필요)')
-    }
-  } else {
-    lines.push('계산 기준: 위 출생정보 양력 시각 그대로 (KST/출생지 타임존 보정 후 사주·대운 계산)')
+  for (const line of formatCalculationBasisLines(input)) {
+    lines.push(line)
   }
   lines.push('')
 
