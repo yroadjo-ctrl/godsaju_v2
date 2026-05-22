@@ -3,17 +3,10 @@ export type Locale = 'ko' | 'zh' | 'ja' | 'en'
 const STORAGE_KEY = 'orrery-locale'
 const VALID: Set<string> = new Set(['ko', 'zh', 'ja', 'en'])
 
-function detectBrowserLocale(): Locale {
-  for (const lang of navigator.languages ?? [navigator.language]) {
-    const code = lang.split('-')[0].toLowerCase()
-    if (VALID.has(code)) return code as Locale
-  }
-  return 'ko'
-}
-
 function getStored(): Locale {
   const v = localStorage.getItem(STORAGE_KEY)
-  return v && VALID.has(v) ? (v as Locale) : detectBrowserLocale()
+  // 저장값 없으면 한국어(갓사주 기본). Cursor 내장 브라우저 등 별도 localStorage·en navigator 환경 대응.
+  return v && VALID.has(v) ? (v as Locale) : 'ko'
 }
 
 let currentLocale: Locale = getStored()

@@ -4,7 +4,7 @@
  */
 import {
   getFourPillars, getDaewoon, getRelation, getJeonggi,
-  getTwelveMeteor, getTwelveSpirit, getHiddenStems, analyzeAllRelations, getSpecialSals,
+  getTwelveMeteor, getTwelveSpirit, getHiddenStems, analyzeAllRelations,
   calculateJwabeop, calculateInjongbeop, getGongmang,
 } from './pillars.ts';
 import { STEM_INFO } from './constants.ts';
@@ -388,107 +388,6 @@ export function getPillarSinsals(
   return sinsalList;
 }
 
-function getGodSinsal(dayStem: string, stems: string[], branches: string[], dayPillar: string[], yearPillar: string[]): SpecialSinsal[] {
-  const sinsalList: SpecialSinsal[] = [];
-  const addSinsal = (name: string, position: 'heaven' | 'earth') => {
-    if (!sinsalList.find(s => s.name === name)) {
-      sinsalList.push({ name, position, pillarIndex: 0 });
-    }
-  };
-  
-  // 1. 태극귀인 (일간 기준 전 지지 조사) - 지지 신살
-  const taegukMap: Record<string, string[]> = {
-    '甲': ['子', '午'], '乙': ['子', '午'],
-    '丙': ['卯', '酉'], '丁': ['卯', '酉'],
-    '戊': ['辰', '戌', '丑', '未'], '己': ['辰', '戌', '丑', '未'],
-    '庚': ['寅', '亥'], '辛': ['寅', '亥'],
-    '壬': ['巳', '申'], '癸': ['巳', '申']
-  };
-  branches.forEach(b => {
-    if (taegukMap[dayStem]?.includes(b)) addSinsal('태극귀인', 'earth');
-  });
-  
-  // 2. 괴강살 (일주 및 년주 기준 간지 조합) - 지지 신살
-  const gwaegangList = ['戊戌', '庚戌', '庚辰', '壬辰', '壬戌'];
-  const dayPillarStr = dayPillar.join('');
-  const yearPillarStr = yearPillar.join('');
-  if (gwaegangList.includes(dayPillarStr)) addSinsal('괴강살', 'earth');
-  if (gwaegangList.includes(yearPillarStr)) addSinsal('괴강살', 'earth');
-  
-  // 3. 백호대살 (전체 기둥 조사) - 지지 신살
-  const baekhoList = ['甲辰', '乙未', '丙戌', '丁丑', '戊辰', '壬戌', '癸丑'];
-  [0, 1, 2, 3].forEach(i => {
-    const pillarStr = stems[i] + branches[i];
-    if (baekhoList.includes(pillarStr)) addSinsal('백호대살', 'earth');
-  });
-  
-  // 4. 현침살 (글자 모양 대조) - 천간/지지 신살
-  const hyeonchimChars = ['甲', '辛', '卯', '午', '申'];
-  const hasHyeonchimStem = stems.some(char => hyeonchimChars.includes(char));
-  const hasHyeonchimBranch = branches.some(char => hyeonchimChars.includes(char));
-  if (hasHyeonchimStem) addSinsal('현침살', 'heaven');
-  if (hasHyeonchimBranch && !hasHyeonchimStem) addSinsal('현침살', 'earth');
-  
-  // 5. 천문성 (술토, 해수 존재 여부) - 지지 신살
-  if (branches.includes('戌') || branches.includes('亥')) addSinsal('천문성', 'earth');
-  
-  // 6. 양인살 (양인살) - 일간 기준 '제왕(샀냉)'지 - 지지 신살
-  const yanginsalBranch: Record<string, string> = {
-    '甲': '卯', '丙': '午', '戊': '午',
-    '庚': '酉', '壬': '子'
-  };
-  if (yanginsalBranch[dayStem] && branches.includes(yanginsalBranch[dayStem])) {
-    addSinsal('양인살', 'earth');
-  }
-  
-  // 7. 정록 (정록) - 일간 기준 '건록' 지 - 지지 신살
-  const jeongrokBranch: Record<string, string> = {
-    '甲': '寅', '乙': '卯', '丙': '巳', '丁': '午',
-    '戊': '巳', '己': '午', '庚': '申', '辛': '酉',
-    '壬': '亥', '癸': '子'
-  };
-  if (jeongrokBranch[dayStem] && branches.includes(jeongrokBranch[dayStem])) {
-    addSinsal('정록', 'earth');
-  }
-  
-  // 8. 암록 (암록) - 정록과 육합하는 지지 - 지지 신살
-  const amrokBranch: Record<string, string> = {
-    '甲': '寅', '乙': '卯', '丙': '巳', '丁': '午',
-    '戊': '巳', '己': '午', '庚': '申', '辛': '酉',
-    '壬': '亥', '癸': '子'
-  };
-  if (amrokBranch[dayStem] && branches.includes(amrokBranch[dayStem])) {
-    addSinsal('암록', 'earth');
-  }
-  
-  // 9. 귀문관살 (귀문관살) - 지지 쌍 - 지지 신살
-  const gwimunPairs: [string, string][] = [
-    ['子', '酉'], ['丑', '午'], ['寅', '未'],
-    ['卯', '申'], ['辰', '亥'], ['巳', '戌']
-  ];
-  const branchSet = new Set(branches);
-  for (const [b1, b2] of gwimunPairs) {
-    if (branchSet.has(b1) && branchSet.has(b2)) {
-      addSinsal('귀문관살', 'earth');
-      break;
-    }
-  }
-  
-  // 10. 원진살 (원진살) - 지지 쌍 - 지지 신살
-  const wonjinPairs: [string, string][] = [
-    ['子', '未'], ['丑', '午'], ['寅', '酉'],
-    ['卯', '申'], ['辰', '亥'], ['巳', '戌']
-  ];
-  for (const [b1, b2] of wonjinPairs) {
-    if (branchSet.has(b1) && branchSet.has(b2)) {
-      addSinsal('원진살', 'earth');
-      break;
-    }
-  }
-  
-  return sinsalList;
-}
-
 /** BirthInput → SajuResult (확장 버전) */
 export function calculateSaju(input: BirthInput): SajuResult {
   const { year, month, day, hour, minute } = getAdjustedBirthDateTime(input);
@@ -603,9 +502,7 @@ export function calculateSaju(input: BirthInput): SajuResult {
   });
   // 팔자 관계
   const relations = analyzeAllRelations(ganzis);
-  // 신살 (기존 기본 신살)
-  const specialSals = getSpecialSals(stems, branches, dp);
-  // 갓사주 전용 특수 신살 산출 호출 (기둥별 독립 검사)
+  // 특수신살 (기둥별 천·지)
   const godSinsal: SpecialSinsal[] = [];
   const allPillars = ganzis.map((ganzi, idx) => ({
     ganzi: ganzi[0] + ganzi[1],
@@ -628,7 +525,6 @@ export function calculateSaju(input: BirthInput): SajuResult {
     pillars: pillars as any, // PillarDetailExtended는 PillarDetail의 확장
     daewoon,
     relations,
-    specialSals,
     godSinsal,
     gongmang,
     jwabeop,

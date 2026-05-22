@@ -1,4 +1,4 @@
-import { Solar } from 'lunar-javascript'
+﻿import { Solar } from 'lunar-javascript'
 import type { BirthInput, JasiMethod, SajuResult, ZiweiChart, LiuNianInfo, NatalChart } from '@core/types'
 import { ELEMENT_HANJA, PILLAR_NAMES, PALACE_NAMES, MAIN_STAR_NAMES, JIJANGGAN, GONGMANG_TABLE, HGANJI } from '@core/constants'
 import { getDaxianList } from '@core/ziwei'
@@ -127,7 +127,7 @@ function makeT(locale?: Locale) {
 /** 사주 결과를 CLI 형식 텍스트로 변환 */
 export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: number): string {
   const t = makeT(locale)
-  const { input, pillars, daewoon, daewoonMeta, relations, specialSals, gongmang, ohaengSipsin, sinGangYak, yongsin } = result
+  const { input, pillars, daewoon, daewoonMeta, relations, gongmang, ohaengSipsin, sinGangYak, yongsin } = result
   const lines: string[] = []
 
   // 음양오행 변환 맵 (PillarTable.tsx와 동일)
@@ -481,8 +481,6 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     lines.push(`3자 관계: ${bzMulti.join(', ')}`)
   }
   lines.push('')
-
-  // 신살 목록 제거 - 특수신살 표에서 모두 표시됨
 
   // 坐法 · 引從法 통합 마크다운 표
   if (result.jwabeop) {
@@ -844,6 +842,8 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     // 월운 섹션
     lines.push('')
     lines.push(sectionTitle('월운 (月運)'))
+    lines.push('')
+    lines.push('※ 월운은 양력 1~12월 기준이며, 각 칸 간지는 월두법으로 산출·고정됩니다. 절기 시각별 流月 전환과는 다를 수 있습니다.')
     lines.push('')
 
     // 월운 데이터: 지정 연도(monthlyYear) 1월~12월 동적 생성
@@ -1328,301 +1328,4 @@ export function natalToText(chart: NatalChart, houseSystemName = 'Placidus'): st
   }
 
   return lines.join('\n')
-}
-
-
-/** 일운(日運) 데이터를 AI해석용 복사본 양식으로 변환 */
-export function dailyCalendarToText(
-  year: number,
-  month: number,
-  dayStem: string,
-  yearBranch: string,
-  days: Array<{
-    day: number;
-    lunarMonth: number;
-    lunarDay: number;
-    ganzi: { stem: string; branch: string };
-    jieqi?: { name: string; time: string };
-    stemTenStem: string | null;
-    branchTenStem: string | null;
-    twelveMeteor: string | null;
-    twelveSpirit: string | null;
-  }>
-): string {
-  const lines: string[] = []
-
-  // 제목
-  lines.push(sectionTitle(`일운 (日運) (${year}년 ${String(month).padStart(2, '0')}월)`))
-  lines.push('')
-
-  // 테이블 헤더
-  lines.push('| 날짜(음력) / 절기 | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 | 합충형파해 | 비고(공망 등) |')
-  lines.push('|---|---|---|---|---|---|---|---|---|')
-
-  // 각 날짜별 데이터 행
-  for (const d of days) {
-    const lunarDate = `${month}월${d.lunarDay}일(음${d.lunarMonth}.${d.lunarDay})`
-    const jieqiInfo = d.jieqi ? ` / ${d.jieqi.name}${d.jieqi.time}` : ''
-    const dateCol = `${lunarDate}${jieqiInfo}`
-    
-    const stemTenStemCol = d.stemTenStem || ''
-    const stemCol = d.ganzi.stem
-    const branchCol = d.ganzi.branch
-    const branchTenStemCol = d.branchTenStem || ''
-    const meteorCol = d.twelveMeteor || ''
-    const spiritCol = d.twelveSpirit || ''
-    const hoaChungCol = '' // 합충형파해 - 나중에 채워질 예정
-    const bigoCol = '' // 비고(공망 등) - 나중에 채워질 예정
-
-    lines.push(
-      `| ${dateCol} | ${stemTenStemCol} | ${stemCol} | ${branchCol} | ${branchTenStemCol} | ${meteorCol} | ${spiritCol} | ${hoaChungCol} | ${bigoCol} |`
-    )
-  }
-
-  lines.push('')
-
-  return lines.join('\n')
-}
-
-
-/** 
- * 일운(日運) 데이터를 설정된 범위만큼 추출하여 AI해석용 양식으로 생성
- * @param dayStem - 사용자 일간 (예: 甲)
- * @param yearBranch - 사용자 년지 (예: 子)
- * @param copyDirection - 복사 방향 ('future' | 'past')
- * @param copyMonths - 복사 개월수 ('1' | '3' | '6')
- * @returns 설정된 범위의 일운 데이터를 테이블 양식으로 변환한 문자열
- */
-export function generateDailyLuckText(
-  dayStem: string,
-  yearBranch: string,
-  copyDirection: 'future' | 'past',
-  copyMonths: string
-): string {
-  try {
-    // 범위 계산
-    const today = new Date();
-    let startDate = new Date(today);
-    let endDate = new Date(today);
-    const months = parseInt(copyMonths) || 3;
-
-    if (copyDirection === 'future') {
-      // 미래: 오늘부터 N개월 뒤까지
-      endDate.setMonth(endDate.getMonth() + months);
-    } else {
-      // 과거: N개월 전부터 오늘까지
-      startDate.setMonth(startDate.getMonth() - months);
-    }
-
-    // 범위 내의 모든 날짜 추출
-    const days: Array<{
-      day: number;
-      lunarMonth: number;
-      lunarDay: number;
-      ganzi: { stem: string; branch: string };
-      jieqi?: { name: string; time: string };
-      stemTenStem: string | null;
-      branchTenStem: string | null;
-      twelveMeteor: string | null;
-      twelveSpirit: string | null;
-    }> = [];
-
-    const { Solar } = require('lunar-javascript');
-    const { getRelation, getHiddenStems, getTwelveMeteor, getTwelveSpirit } = require('@core/pillars');
-
-    // 범위 내 모든 날짜 순회
-    const current = new Date(startDate);
-    while (current <= endDate) {
-      const year = current.getFullYear();
-      const month = current.getMonth() + 1;
-      const day = current.getDate();
-
-      try {
-        const solar = Solar.fromYmd(year, month, day);
-        const lunar = solar.getLunar();
-        const ganzi = solar.getGanzi();
-
-        // 천간십성 계산
-        const relation = getRelation(dayStem, ganzi.stem);
-        const stemTenStem = relation || null;
-
-        // 지지십성 계산 (정기 기준)
-        const branchRelation = getRelation(dayStem, ganzi.branch);
-        const branchTenStem = branchRelation || null;
-
-        // 12운성 계산
-        const twelveMeteor = getTwelveMeteor(dayStem, ganzi.branch) || null;
-
-        // 12신살 계산 (년지 기준)
-        const twelveSpirit = getTwelveSpirit(yearBranch, ganzi.branch) || null;
-
-        // 절기 정보 추출
-        let jieqi: { name: string; time: string } | undefined;
-        try {
-          const jieQiTable = lunar.getJieQiTable();
-          // 절기 정보는 복잡하므로 여기서는 생략 (필요시 추가)
-        } catch (e) {
-          // 절기 정보 없음
-        }
-
-        days.push({
-          day,
-          lunarMonth: lunar.getMonth(),
-          lunarDay: lunar.getDay(),
-          ganzi: { stem: ganzi.stem, branch: ganzi.branch },
-          jieqi,
-          stemTenStem,
-          branchTenStem,
-          twelveMeteor,
-          twelveSpirit
-        });
-      } catch (e) {
-        console.warn(`날짜 ${year}-${month}-${day} 처리 오류:`, e);
-      }
-
-      // 다음 날짜로 이동
-      current.setDate(current.getDate() + 1);
-    }
-
-    // 데이터가 없으면 빈 문자열 반환
-    if (days.length === 0) {
-      return '';
-    }
-
-    // 첫 번째 날짜의 연/월 기준으로 제목 생성
-    const firstDay = days[0];
-    const year = startDate.getFullYear();
-    const month = startDate.getMonth() + 1;
-
-    // dailyCalendarToText 함수 사용하여 테이블 생성
-    return dailyCalendarToText(year, month, dayStem, yearBranch, days);
-  } catch (e) {
-    console.error('[generateDailyLuckText] 오류:', e);
-    return '';
-  }
-}
-
-// ============================================
-// 범위 필터링 기반 일운 데이터 추출 함수들
-// ============================================
-
-/** 범위 내 일운 데이터 추출 */
-export function extractDailyLuckData(
-  dayStem: string,
-  yearBranch: string,
-  selectedDate?: Date
-): Array<{
-  date: string;
-  lunarDate: string;
-  ganzi: string;
-  stem: string;
-  branch: string;
-  stemSipsin: string;
-  branchSipsin: string;
-  meteor: string;
-  spirit: string;
-}> {
-  try {
-    const { Solar } = require('lunar-javascript');
-    const { getRelation, getTwelveMeteor, getTwelveSpirit } = require('@core/pillars');
-    
-    // 선택된 날짜 또는 오늘부터 시작
-    const startDate = selectedDate ? new Date(selectedDate) : new Date();
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 30); // 31일 = 시작일 + 30일
-
-    const dailyData: Array<any> = [];
-    const current = new Date(startDate);
-
-    while (current <= endDate) {
-      const year = current.getFullYear();
-      const month = current.getMonth() + 1;
-      const day = current.getDate();
-
-      try {
-        const solar = Solar.fromYmd(year, month, day);
-        const lunar = solar.getLunar();
-        const ganzi = solar.getGanzi();
-        
-        const stem = ganzi.stem;
-        const branch = ganzi.branch;
-
-        const stemSipsin = getRelation(dayStem, stem) || '';
-        const branchSipsin = getRelation(dayStem, branch) || '';
-        const meteor = getTwelveMeteor(dayStem, branch) || '';
-        const spirit = getTwelveSpirit(yearBranch, branch) || '';
-
-        const lunarMonth = lunar.getMonth();
-        const lunarDay = lunar.getDay();
-
-        dailyData.push({
-          date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-          lunarDate: `${lunarMonth}월${lunarDay}일`,
-          ganzi: `${stem}${branch}`,
-          stem,
-          branch,
-          stemSipsin,
-          branchSipsin,
-          meteor,
-          spirit
-        });
-      } catch (e) {
-        // 날짜 처리 오류 무시
-      }
-
-      current.setDate(current.getDate() + 1);
-    }
-
-    return dailyData;
-  } catch (e) {
-    console.error('[extractDailyLuckData] 오류:', e);
-    return [];
-  }
-}
-
-/** 추출된 일운 데이터를 테이블로 변환 */
-export function dailyDataToText(
-  dailyData: Array<any>,
-  year: number,
-  month: number
-): string {
-  const lines: string[] = [];
-
-  lines.push(sectionTitle(`일운 (日運) (${year}년 ${String(month).padStart(2, '0')}월)`));
-  lines.push('');
-  lines.push('| 날짜(음력) | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 |');
-  lines.push('|---|---|---|---|---|---|---|');
-
-  for (const d of dailyData) {
-    lines.push(
-      `| ${d.lunarDate} | ${d.stemSipsin || ''} | ${d.stem} | ${d.branch} | ${d.branchSipsin || ''} | ${d.meteor || ''} | ${d.spirit || ''} |`
-    );
-  }
-
-  lines.push('');
-  return lines.join('\n');
-}
-
-/** 일운 데이터 생성 (31일 고정 기간) */
-export function generateDailyLuckTextNew(
-  dayStem: string,
-  yearBranch: string,
-  selectedDate?: Date
-): string {
-  try {
-    const dailyData = extractDailyLuckData(dayStem, yearBranch, selectedDate);
-
-    if (dailyData.length === 0) {
-      return '';
-    }
-
-    const firstDate = dailyData[0].date;
-    const [year, monthStr] = firstDate.split('-');
-    const month = parseInt(monthStr);
-
-    return dailyDataToText(dailyData, parseInt(year), month);
-  } catch (e) {
-    console.error('[generateDailyLuckTextNew] 오류:', e);
-    return '';
-  }
 }

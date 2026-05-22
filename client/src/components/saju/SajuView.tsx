@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { calculateSaju } from '@core/index'
 import PillarTable from './PillarTable.tsx'
 import OhaengSipsinSection from './OhaengSipsinSection.tsx'
@@ -8,6 +8,7 @@ import SpecialSinsalTable from './SpecialSinsalTable.tsx'
 import RelationList from './RelationList.tsx'
 import JwaInjongTable from './JwaInjongTable.tsx'
 import DaewoonTable from './DaewoonTable.tsx'
+import SewoonTable, { findActiveDaewoonIndexByAge } from './SewoonTable.tsx'
 import MonthlyTable from './MonthlyTable.tsx'
 import DailyCalendar from './DailyCalendar.tsx'
 import CopyButton from '../CopyButton.tsx'
@@ -25,6 +26,19 @@ export default function SajuView({ input }: Props) {
 
   const result = useMemo(() => calculateSaju(input), [input])
   const [monthlyDisplayYear, setMonthlyDisplayYear] = useState(new Date().getFullYear())
+
+  const currentAge = new Date().getFullYear() - input.year
+  const autoDaewoonIdx = useMemo(
+    () => findActiveDaewoonIndexByAge(result.daewoon, currentAge),
+    [result.daewoon, currentAge],
+  )
+  const [selectedDaewoonIdx, setSelectedDaewoonIdx] = useState(autoDaewoonIdx)
+
+  useEffect(() => {
+    setSelectedDaewoonIdx(autoDaewoonIdx)
+  }, [result.daewoon, autoDaewoonIdx])
+
+  const displayDaewoonIdx = selectedDaewoonIdx >= 0 ? selectedDaewoonIdx : autoDaewoonIdx
 
   const ganzis = result.pillars.map(p => p.pillar.ganzi)
   const natalPillars = ganzis // [시, 일, 월, 년]
@@ -101,6 +115,18 @@ export default function SajuView({ input }: Props) {
           daewoon={result.daewoon}
           daewoonMeta={result.daewoonMeta}
           unknownTime={input.unknownTime}
+          pillars={result.pillars.map(p => p.pillar.ganzi)}
+          selectedIdx={selectedDaewoonIdx}
+          autoIndex={autoDaewoonIdx}
+          onSelectDaewoon={setSelectedDaewoonIdx}
+        />
+      </div>
+
+      {/* 세운 */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <SewoonTable
+          daewoon={result.daewoon}
+          displayIndex={displayDaewoonIdx}
           birthYear={input.year}
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}

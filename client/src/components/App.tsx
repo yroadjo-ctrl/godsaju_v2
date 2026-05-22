@@ -13,12 +13,11 @@ import NatalView from './natal/NatalView.tsx'
 import { calculateSaju } from '@core/saju'
 import { createChart } from '@core/ziwei'
 import { calculateNatal } from '@core/natal'
-import { sajuToText, ziweiToText, natalToText, generateDailyLuckTextNew } from '../utils/text-export.ts'
+import { sajuToText, ziweiToText, natalToText } from '../utils/text-export.ts'
 import type { BirthInput } from '@core/types'
 
 type Tab = 'saju' | 'ziwei' | 'natal'
 
-// AppContent 컴포넌트 - DailyLuckContext 제거
 function AppContent() {
   const { t } = useLocale()
   const [tab, setTab] = useState<Tab>('saju')
@@ -129,17 +128,7 @@ function AppContent() {
                     }
                     const natal = await calculateNatal(birthInput)
                     parts.push(natalToText(natal))
-                    
-                    // 31일 고정 기간으로 일운 데이터 추가 (오늘부터 시작)
-                    const dailyText = generateDailyLuckTextNew(
-                      saju.pillars[1].pillar.stem,
-                      saju.pillars[3].pillar.branch
-                    );
-                    
-                    if (dailyText) {
-                      parts.push(dailyText)
-                    }
-                    
+
                     return parts.join('\n\n')
                   }}
                 />
@@ -164,7 +153,6 @@ function AppContent() {
   )
 }
 
-// App 컴포넌트 - DailyLuckProvider 제거
 export default function App() {
   return <AppContent />
 }

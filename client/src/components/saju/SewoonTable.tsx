@@ -1,80 +1,56 @@
-import { useState } from 'react'
-import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
-import { calculateMonthGanzi } from '@core/monthly-data'
+import { useMemo } from 'react'
+import type { DaewoonItem } from '@core/types'
+import { getYearGanzi, getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
-import { useLocale } from '../../i18n/index.ts'
 
 interface Props {
-  currentYear: number
-  currentMonth: number
-  pillars: string[][]
+  daewoon: DaewoonItem[]
+  displayIndex: number
+  birthYear: number
   dayStem: string
   yearBranch: string
   gongmangBranches: [string, string]
-  onYearChange?: (year: number) => void
+  pillars: string[][]
 }
 
-interface MonthlyItem {
+interface SewoonItem {
   year: number
-  month: number
+  age: number
   ganzi: string
   stemSipsin: string
   branchSipsin: string
   unseong: string
   sinsal: string
-  interactions: string
   isGongmang: boolean
-  solarTerm: string
-}
-
-const MONTH_TO_SOLAR_TERM: Record<number, string> = {
-  1: '소한(小寒)',
-  2: '입춘(立春)',
-  3: '경칩(驚蟄)',
-  4: '청명(清明)',
-  5: '입하(入夏)',
-  6: '망종(芒種)',
-  7: '소서(小暑)',
-  8: '입추(立秋)',
-  9: '백로(白露)',
-  10: '한로(寒露)',
-  11: '입동(立冬)',
-  12: '대설(大雪)',
+  interactions: string
 }
 
 const STEM_SIPSIN_MAP: Record<string, string> = {
   '正官': '정관(正官)', '偏官': '편관(偏官)', '正印': '정인(正印)', '偏印': '편인(偏印)',
   '正財': '정재(正財)', '偏財': '편재(偏財)', '食神': '식신(食神)', '傷官': '상관(傷官)',
-  '比肩': '비견(比肩)', '劫財': '겁재(劫財)'
+  '比肩': '비견(比肩)', '劫財': '겁재(劫財)',
 }
 
-const BRANCH_SIPSIN_MAP: Record<string, string> = {
-  '正官': '정관(正官)', '偏官': '편관(偏官)', '正印': '정인(正印)', '偏印': '편인(偏印)',
-  '正財': '정재(正財)', '偏財': '편재(偏財)', '食神': '식신(食神)', '傷官': '상관(傷官)',
-  '比肩': '비견(比肩)', '劫財': '겁재(劫財)'
-}
-
-function buildMonthlyItems(
-  displayYear: number,
-  pillars: string[][], dayStem: string, yearBranch: string,
+function buildSewoonItems(
+  startYear: number, endYear: number,
+  birthYear: number, dayStem: string, yearBranch: string,
   gmSet: Set<string>,
-): MonthlyItem[] {
-  const items: MonthlyItem[] = []
-  const posLabels = ["시", "일", "월", "년"]
+  pillars: string[][],
+): SewoonItem[] {
+  const items: SewoonItem[] = []
+  const posLabels = ['시', '일', '월', '년']
 
-  for (let month = 1; month <= 12; month++) {
-    const ganzi = calculateMonthGanzi(displayYear, month)
+  for (let y = startYear; y < endYear; y++) {
+    const ganzi = getYearGanzi(y)
     const stem = ganzi[0]
     const branch = ganzi[1]
-
-    const stemRel = getRelation(dayStem, stem)
-    const stemSipsin = stemRel ? stemRel.hanja : '?'
+    const rel = getRelation(dayStem, stem)
+    const stemSipsin = rel ? rel.hanja : '?'
     const jeonggi = getJeonggi(branch)
-    const jeonggiRel = getRelation(dayStem, jeonggi)
-    const branchSipsin = jeonggiRel ? jeonggiRel.hanja : '?'
+    const bRel = getRelation(dayStem, jeonggi)
+    const branchSipsin = bRel ? bRel.hanja : '?'
 
     const interArr: string[] = []
-
     pillars.forEach((p, idx) => {
       const natalStem = p[0]
       const natalBranch = p[1]
@@ -89,9 +65,9 @@ function buildMonthlyItems(
         })
       }
 
-      const bRel = getBranchRelation(natalBranch, branch)
-      if (bRel) {
-        const bRels = Array.isArray(bRel) ? bRel : [bRel]
+      const brRel = getBranchRelation(natalBranch, branch)
+      if (brRel) {
+        const bRels = Array.isArray(brRel) ? brRel : [brRel]
         bRels.forEach(rel => {
           const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel
           if (label) interArr.push(`${natalBranch}${branch}${label}(${pos}지)`)
@@ -100,80 +76,78 @@ function buildMonthlyItems(
     })
 
     items.push({
-      year: displayYear,
-      month,
+      year: y,
+      age: y - birthYear,
       ganzi,
       stemSipsin,
       branchSipsin,
       unseong: getTwelveMeteor(dayStem, branch),
       sinsal: formatSinsal(getTwelveSpirit(yearBranch, branch)),
-      interactions: interArr.length > 0 ? interArr.join('\n') : '',
       isGongmang: gmSet.has(branch),
-      solarTerm: MONTH_TO_SOLAR_TERM[month] || '',
+      interactions: interArr.length > 0 ? interArr.join('\n') : '',
     })
   }
   return items
 }
 
-export default function MonthlyTable({
-  currentYear, currentMonth, pillars, dayStem, yearBranch, gongmangBranches, onYearChange,
+export function findActiveDaewoonIndexByAge(daewoon: DaewoonItem[], currentAge: number): number {
+  for (let i = 0; i < daewoon.length; i++) {
+    const d = daewoon[i]
+    if (currentAge >= d.age && currentAge <= d.age + 9) {
+      return i
+    }
+  }
+  return 0
+}
+
+export default function SewoonTable({
+  daewoon, displayIndex, birthYear, dayStem, yearBranch, gongmangBranches, pillars,
 }: Props) {
-  const { t } = useLocale()
-  const [displayYear, setDisplayYear] = useState(currentYear)
-  const gmSet = new Set(gongmangBranches)
-  const monthlyItems = buildMonthlyItems(displayYear, pillars, dayStem, yearBranch, gmSet)
+  const gmSet = useMemo(() => new Set(gongmangBranches), [gongmangBranches])
 
-  const handlePrevYear = () => {
-    const newYear = displayYear - 1
-    setDisplayYear(newYear)
-    onYearChange?.(newYear)
-  }
+  const targetDaewoon = daewoon[displayIndex] ?? daewoon[0]
+  const startYearForSewoon = birthYear + (targetDaewoon?.age ?? 0)
+  const endYearForSewoon = startYearForSewoon + 10
 
-  const handleNextYear = () => {
-    const newYear = displayYear + 1
-    setDisplayYear(newYear)
-    onYearChange?.(newYear)
-  }
+  const sewoonItems = useMemo(() => {
+    if (!targetDaewoon) return []
+    return buildSewoonItems(
+      startYearForSewoon,
+      endYearForSewoon,
+      birthYear,
+      dayStem,
+      yearBranch,
+      gmSet,
+      pillars,
+    )
+  }, [targetDaewoon, startYearForSewoon, endYearForSewoon, birthYear, dayStem, yearBranch, gmSet, pillars])
+
+  if (sewoonItems.length === 0) return null
+
+  const periodLabel = `${targetDaewoon.age}세~ (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">
-          월운 <span className="font-hanja">(月運)</span>
-        </h3>
-        <div className="flex items-center gap-3 text-sm">
-          <button
-            onClick={handlePrevYear}
-            className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-100 text-gray-600"
-          >
-            &lt; 이전해
-          </button>
-          <span className="font-semibold text-gray-700">{displayYear}년</span>
-          <button
-            onClick={handleNextYear}
-            className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-100 text-gray-600"
-          >
-            다음해 &gt;
-          </button>
-        </div>
-      </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-        ※ 월운은 양력 1~12월 기준이며, 각 칸 간지는 월두법으로 산출·고정됩니다. 절기 시각별 流月 전환과는 다를 수 있습니다.
+    <section>
+      <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
+        세운 <span className="font-hanja">(歲運)</span>
+      </h3>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        선택 대운: {periodLabel}
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr>
-              {monthlyItems.map((item, idx) => {
-                const isCurrentMonth = item.year === currentYear && item.month === currentMonth
+            <tr className="bg-gray-100">
+              {[...sewoonItems].reverse().map((item, idx) => {
+                const isCurrentYear = item.year === new Date().getFullYear()
                 return (
                   <th
                     key={idx}
-                    className={`border border-black px-2 py-1 text-center min-w-[100px] text-xs ${
-                      isCurrentMonth ? 'bg-[#FFFF00] text-black font-bold' : 'bg-gray-100'
+                    className={`border border-black px-2 py-2 text-center min-w-[100px] text-xs font-semibold ${
+                      isCurrentYear ? 'bg-[#FFFF00]' : 'bg-gray-100'
                     }`}
                   >
-                    {item.year}년<br />{item.month}월
+                    {item.age}세<br />({item.year}년)
                   </th>
                 )
               })}
@@ -181,21 +155,14 @@ export default function MonthlyTable({
           </thead>
           <tbody>
             <tr>
-              {monthlyItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
-                  {item.solarTerm}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              {monthlyItems.map((item, idx) => (
+              {[...sewoonItems].reverse().map((item, idx) => (
                 <td key={idx} className={`border border-black px-2 py-1 text-center text-xs font-medium ${stemColorClass(item.ganzi[0])}`}>
                   {STEM_SIPSIN_MAP[item.stemSipsin] || item.stemSipsin}
                 </td>
               ))}
             </tr>
             <tr>
-              {monthlyItems.map((item, idx) => {
+              {[...sewoonItems].reverse().map((item, idx) => {
                 const stemAttr = getStemAttr(item.ganzi[0])
                 return (
                   <td key={idx} className="border border-black px-2 py-2 text-center">
@@ -215,7 +182,7 @@ export default function MonthlyTable({
               })}
             </tr>
             <tr>
-              {monthlyItems.map((item, idx) => {
+              {[...sewoonItems].reverse().map((item, idx) => {
                 const branchAttr = getBranchAttr(item.ganzi[1])
                 return (
                   <td key={idx} className="border border-black px-2 py-2 text-center">
@@ -235,21 +202,21 @@ export default function MonthlyTable({
               })}
             </tr>
             <tr>
-              {monthlyItems.map((item, idx) => (
+              {[...sewoonItems].reverse().map((item, idx) => (
                 <td key={idx} className={`border border-black px-2 py-1 text-center text-xs font-medium ${branchColorClass(item.ganzi[1])}`}>
-                  {BRANCH_SIPSIN_MAP[item.branchSipsin] || item.branchSipsin}
+                  {STEM_SIPSIN_MAP[item.branchSipsin] || item.branchSipsin}
                 </td>
               ))}
             </tr>
             <tr>
-              {monthlyItems.map((item, idx) => (
+              {[...sewoonItems].reverse().map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
                   {item.unseong}
                 </td>
               ))}
             </tr>
             <tr>
-              {monthlyItems.map((item, idx) => {
+              {[...sewoonItems].reverse().map((item, idx) => {
                 const match = item.sinsal.match(/^(.+?)\((.+?)\)$/)
                 const hangul = match ? match[1] : item.sinsal
                 const hanja = match ? `(${match[2]})` : ''
@@ -261,15 +228,15 @@ export default function MonthlyTable({
               })}
             </tr>
             <tr>
-              {monthlyItems.map((item, idx) => (
+              {[...sewoonItems].reverse().map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
                   {item.isGongmang ? '空亡' : '-'}
                 </td>
               ))}
             </tr>
             <tr className="bg-blue-50/30">
-              {monthlyItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep">
+              {[...sewoonItems].reverse().map((item, idx) => (
+                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep min-h-[50px]">
                   {item.interactions || '-'}
                 </td>
               ))}
@@ -277,6 +244,6 @@ export default function MonthlyTable({
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   )
 }

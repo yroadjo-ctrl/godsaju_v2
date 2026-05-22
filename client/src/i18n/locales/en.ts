@@ -176,18 +176,6 @@ const en: Record<string, string> = {
   'saju.unknownTimeWarning': 'Calculated based on noon (12:00) without birth time. The start of major cycles may have an error of several months.',
   'saju.ageSuffix': '',
 
-  // Saju - SinsalList
-  'saju.sal.cheonul': 'Heavenly Noble (天乙貴人)',
-  'saju.sal.cheonduk': 'Heavenly Virtue (天德貴人)',
-  'saju.sal.wolduk': 'Monthly Virtue (月德貴人)',
-  'saju.sal.munchang': 'Literary Star (文昌貴人)',
-  'saju.sal.geumyeo': 'Golden Carriage (金輿祿)',
-  'saju.sal.yangin': 'Blade Star (羊刃殺)',
-  'saju.sal.dohwa': 'Peach Blossom (桃花殺)',
-  'saju.sal.baekho': 'White Tiger (白虎殺)',
-  'saju.sal.goegang': 'Chief Star (魁罡殺)',
-  'saju.sal.hongyeom': 'Red Beauty (紅艶殺)',
-
   // Saju - TransitView
   'saju.transit.past': 'Past',
   'saju.transit.future': 'Upcoming',

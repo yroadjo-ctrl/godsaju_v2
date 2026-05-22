@@ -177,18 +177,6 @@ const ko: Record<string, string> = {
   'saju.unknownTimeWarning': '출생 시간 없이 정오(12:00) 기준으로 계산하여 대운 시작 시기에 수개월 오차가 있을 수 있습니다.',
   'saju.ageSuffix': '세',
 
-  // Saju - SinsalList
-  'saju.sal.cheonul': '천을귀인',
-  'saju.sal.cheonduk': '천덕귀인',
-  'saju.sal.wolduk': '월덕귀인',
-  'saju.sal.munchang': '문창귀인',
-  'saju.sal.geumyeo': '금여록',
-  'saju.sal.yangin': '양인살',
-  'saju.sal.dohwa': '도화살',
-  'saju.sal.baekho': '백호살',
-  'saju.sal.goegang': '괴강살',
-  'saju.sal.hongyeom': '홍염살',
-
   // Saju - TransitView
   'saju.transit.past': '과거',
   'saju.transit.future': '향후',

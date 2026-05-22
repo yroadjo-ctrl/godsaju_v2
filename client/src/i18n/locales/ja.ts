@@ -165,18 +165,6 @@ const ja: Record<string, string> = {
   'saju.unknownTimeWarning': '出生時間未入力のため正午（12:00）基準で計算しており、大運の開始時期に数か月の誤差がある可能性があります。',
   'saju.ageSuffix': '歳',
 
-  // Saju - SinsalList
-  'saju.sal.cheonul': '天乙貴人',
-  'saju.sal.cheonduk': '天徳貴人',
-  'saju.sal.wolduk': '月徳貴人',
-  'saju.sal.munchang': '文昌貴人',
-  'saju.sal.geumyeo': '金輿禄',
-  'saju.sal.yangin': '羊刃殺',
-  'saju.sal.dohwa': '桃花殺',
-  'saju.sal.baekho': '白虎殺',
-  'saju.sal.goegang': '魁罡殺',
-  'saju.sal.hongyeom': '紅艶殺',
-
   // Saju - TransitView
   'saju.transit.past': '過去',
   'saju.transit.future': '今後',

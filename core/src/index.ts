@@ -70,7 +70,7 @@ export {
   getStemRelation, getBranchRelation,
   analyzePillarRelations, analyzeAllRelations,
   checkTripleCompose, checkDirectionalCompose,
-  getSpecialSals, findTransits, calculateJwabeop, calculateInjongbeop,
+  findTransits, calculateJwabeop, calculateInjongbeop,
   calcPillarIndices, calcSolarTerms, getGongmang, getYearGanzi,
 } from './pillars.ts'
 
@@ -104,7 +104,7 @@ export type {
   StemInfo, Relation, Meteor, Spirit, SpecialSinsal,
   Pillar, PillarDetail, DaewoonItem,
   RelationResult, PairRelation, AllRelations,
-  SpecialSals, Gongmang, TransitItem, JwaEntry, InjongEntry,
+  Gongmang, TransitItem, JwaEntry, InjongEntry,
   SajuResult,
   WuXingJu, ZiweiStar, ZiweiPalace, ZiweiChart,
   LiuYueInfo, LiuNianInfo,

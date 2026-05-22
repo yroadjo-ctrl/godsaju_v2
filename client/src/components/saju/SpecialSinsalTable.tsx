@@ -108,7 +108,7 @@ export default function SpecialSinsalTable({
       )
 
   return (
-    <div className="mt-6">
+    <section>
       <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
         특수신살 <span className="font-hanja">(特殊神殺)</span> (길성과 흉성)
       </h3>
@@ -215,6 +215,6 @@ export default function SpecialSinsalTable({
           </tr>
         </tbody>
       </table>
-    </div>
+    </section>
   )
 }

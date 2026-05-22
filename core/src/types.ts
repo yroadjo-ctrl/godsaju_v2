@@ -154,20 +154,6 @@ export interface AllRelations {
   directional: RelationResult[];
 }
 
-/** 신살 정보 */
-export interface SpecialSals {
-  yangin: number[];      // 양인살 위치 인덱스
-  baekho: boolean;       // 백호살
-  goegang: boolean;      // 괴강살
-  dohwa: number[];       // 도화살 위치 인덱스
-  cheonul: number[];     // 천을귀인 위치 인덱스
-  cheonduk: number[];    // 천덕귀인 위치 인덱스 (천간 또는 지지)
-  wolduk: number[];      // 월덕귀인 위치 인덱스 (천간)
-  munchang: number[];    // 문창귀인 위치 인덱스
-  hongyeom: boolean;     // 홍염살
-  geumyeo: number[];     // 금여록 위치 인덱스
-}
-
 /** 공망 정보 */
 export interface Gongmang {
   /** 공망 지지 2개 */
@@ -210,9 +196,7 @@ export interface SajuResult {
   daewoonMeta: DaewoonMeta;
   /** 팔자 관계 */
   relations: AllRelations;
-  /** 신살 */
-  specialSals: SpecialSals;
-  /** 갓사주 전용 특수 신살 데이터 추가 */
+  /** 특수신살 (柱별 천·지) */
   godSinsal?: SpecialSinsal[];
   /** 공망 */
   gongmang: Gongmang;

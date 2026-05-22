@@ -11,13 +11,10 @@ import {
   STEM_COMBINES, STEM_CLASHES,
   BRANCH_COMBINES_6, BRANCH_CLASHES, BRANCH_BREAKS, BRANCH_HARMS,
   BRANCH_PUNISHMENTS, BRANCH_SELF_PUNISHMENTS, BRANCH_WONJIN, BRANCH_GWIMUN,
-  YANGIN_MAP, BAEKHO_PILLARS, GOEGANG_PILLARS,
-  DOHWA_MAP, CHEONUL_MAP, CHEONDUK_MAP, WOLDUK_MAP,
-  MUNCHANG_MAP, HONGYEOM_PILLARS, GEUMYEO_MAP,
   JIJANGGAN, METEOR_LOOKUP, PILLAR_NAMES, GONGMANG_TABLE,
 } from './constants.ts';
 import type {
-  Element, Relation, RelationResult, PairRelation, AllRelations, SpecialSals,
+  Element, Relation, RelationResult, PairRelation, AllRelations,
   TransitItem, JwaEntry, InjongEntry, JasiMethod,
 } from './types.ts';
 
@@ -767,77 +764,6 @@ export function analyzeAllRelations(pillars: string[]): AllRelations {
     pairs,
     triple: checkTripleCompose(branches),
     directional: checkDirectionalCompose(branches),
-  };
-}
-
-// =============================================
-// 신살
-// =============================================
-
-export function getSpecialSals(
-  stems: string[], branches: string[], dayPillar: string,
-): SpecialSals {
-  const dayStem = stems[1];
-  const dayBranch = branches[1];
-  const monthBranch = branches[2];
-
-  // 양인살
-  const yanginBranch = YANGIN_MAP[dayStem];
-  const yangin = yanginBranch
-    ? branches.reduce<number[]>((acc, b, i) => { if (b === yanginBranch) acc.push(i); return acc; }, [])
-    : [];
-
-  // 도화살 (일지 삼합 기준)
-  const dohwaBranch = DOHWA_MAP[dayBranch];
-  const dohwa = dohwaBranch
-    ? branches.reduce<number[]>((acc, b, i) => { if (i !== 1 && b === dohwaBranch) acc.push(i); return acc; }, [])
-    : [];
-
-  // 천을귀인 (일간 기준)
-  const cheonulBranches = CHEONUL_MAP[dayStem] ?? [];
-  const cheonul = branches.reduce<number[]>((acc, b, i) => {
-    if (cheonulBranches.includes(b)) acc.push(i);
-    return acc;
-  }, []);
-
-  // 천덕귀인 (월지 기준, 천간 또는 지지에서 탐색)
-  const cheondukChar = CHEONDUK_MAP[monthBranch];
-  const cheonduk = cheondukChar
-    ? [...stems, ...branches].reduce<number[]>((acc, ch, i) => {
-        if (ch === cheondukChar) acc.push(i % 4); // stems[0..3], branches[0..3] → pillar index
-        return acc;
-      }, []).filter((v, i, a) => a.indexOf(v) === i) // deduplicate
-    : [];
-
-  // 월덕귀인 (월지 기준, 천간에서 탐색)
-  const woldukChar = WOLDUK_MAP[monthBranch];
-  const wolduk = woldukChar
-    ? stems.reduce<number[]>((acc, s, i) => { if (s === woldukChar) acc.push(i); return acc; }, [])
-    : [];
-
-  // 문창귀인 (일간 기준)
-  const munchangBranch = MUNCHANG_MAP[dayStem];
-  const munchang = munchangBranch
-    ? branches.reduce<number[]>((acc, b, i) => { if (b === munchangBranch) acc.push(i); return acc; }, [])
-    : [];
-
-  // 금여록 (일간 기준)
-  const geumyeoBranch = GEUMYEO_MAP[dayStem];
-  const geumyeo = geumyeoBranch
-    ? branches.reduce<number[]>((acc, b, i) => { if (b === geumyeoBranch) acc.push(i); return acc; }, [])
-    : [];
-
-  return {
-    yangin,
-    baekho: BAEKHO_PILLARS.has(dayPillar),
-    goegang: GOEGANG_PILLARS.has(dayPillar),
-    dohwa,
-    cheonul,
-    cheonduk,
-    wolduk,
-    munchang,
-    hongyeom: HONGYEOM_PILLARS.has(dayPillar),
-    geumyeo,
   };
 }
 

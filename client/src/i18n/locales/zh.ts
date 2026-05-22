@@ -165,18 +165,6 @@ const zh: Record<string, string> = {
   'saju.unknownTimeWarning': '未输入出生时间，以正午（12:00）为基准计算，大运起始时间可能有数月误差。',
   'saju.ageSuffix': '岁',
 
-  // Saju - SinsalList
-  'saju.sal.cheonul': '天乙贵人',
-  'saju.sal.cheonduk': '天德贵人',
-  'saju.sal.wolduk': '月德贵人',
-  'saju.sal.munchang': '文昌贵人',
-  'saju.sal.geumyeo': '金舆禄',
-  'saju.sal.yangin': '羊刃煞',
-  'saju.sal.dohwa': '桃花煞',
-  'saju.sal.baekho': '白虎煞',
-  'saju.sal.goegang': '魁罡煞',
-  'saju.sal.hongyeom': '红艳煞',
-
   // Saju - TransitView
   'saju.transit.past': '过去',
   'saju.transit.future': '未来',
