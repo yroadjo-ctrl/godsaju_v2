@@ -87,11 +87,21 @@ export default function YongsinSection({ yongsin }: Props) {
           <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
             {yongsin.explanation}
           </p>
+          {yongsin.johuPrimary && (
+            <p className="mt-1.5 text-xs text-sky-700 dark:text-sky-400">
+              조후용신: {yongsin.johuPrimary.label}({yongsin.johuPrimary.hanja})
+            </p>
+          )}
+          {yongsin.gyeokgukSummary && (
+            <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+              격국: {yongsin.gyeokgukSummary}
+            </p>
+          )}
         </div>
       </div>
 
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-        ※ 억부용신(抑扶用神) 기준. 조후·통관·합화·격국 보정은 미포함(추후 단계).
+        ※ {yongsin.method}({yongsin.methodHanja}) · 오행 기준: {yongsin.ohaengBasis ?? '원국'}
       </p>
     </section>
   )

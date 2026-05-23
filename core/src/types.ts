@@ -1,6 +1,9 @@
 import type { OhaengSipsinStats } from './ohaeng-analysis.ts';
 import type { SinGangYakStats } from './singang-analysis.ts';
 import type { YongsinStats } from './yongsin-analysis.ts';
+import type { JohuStats } from './johu-analysis.ts';
+import type { HapHwaStats } from './hap-hwa-analysis.ts';
+import type { GyeokgukStats } from './gyeokguk-analysis.ts';
 import type { DaewoonMeta } from './daewoon-meta.ts';
 
 /** 오행 (Five Elements) */
@@ -9,6 +12,9 @@ export type Element = 'tree' | 'fire' | 'earth' | 'metal' | 'water';
 export type { OhaengSipsinStats, ElementStat, SipsinStat, BalanceStatus } from './ohaeng-analysis.ts';
 export type { SinGangYakStats, SinGangLevel, DeungFlag } from './singang-analysis.ts';
 export type { YongsinStats, YongsinElementInfo } from './yongsin-analysis.ts';
+export type { JohuStats } from './johu-analysis.ts';
+export type { HapHwaStats, HapHwaEvent } from './hap-hwa-analysis.ts';
+export type { GyeokgukStats, GyeokgukCategory } from './gyeokguk-analysis.ts';
 export type { DaewoonMeta } from './daewoon-meta.ts';
 
 /** 음양 (Yin-Yang) */
@@ -204,8 +210,18 @@ export interface SajuResult {
   jwabeop: JwaEntry[][];
   /** 인종법 (일지에 없는 십성 카테고리 인종) */
   injongbeop: InjongEntry[];
-  /** 오행·십성 비율 (원국 8글자 기준) */
+  /** 오행·십성 비율 (천간·지지 표면 8글자) */
   ohaengSipsin: OhaengSipsinStats;
+  /** 오행·십성 (지장간 가중) */
+  ohaengSipsinWeighted: OhaengSipsinStats;
+  /** 오행·십성 (지장간·합화 보정) */
+  ohaengSipsinAdjusted: OhaengSipsinStats;
+  /** 합화 분석 */
+  hapHwa: HapHwaStats;
+  /** 조후 */
+  johu: JohuStats;
+  /** 격국 */
+  gyeokguk: GyeokgukStats;
   /** 신강·신약 (득령·득지·득시·득세) */
   sinGangYak: SinGangYakStats;
   /** 용신 (억부용신) */

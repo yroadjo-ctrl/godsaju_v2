@@ -35,7 +35,11 @@ function makeT(locale?: Locale) {
 /** 사주 결과를 CLI 형식 텍스트로 변환 */
 export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: number): string {
   const t = makeT(locale)
-  const { input, pillars, daewoon, daewoonMeta, relations, gongmang, ohaengSipsin, sinGangYak, yongsin } = result
+  const {
+    input, pillars, daewoon, daewoonMeta, relations, gongmang,
+    ohaengSipsin, ohaengSipsinWeighted, ohaengSipsinAdjusted,
+    hapHwa, johu, gyeokguk, sinGangYak, yongsin,
+  } = result
   const lines: string[] = []
 
   // 음양오행 변환 맵 (PillarTable.tsx와 동일)
@@ -228,7 +232,43 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   lines.push('')
 
   // 오행·십성 분석
-  if (ohaengSipsin) {
+  const appendOhaengBlock = (title: string, os: typeof ohaengSipsin) => {
+    lines.push(sectionTitle(title))
+    lines.push('')
+    lines.push('| 오행 | 비율 | 상태 |')
+    lines.push('|------|------|------|')
+    for (const el of os.elements) {
+      const pct = el.percent > 0 ? `${el.percent}%` : '-'
+      const status = el.status === '없음' ? '-' : el.status
+      lines.push(`| ${el.label}(${el.hanja}) | ${pct} | ${status} |`)
+    }
+    lines.push('')
+    lines.push('| 십성 (十星) | 비율 | 상태 |')
+    lines.push('|------|------|------|')
+    for (const s of os.sipsin) {
+      const pct = s.percent > 0 ? `${s.percent}%` : '-'
+      const status = s.status === '없음' ? '-' : s.status
+      lines.push(`| ${s.hangul}(${s.hanja}) | ${pct} | ${status} |`)
+    }
+    lines.push('')
+  }
+
+  if (ohaengSipsin && ohaengSipsinWeighted && ohaengSipsinAdjusted) {
+    appendOhaengBlock(
+      `오행 · 십성 (표면 8글자) (일간 ${ohaengSipsin.dayStemKor}(${ohaengSipsin.dayStem}) ${ohaengSipsin.dayElementLabel})`,
+      ohaengSipsin,
+    )
+    appendOhaengBlock(
+      `오행 · 십성 (지장간 가중 6:3:1) (일간 ${ohaengSipsinWeighted.dayStemKor}(${ohaengSipsinWeighted.dayStem}))`,
+      ohaengSipsinWeighted,
+    )
+    appendOhaengBlock(
+      `오행 · 십성 (합화 보정) (일간 ${ohaengSipsinAdjusted.dayStemKor}(${ohaengSipsinAdjusted.dayStem}))`,
+      ohaengSipsinAdjusted,
+    )
+    lines.push('※ 발달(20%↑)·적정(10~20%)·부족(10%↓).')
+    lines.push('')
+  } else if (ohaengSipsin) {
     const os = ohaengSipsin
     lines.push(sectionTitle(`오행 · 십성 (五行 · 十星) 분석 (일간 ${os.dayStemKor}(${os.dayStem}) ${os.dayElementLabel}, 원국 ${os.totalCharSlots}글자 기준)`))
     lines.push('')
@@ -248,7 +288,21 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       lines.push(`| ${s.hangul}(${s.hanja}) | ${pct} | ${status} |`)
     }
     lines.push('')
-    lines.push('※ 발달(20%↑)·적정(10~20%)·부족(10%↓). 지장간·합화·조후 보정 미포함.')
+    lines.push('※ 발달(20%↑)·적정(10~20%)·부족(10%↓).')
+    lines.push('')
+  }
+
+  // 조후·합화·격국
+  if (johu && hapHwa && gyeokguk) {
+    lines.push(sectionTitle('조후 · 합화 · 격국'))
+    lines.push('')
+    lines.push(`- **조후(調候)**: ${johu.summary}`)
+    lines.push(`  ${johu.explanation}`)
+    lines.push(`- **합화(合化)**: ${hapHwa.summary}`)
+    for (const e of hapHwa.events) {
+      lines.push(`  - ${e.label}: ${e.established ? '성립' : '불성립'} (${e.reason})`)
+    }
+    lines.push(`- **격국(格局)**: ${gyeokguk.summary} — ${gyeokguk.explanation}`)
     lines.push('')
   }
 
@@ -267,7 +321,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     lines.push(`- **득력**: ${sg.score}/4 (득령·득지·득시·득세)`)
     lines.push(`- **일간 세력 비율**: ${formatHelpSipsinRatio(sg.helpCount, sg.totalCount)} → 약 ${sg.strengthPercent}% (일간 제외 원국 십성 칸 중 인성·비겁 해당)`)
     lines.push('')
-    lines.push('※ 득지=일지, 득시=시지. 조후·합화 보정 미포함.')
+    lines.push('※ 득지=일지, 득시=시지. 표면 십성 기준(지장간·합화 미반영).')
     lines.push('')
   }
 
@@ -282,7 +336,14 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     lines.push(`- **요약**: ${ys.summary}`)
     lines.push(`- **설명**: ${ys.explanation}`)
     lines.push('')
-    lines.push('※ 억부용신 기준. 조후·통관·합화·격국 보정 미포함.')
+    if (yongsin.johuSummary) {
+      lines.push(`- **조후용신**: ${yongsin.johuSummary}`)
+    }
+    if (yongsin.gyeokgukSummary) {
+      lines.push(`- **격국**: ${yongsin.gyeokgukSummary}`)
+    }
+    lines.push('')
+    lines.push(`※ ${yongsin.method}(${yongsin.methodHanja}) · 오행 기준: ${yongsin.ohaengBasis ?? '원국'}`)
     lines.push('')
   }
 

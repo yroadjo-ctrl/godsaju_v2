@@ -106,7 +106,7 @@ export default function SinGangSection({ stats }: Props) {
 
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
         ※ 주황 채움=인성·비겁 비율(일간 제외 칸 기준). 굵은 글자=득력 4항목 종합 판정.
-        조후·합화 보정은 미포함(추후 단계).
+        ※ 득지=일지, 득시=시지. 신강·신약은 표면 십성 기준(지장간·합화 미반영).
       </p>
     </section>
   )

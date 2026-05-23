@@ -1,6 +1,12 @@
 // 사주 (四柱八字)
 export { calculateSaju, getPillarSinsals } from './saju.ts'
-export { calculateOhaengSipsinStats } from './ohaeng-analysis.ts'
+export { calculateOhaengSipsinStats, calculateOhaengSipsinStatsWeighted, buildOhaengSipsinFromCounts } from './ohaeng-analysis.ts'
+export { calculateJohu, getSeasonFromBranch } from './johu-analysis.ts'
+export { calculateHapHwa } from './hap-hwa-analysis.ts'
+export { calculateGyeokguk } from './gyeokguk-analysis.ts'
+export type { JohuStats } from './johu-analysis.ts'
+export type { HapHwaStats, HapHwaEvent } from './hap-hwa-analysis.ts'
+export type { GyeokgukStats, GyeokgukCategory } from './gyeokguk-analysis.ts'
 export { calculateSinGangYak, SINGANG_LEVELS, HELP_SIPSIN_LABEL, formatHelpSipsinRatio } from './singang-analysis.ts'
 export { calculateYongsin } from './yongsin-analysis.ts'
 export { buildSinsalSummaryLine, buildRelationsSummaryLine, sinsalDisplay, SINSAL_HANJA } from './summary-lines.ts'

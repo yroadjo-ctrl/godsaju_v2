@@ -8,9 +8,12 @@ import {
   calculateJwabeop, calculateInjongbeop, getGongmang,
 } from './pillars.ts';
 import { STEM_INFO } from './constants.ts';
-import { calculateOhaengSipsinStats } from './ohaeng-analysis.ts';
+import { calculateOhaengSipsinStats, calculateOhaengSipsinStatsWeighted } from './ohaeng-analysis.ts';
 import { calculateSinGangYak } from './singang-analysis.ts';
 import { calculateYongsin } from './yongsin-analysis.ts';
+import { calculateJohu } from './johu-analysis.ts';
+import { calculateHapHwa } from './hap-hwa-analysis.ts';
+import { calculateGyeokguk } from './gyeokguk-analysis.ts';
 import { calculateDaewoonMeta } from './daewoon-meta.ts';
 import { formatNayeon } from './nayeon.ts';
 import { getAdjustedBirthDateTime } from './birth-calendar.ts';
@@ -518,8 +521,13 @@ export function calculateSaju(input: BirthInput): SajuResult {
   const jwabeop = calculateJwabeop(dayStem, branches, dayBranch);
   const injongbeop = calculateInjongbeop(dayStem, dayBranch);
   const ohaengSipsin = calculateOhaengSipsinStats(pillars as PillarDetail[], input.unknownTime);
+  const ohaengSipsinWeighted = calculateOhaengSipsinStatsWeighted(pillars as PillarDetail[], input.unknownTime);
+  const hapHwa = calculateHapHwa(pillars as PillarDetail[], relations, ohaengSipsinWeighted);
+  const ohaengSipsinAdjusted = hapHwa.adjustedOhaeng;
   const sinGangYak = calculateSinGangYak(pillars as PillarDetail[], input.unknownTime);
-  const yongsin = calculateYongsin(sinGangYak, ohaengSipsin);
+  const johu = calculateJohu(pillars as PillarDetail[]);
+  const gyeokguk = calculateGyeokguk(pillars as PillarDetail[], sinGangYak, ohaengSipsinAdjusted);
+  const yongsin = calculateYongsin(sinGangYak, ohaengSipsinAdjusted, { johu, gyeokguk, hapHwa });
   return {
     input,
     pillars: pillars as any, // PillarDetailExtended는 PillarDetail의 확장
@@ -530,6 +538,11 @@ export function calculateSaju(input: BirthInput): SajuResult {
     jwabeop,
     injongbeop,
     ohaengSipsin,
+    ohaengSipsinWeighted,
+    ohaengSipsinAdjusted,
+    hapHwa,
+    johu,
+    gyeokguk,
     sinGangYak,
     yongsin,
     daewoonMeta,

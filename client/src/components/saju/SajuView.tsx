@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { calculateSaju } from '@core/index'
 import PillarTable from './PillarTable.tsx'
 import OhaengSipsinSection from './OhaengSipsinSection.tsx'
+import AdvancedAnalysisSection from './AdvancedAnalysisSection.tsx'
 import SinGangSection from './SinGangSection.tsx'
 import YongsinSection from './YongsinSection.tsx'
 import SpecialSinsalTable from './SpecialSinsalTable.tsx'
@@ -71,12 +72,25 @@ export default function SajuView({ input }: Props) {
 
       {/* 오행·십성 분석 */}
       <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-        <OhaengSipsinSection stats={result.ohaengSipsin} />
+        <OhaengSipsinSection
+          surface={result.ohaengSipsin}
+          weighted={result.ohaengSipsinWeighted}
+          adjusted={result.ohaengSipsinAdjusted}
+        />
       </section>
 
       {/* 신강·신약 */}
       <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <SinGangSection stats={result.sinGangYak} />
+      </section>
+
+      {/* 조후·합화·격국 */}
+      <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <AdvancedAnalysisSection
+          johu={result.johu}
+          hapHwa={result.hapHwa}
+          gyeokguk={result.gyeokguk}
+        />
       </section>
 
       {/* 용신 */}

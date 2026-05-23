@@ -1,5 +1,15 @@
 import type { Element, PillarDetail } from './types.ts';
 import { BRANCH_ELEMENT, STEM_INFO, ELEMENT_HANJA, RELATIONS } from './constants.ts';
+import {
+  hiddenStemWeights,
+  addElementWeight,
+  addSipsinWeight,
+  emptyElementCounts,
+  emptySipsinCounts,
+  stemElement,
+  type ElementCounts,
+  type SipsinCounts,
+} from './element-weights.ts';
 
 export type BalanceStatus = '발달' | '적정' | '부족' | '없음';
 
@@ -26,6 +36,8 @@ export interface OhaengSipsinStats {
   dayElement: Element;
   dayElementLabel: string;
   totalCharSlots: number;
+  /** 표기용 기준 설명 */
+  basisLabel?: string;
   elements: ElementStat[];
   sipsin: SipsinStat[];
 }
@@ -52,6 +64,56 @@ function balanceStatus(percent: number): BalanceStatus {
 function parseSipsinHanja(sipsin: string): string | null {
   const m = sipsin.match(/\(([^)]+)\)/);
   return m ? m[1] : null;
+}
+
+export function buildOhaengSipsinFromCounts(
+  dayStem: string,
+  elementCounts: ElementCounts,
+  sipsinCounts: SipsinCounts,
+  totalWeight: number,
+  basisLabel?: string,
+): OhaengSipsinStats {
+  const dayEl = STEM_INFO[dayStem]?.element ?? 'tree';
+
+  const elements: ElementStat[] = ELEMENT_ORDER.map(el => {
+    const count = Math.round(elementCounts[el] * 10) / 10;
+    const percent = totalWeight > 0
+      ? Math.round((count / totalWeight) * 1000) / 10
+      : 0;
+    return {
+      element: el,
+      label: ELEMENT_KOR[el],
+      hanja: ELEMENT_HANJA[el],
+      count,
+      percent,
+      status: balanceStatus(percent),
+    };
+  });
+
+  const sipsin: SipsinStat[] = RELATIONS.map(r => {
+    const count = Math.round((sipsinCounts[r.hanja] ?? 0) * 10) / 10;
+    const percent = totalWeight > 0
+      ? Math.round((count / totalWeight) * 1000) / 10
+      : 0;
+    return {
+      hanja: r.hanja,
+      hangul: r.hangul,
+      count,
+      percent,
+      status: balanceStatus(percent),
+    };
+  });
+
+  return {
+    dayStem,
+    dayStemKor: STEM_KOR[dayStem] ?? dayStem,
+    dayElement: dayEl,
+    dayElementLabel: `${ELEMENT_KOR[dayEl]}(${ELEMENT_HANJA[dayEl]})`,
+    totalCharSlots: Math.round(totalWeight * 10) / 10,
+    basisLabel,
+    elements,
+    sipsin,
+  };
 }
 
 /** 사주 원국 8글자(천간4·지지4) 기준 오행·십성 비율 */
@@ -121,7 +183,42 @@ export function calculateOhaengSipsinStats(
     dayElement: dayEl,
     dayElementLabel: `${ELEMENT_KOR[dayEl]}(${ELEMENT_HANJA[dayEl]})`,
     totalCharSlots,
+    basisLabel: '천간·지지 표면 8글자',
     elements,
     sipsin,
   };
+}
+
+/** 지장간 가중(本气60·中气30·余气10) 오행·십성 */
+export function calculateOhaengSipsinStatsWeighted(
+  pillars: PillarDetail[],
+  unknownTime?: boolean,
+): OhaengSipsinStats {
+  const elementCounts = emptyElementCounts();
+  const sipsinCounts = emptySipsinCounts();
+  let totalWeight = 0;
+
+  const indices = unknownTime ? [1, 2, 3] : [0, 1, 2, 3];
+  const dayStem = pillars[1].pillar.stem;
+
+  for (const i of indices) {
+    const p = pillars[i];
+    addElementWeight(elementCounts, stemElement(p.pillar.stem), 1);
+    totalWeight += 1;
+    addSipsinWeight(sipsinCounts, dayStem, p.pillar.stem, 1);
+
+    for (const { stem, weight } of hiddenStemWeights(p.pillar.branch)) {
+      addElementWeight(elementCounts, stemElement(stem), weight);
+      totalWeight += weight;
+      addSipsinWeight(sipsinCounts, dayStem, stem, weight);
+    }
+  }
+
+  return buildOhaengSipsinFromCounts(
+    dayStem,
+    elementCounts,
+    sipsinCounts,
+    totalWeight,
+    '천간 1 + 지장간 가중(6:3:1)',
+  );
 }

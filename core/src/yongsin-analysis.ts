@@ -1,4 +1,7 @@
 import type { Element, OhaengSipsinStats, SinGangYakStats } from './types.ts';
+import type { JohuStats } from './johu-analysis.ts';
+import type { GyeokgukStats } from './gyeokguk-analysis.ts';
+import type { HapHwaStats } from './hap-hwa-analysis.ts';
 import { ELEMENT_HANJA } from './constants.ts';
 
 export interface YongsinElementInfo {
@@ -26,6 +29,13 @@ export interface YongsinStats {
   avoid: YongsinElementInfo[];
   summary: string;
   explanation: string;
+  /** 조후·격국·합화 보정 레이어 */
+  johuPrimary?: YongsinElementInfo;
+  johuSummary?: string;
+  gyeokgukPattern?: string;
+  gyeokgukSummary?: string;
+  hapHwaSummary?: string;
+  ohaengBasis?: string;
 }
 
 const ELEMENT_KOR: Record<Element, string> = {
@@ -82,10 +92,72 @@ function percentMap(ohaeng: OhaengSipsinStats): Record<Element, number> {
   return Object.fromEntries(ohaeng.elements.map(e => [e.element, e.percent])) as Record<Element, number>;
 }
 
-/** 신강·신약·오행 비율 기준 억부용신 (조후·합화 미포함) */
+function buildYongsinResult(
+  sinGangYak: SinGangYakStats,
+  dayEl: Element,
+  primary: YongsinElementInfo,
+  secondary: YongsinElementInfo,
+  avoid: YongsinElementInfo[],
+  summary: string,
+  explanation: string,
+  options: { johu?: JohuStats; gyeokguk?: GyeokgukStats; hapHwa?: HapHwaStats } | undefined,
+  ohaengSipsin: OhaengSipsinStats,
+  isStrong: boolean,
+): YongsinStats {
+  const johu = options?.johu;
+  const gyeokguk = options?.gyeokguk;
+  const hapHwa = options?.hapHwa;
+
+  const johuPrimary = johu ? {
+    element: johu.primary,
+    label: ELEMENT_KOR[johu.primary],
+    hanja: ELEMENT_HANJA[johu.primary],
+    sipsinRole: '조후',
+    sipsinHanja: '調候',
+    percent: ohaengSipsin.elements.find(e => e.element === johu.primary)?.percent ?? 0,
+  } : undefined;
+
+  const extraNotes: string[] = [];
+  if (johu) extraNotes.push(`조후: ${johu.summary}`);
+  if (gyeokguk) extraNotes.push(`격국: ${gyeokguk.summary}`);
+  if (hapHwa && hapHwa.events.some(e => e.established)) {
+    extraNotes.push(`합화: ${hapHwa.summary}`);
+  }
+  if (extraNotes.length > 0) {
+    explanation += ` ${extraNotes.join(' · ')}.`;
+  }
+
+  return {
+    method: extraNotes.length > 0 ? '억부·조후·격국 종합' : '억부용신',
+    methodHanja: extraNotes.length > 0 ? '抑扶·調候·格局' : '抑扶用神',
+    dayStem: sinGangYak.dayStem,
+    dayStemKor: sinGangYak.dayStemKor,
+    dayElement: dayEl,
+    sinGangLevel: sinGangYak.level,
+    isStrong,
+    primary,
+    secondary,
+    avoid,
+    summary,
+    explanation,
+    johuPrimary,
+    johuSummary: johu?.summary,
+    gyeokgukPattern: gyeokguk?.hanja,
+    gyeokgukSummary: gyeokguk?.summary,
+    hapHwaSummary: hapHwa?.summary,
+    ohaengBasis: ohaengSipsin.basisLabel,
+  };
+}
+
+/** 신강·신약·오행 비율 기준 억부용신 */
 export function calculateYongsin(
   sinGangYak: SinGangYakStats,
   ohaengSipsin: OhaengSipsinStats,
+  options?: {
+    johu?: JohuStats;
+    gyeokguk?: GyeokgukStats;
+    hapHwa?: HapHwaStats;
+  },
 ): YongsinStats {
   const dayEl = ohaengSipsin.dayElement;
   const cycle = ELEMENT_CYCLE[dayEl];
@@ -106,20 +178,9 @@ export function calculateYongsin(
       `희신(喜神)은 ${secondary.label}(${secondary.hanja}, ${secondary.sipsinRole}/${secondary.sipsinHanja})입니다. ` +
       `기신(忌神)은 ${avoid.map(a => `${a.label}(${a.hanja})`).join('·')} 쪽입니다.`;
 
-    return {
-      method: '억부용신',
-      methodHanja: '抑扶用神',
-      dayStem: sinGangYak.dayStem,
-      dayStemKor: sinGangYak.dayStemKor,
-      dayElement: dayEl,
-      sinGangLevel: sinGangYak.level,
-      isStrong: false,
-      primary,
-      secondary,
-      avoid,
-      summary,
-      explanation,
-    };
+    return buildYongsinResult(
+      sinGangYak, dayEl, primary, secondary, avoid, summary, explanation, options, ohaengSipsin, false,
+    );
   }
 
   const drainCandidates: Array<{ key: 'officer' | 'output' | 'wealth'; el: Element }> = [
@@ -145,18 +206,7 @@ export function calculateYongsin(
     `희신(喜神)은 ${secondary.label}(${secondary.hanja}, ${secondary.sipsinRole}/${secondary.sipsinHanja})입니다. ` +
     `기신(忌神)은 ${avoid.map(a => `${a.label}(${a.hanja})`).join('·')} 쪽입니다.`;
 
-  return {
-    method: '억부용신',
-    methodHanja: '抑扶用神',
-    dayStem: sinGangYak.dayStem,
-    dayStemKor: sinGangYak.dayStemKor,
-    dayElement: dayEl,
-    sinGangLevel: sinGangYak.level,
-    isStrong: true,
-    primary,
-    secondary,
-    avoid,
-    summary,
-    explanation,
-  };
+  return buildYongsinResult(
+    sinGangYak, dayEl, primary, secondary, avoid, summary, explanation, options, ohaengSipsin, true,
+  );
 }
