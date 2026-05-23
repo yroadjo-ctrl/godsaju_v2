@@ -3,6 +3,7 @@ import type { DaewoonItem, DaewoonMeta } from '@core/types'
 import { getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
+import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -123,6 +124,9 @@ export default function DaewoonTable({
           {t('saju.unknownTimeWarning')}
         </p>
       )}
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+        {YUN_METHOD_NOTES.daewoon}
+      </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
         열을 클릭하면 해당 대운 구간의 세운을 아래에서 볼 수 있습니다.
       </p>

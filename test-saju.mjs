@@ -25,5 +25,5 @@ result.pillars.forEach((p, i) => {
 console.log('\n=== 예상값 ===');
 console.log('時柱: 丁卯 (천간: 丁, 지지: 卯)');
 console.log('日柱: 甲午 (천간: 甲, 지지: 午)');
-console.log('月柱: 庚申 (천간: 庚, 지지: 申)');
+console.log('月柱: 戊申 (천간: 戊, 지지: 申)');
 console.log('年柱: 壬戌 (천간: 壬, 지지: 戌)');

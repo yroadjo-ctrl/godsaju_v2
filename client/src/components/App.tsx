@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import BirthForm from './BirthForm.tsx'
 import type { BirthFormHandle, SavedFormState } from './BirthForm.tsx'
 import ProfileModal from './ProfileModal.tsx'
@@ -8,6 +8,7 @@ import ThemeToggle from './ThemeToggle.tsx'
 import LanguageToggle from './LanguageToggle.tsx'
 import { useLocale } from '../i18n/index.ts'
 import SajuView from './saju/SajuView.tsx'
+import { findActiveDaewoonIndexByAge } from './saju/SewoonTable.tsx'
 import ZiweiView from './ziwei/ZiweiView.tsx'
 import NatalView from './natal/NatalView.tsx'
 import { calculateSaju } from '@core/saju'
@@ -37,6 +38,32 @@ function AppContent() {
   const getCurrentFormState = useCallback(() => {
     return birthFormRef.current?.getCurrentState() ?? null
   }, [])
+
+  const sajuResult = useMemo(
+    () => (birthInput ? calculateSaju(birthInput) : null),
+    [birthInput],
+  )
+
+  const currentAge = birthInput ? new Date().getFullYear() - birthInput.year : 0
+  const autoDaewoonIdx = useMemo(
+    () => (sajuResult ? findActiveDaewoonIndexByAge(sajuResult.daewoon, currentAge) : 0),
+    [sajuResult, currentAge],
+  )
+
+  const [monthlyDisplayYear, setMonthlyDisplayYear] = useState(() => new Date().getFullYear())
+  const [selectedDaewoonIdx, setSelectedDaewoonIdx] = useState(0)
+
+  useEffect(() => {
+    if (birthInput) {
+      setMonthlyDisplayYear(new Date().getFullYear())
+    }
+  }, [birthInput])
+
+  useEffect(() => {
+    setSelectedDaewoonIdx(autoDaewoonIdx)
+  }, [sajuResult?.daewoon, autoDaewoonIdx])
+
+  const displayDaewoonIdx = selectedDaewoonIdx >= 0 ? selectedDaewoonIdx : autoDaewoonIdx
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 relative">
@@ -120,8 +147,10 @@ function AppContent() {
                 <CopyButton
                   label={<>{t('app.copyAll')}<br />{t('app.copyAllSub')}</>}
                   getText={async () => {
-                    const saju = calculateSaju(birthInput)
-                    const parts = [sajuToText(saju)]
+                    if (!birthInput || !sajuResult) return ''
+                    const parts = [
+                      sajuToText(sajuResult, undefined, monthlyDisplayYear, displayDaewoonIdx),
+                    ]
                     if (!birthInput.unknownTime) {
                       const chart = createChart(birthInput)
                       parts.push(ziweiToText(chart))
@@ -135,7 +164,18 @@ function AppContent() {
               </div>
             </div>
 
-            {tab === 'saju' && <SajuView input={birthInput} />}
+            {tab === 'saju' && (
+              <SajuView
+                input={birthInput}
+                result={sajuResult!}
+                monthlyDisplayYear={monthlyDisplayYear}
+                onMonthlyDisplayYearChange={setMonthlyDisplayYear}
+                selectedDaewoonIdx={selectedDaewoonIdx}
+                onSelectedDaewoonIdxChange={setSelectedDaewoonIdx}
+                autoDaewoonIdx={autoDaewoonIdx}
+                displayDaewoonIdx={displayDaewoonIdx}
+              />
+            )}
             {tab === 'ziwei' && <ZiweiView input={birthInput} />}
             {tab === 'natal' && <NatalView input={birthInput} />}
           </div>

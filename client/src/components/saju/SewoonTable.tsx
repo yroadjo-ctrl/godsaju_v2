@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { DaewoonItem } from '@core/types'
 import { getYearGanzi, getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
+import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -131,8 +132,11 @@ export default function SewoonTable({
       <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
         세운 <span className="font-hanja">(歲運)</span>
       </h3>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 대운: {periodLabel}
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+        {YUN_METHOD_NOTES.sewoon}
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">

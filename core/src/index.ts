@@ -24,6 +24,19 @@ export {
   formatMonthPillarBasisDateTime,
 } from './month-pillar-basis.ts'
 export type { MonthPillarBasis } from './month-pillar-basis.ts'
+export {
+  buildJieQiCalendarMap,
+  buildJieQiDateKeyMap,
+  calcLunarMonthBoundaryTerms,
+  calcLunarSolarTerms,
+  getLunarMonthGanIndex,
+  getLunarMonthIndex,
+  getLunarYearGanIndex,
+  formatMonthlyJieQiCell,
+  getMonthlyJieQiEntries,
+  lookupJieForYear,
+  JIEQI_KOR_24,
+} from './jieqi-lunar.ts'
 export type { YongsinStats, YongsinElementInfo } from './yongsin-analysis.ts'
 export type { OhaengSipsinStats, ElementStat, SipsinStat, BalanceStatus } from './ohaeng-analysis.ts'
 export type { SinGangYakStats, SinGangLevel, DeungFlag } from './singang-analysis.ts'
@@ -77,7 +90,7 @@ export type { ResolveLocalDateTimeToUtcResult } from './timezone.ts'
 
 // 사주 저수준 API
 export {
-  getFourPillars, getDaewoon, getRelation, getHiddenStems, getJeonggi,
+  getFourPillars, getDayPillarForDate, getDaewoon, getRelation, getHiddenStems, getJeonggi,
   toHangul, getTwelveMeteor, getTwelveSpirit,
   getStemRelation, getBranchRelation,
   analyzePillarRelations, analyzeAllRelations,

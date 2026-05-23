@@ -1,111 +1,13 @@
 import { useState, useMemo } from 'react'
 import { Solar } from 'lunar-javascript'
-import { getRelation, getHiddenStems, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
+import { getRelation, getHiddenStems, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation, getDayPillarForDate } from '@core/pillars'
+import { buildJieQiCalendarMap } from '@core/jieqi-lunar'
+import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import { HGANJI, GONGMANG_TABLE } from '@core/constants'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 
 
-
-// 라이브러리 내부 키값과 완벽하게 일치시킨 24절기 순서 (정확한 한자 사용)
-const JIEQI_LIST = [
-  "小寒", "大寒", "立春", "雨水", "驚蟄", "春分",
-  "清明", "穀雨", "立夏", "小滿", "芒種", "夏至",
-  "小暑", "大暑", "立秋", "處暑", "白露", "秋分",
-  "寒露", "霜降", "立冬", "小雪", "大雪", "冬至"
-];
-
-// 한글 매핑용
-const JIEQI_KOR = [
-  "소한", "대한", "입춘", "우수", "경칩", "춘분",
-  "청명", "곡우", "입하", "소만", "망종", "하지",
-  "소서", "대서", "입추", "처서", "백로", "추분",
-  "한로", "상강", "입동", "소설", "대설", "동지"
-];
-
-// 누락된 절기들의 간체 한자 대체 (라이브러리가 간체를 사용할 수 있음)
-const JIEQI_FALLBACK: Record<number, string> = {
-  4: "惊蛰",    // 경칩
-  7: "谷雨",    // 곡우
-  9: "小满",    // 소만
-  10: "芒种",   // 망종
-  15: "处暑"    // 처서
-};
-
-// 모든 24절기 추출 (연도 경계 보정 포함)
-function getAllJieQi(year: number) {
-  try {
-    const solar = Solar.fromYmd(year, 1, 1);
-    const lunar = solar.getLunar();
-    const jieQiTable = lunar.getJieQiTable();
-
-    const result: Record<number, Record<number, { name: string; time: string }>> = {};
-
-    JIEQI_KOR.forEach((name, index) => {
-      let chineseKey = JIEQI_LIST[index];
-      let solarData = jieQiTable[chineseKey];
-
-      // 만약 기본 한자로 못 찾으면 간체 한자 시도
-      if (!solarData && JIEQI_FALLBACK[index]) {
-        chineseKey = JIEQI_FALLBACK[index];
-        solarData = jieQiTable[chineseKey];
-      }
-
-      // [핵심] 연도 경계 보정: 동지 등이 전년도/내년도 데이터일 경우 처리
-      if (solarData) {
-        const dataYear = solarData.getYear();
-        
-        // 만약 가져온 데이터의 연도가 입력한 연도와 다르면
-        if (dataYear !== year) {
-          // 다음 연도의 테이블에서 해당 절기를 다시 찾음
-          try {
-            const nextYearSolar = Solar.fromYmd(year + 1, 1, 1);
-            const nextYearLunar = nextYearSolar.getLunar();
-            const nextYearTable = nextYearLunar.getJieQiTable();
-            const nextData = nextYearTable[chineseKey];
-            
-            if (nextData && nextData.getYear() === year) {
-              solarData = nextData;
-            }
-          } catch (e) {
-            // 실패하면 원래 데이터 사용
-          }
-        }
-      }
-
-      if (!solarData) {
-        return; // 누락 처리
-      }
-
-      // 라이브러리 시간(UTC+8)을 Date 객체로 변환
-      const dateStr = solarData.toYmdHms();
-      const [y, m, d, h, min, s] = dateStr.split(/[-: ]/).map(Number);
-      const date = new Date(y, m - 1, d, h, min, s);
-      
-      // 한국 시간(UTC+9)으로 1시간 추가 보정
-      date.setHours(date.getHours() + 1);
-
-      const korMonth = date.getMonth() + 1;
-      const korDay = date.getDate();
-      const korHour = String(date.getHours()).padStart(2, '0');
-      const korMin = String(date.getMinutes()).padStart(2, '0');
-
-      if (!result[korMonth]) {
-        result[korMonth] = {};
-      }
-
-      result[korMonth][korDay] = {
-        name: name,
-        time: `${korHour}:${korMin}`
-      };
-    });
-
-    return result;
-  } catch (e) {
-    console.error('JieQi 계산 오류:', e);
-    return {};
-  }
-}
 
 // 날짜를 "YYYY-MM-DD" 형식으로 변환
 function dateToString(date: Date): string {
@@ -160,7 +62,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
 
   // 해당 연도의 모든 절기 데이터 미리 계산
   const jieQiData = useMemo(() => {
-    return getAllJieQi(year);
+    return buildJieQiCalendarMap(year);
   }, [year]);
 
   // 음력 날짜를 가져오는 함수
@@ -179,19 +81,12 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
     return jieQiData[month + 1]?.[d] || null;
   };
 
-  // 일진(日干支) 추출 함수
+  // 일진(日干支) — core 일주 (날짜 기준)
   const getDayGanzi = (d: number) => {
     try {
-      const solar = Solar.fromYmd(year, month + 1, d);
-      const lunar = solar.getLunar();
-      const stem = lunar.getDayGan();   // 천간 (예: "甲")
-      const branch = lunar.getDayZhi(); // 지지 (예: "子")
-      
-      if (stem && branch) {
-        return { ganzi: stem + branch, stem, branch };
-      }
-      return null;
-    } catch (e) {
+      const ganzi = getDayPillarForDate(year, month + 1, d);
+      return { ganzi, stem: ganzi[0], branch: ganzi[1] };
+    } catch {
       return null;
     }
   };
@@ -358,11 +253,14 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
    return (
     <div className="w-full mt-6">
       {/* 일운 타이틀 */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-1">
         <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">
           일운 <span className="font-hanja">(日運)</span>
         </h3>
       </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+        {YUN_METHOD_NOTES.daily}
+      </p>
       
       <div className="w-full bg-white rounded-xl border border-slate-200 shadow-sm p-4">
         {/* 달력 헤더: 월 이동 */}

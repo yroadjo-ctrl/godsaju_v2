@@ -1,5 +1,3 @@
-import { useMemo, useState, useEffect } from 'react'
-import { calculateSaju } from '@core/index'
 import PillarTable from './PillarTable.tsx'
 import OhaengSipsinSection from './OhaengSipsinSection.tsx'
 import AdvancedAnalysisSection from './AdvancedAnalysisSection.tsx'
@@ -9,39 +7,38 @@ import SpecialSinsalTable from './SpecialSinsalTable.tsx'
 import RelationList from './RelationList.tsx'
 import JwaInjongTable from './JwaInjongTable.tsx'
 import DaewoonTable from './DaewoonTable.tsx'
-import SewoonTable, { findActiveDaewoonIndexByAge } from './SewoonTable.tsx'
+import SewoonTable from './SewoonTable.tsx'
 import MonthlyTable from './MonthlyTable.tsx'
 import DailyCalendar from './DailyCalendar.tsx'
 import CopyButton from '../CopyButton.tsx'
 import BirthInfoSummary from './BirthInfoSummary.tsx'
 import MonthPillarBasisNotice from './MonthPillarBasisNotice.tsx'
 import { sajuToText } from '../../utils/text-export.ts'
-import type { BirthInput } from '@core/types'
+import type { BirthInput, SajuResult } from '@core/types'
 import { useLocale } from '../../i18n/index.ts'
-
 
 interface Props {
   input: BirthInput
+  result: SajuResult
+  monthlyDisplayYear: number
+  onMonthlyDisplayYearChange: (year: number) => void
+  selectedDaewoonIdx: number
+  onSelectedDaewoonIdxChange: (idx: number) => void
+  autoDaewoonIdx: number
+  displayDaewoonIdx: number
 }
 
-export default function SajuView({ input }: Props) {
+export default function SajuView({
+  input,
+  result,
+  monthlyDisplayYear,
+  onMonthlyDisplayYearChange,
+  selectedDaewoonIdx,
+  onSelectedDaewoonIdxChange,
+  autoDaewoonIdx,
+  displayDaewoonIdx,
+}: Props) {
   const { t } = useLocale()
-
-  const result = useMemo(() => calculateSaju(input), [input])
-  const [monthlyDisplayYear, setMonthlyDisplayYear] = useState(new Date().getFullYear())
-
-  const currentAge = new Date().getFullYear() - input.year
-  const autoDaewoonIdx = useMemo(
-    () => findActiveDaewoonIndexByAge(result.daewoon, currentAge),
-    [result.daewoon, currentAge],
-  )
-  const [selectedDaewoonIdx, setSelectedDaewoonIdx] = useState(autoDaewoonIdx)
-
-  useEffect(() => {
-    setSelectedDaewoonIdx(autoDaewoonIdx)
-  }, [result.daewoon, autoDaewoonIdx])
-
-  const displayDaewoonIdx = selectedDaewoonIdx >= 0 ? selectedDaewoonIdx : autoDaewoonIdx
 
   const ganzis = result.pillars.map(p => p.pillar.ganzi)
   const natalPillars = ganzis // [시, 일, 월, 년]
@@ -56,17 +53,17 @@ export default function SajuView({ input }: Props) {
           <h2 className="text-lg font-bold text-gray-700 dark:text-gray-200">
             사주원국 <span className="font-hanja">(四柱原局)</span>
           </h2>
-          <CopyButton 
-            getText={async () => sajuToText(result, undefined, monthlyDisplayYear)}
+          <CopyButton
+            getText={async () => sajuToText(result, undefined, monthlyDisplayYear, displayDaewoonIdx)}
             label={t('copy.aiCopy')}
           />
         </div>
         <MonthPillarBasisNotice input={input} className="mb-3" />
         <PillarTable
-          pillars={result.pillars} 
-          unknownTime={input.unknownTime} 
-          gongmang={result.gongmang} 
-          godSinsal={result.godSinsal} 
+          pillars={result.pillars}
+          unknownTime={input.unknownTime}
+          gongmang={result.gongmang}
+          godSinsal={result.godSinsal}
         />
       </section>
 
@@ -117,7 +114,6 @@ export default function SajuView({ input }: Props) {
         <RelationList relations={result.relations} pillars={ganzis} />
       </div>
 
-
       {/* 좌법 · 인종법 */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <JwaInjongTable
@@ -137,7 +133,7 @@ export default function SajuView({ input }: Props) {
           pillars={result.pillars.map(p => p.pillar.ganzi)}
           selectedIdx={selectedDaewoonIdx}
           autoIndex={autoDaewoonIdx}
-          onSelectDaewoon={setSelectedDaewoonIdx}
+          onSelectDaewoon={onSelectedDaewoonIdxChange}
         />
       </div>
 
@@ -159,21 +155,22 @@ export default function SajuView({ input }: Props) {
         <MonthlyTable
           currentYear={new Date().getFullYear()}
           currentMonth={new Date().getMonth() + 1}
+          displayYear={monthlyDisplayYear}
           pillars={result.pillars.map(p => p.pillar.ganzi)}
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           gongmangBranches={result.gongmang.branches}
-          onYearChange={setMonthlyDisplayYear}
+          onYearChange={onMonthlyDisplayYearChange}
         />
       </div>
 
       {/* 일운 달력 */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-        <DailyCalendar 
-          dayStem={result.pillars[1].pillar.stem} 
+        <DailyCalendar
+          dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           natalPillars={natalPillars}
-          onSelectedDateChange={() => {}} // 선택된 날짜는 내부에서만 사용
+          onSelectedDateChange={() => {}}
         />
       </div>
     </div>

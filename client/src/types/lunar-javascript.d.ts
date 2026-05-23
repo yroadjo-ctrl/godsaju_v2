@@ -12,6 +12,7 @@ declare module 'lunar-javascript' {
     getMinute(): number;
     getSecond(): number;
     toYmd(): string;
+    toYmdHms(): string;
     getLunar(): Lunar;
   }
 
@@ -36,5 +37,6 @@ declare module 'lunar-javascript' {
     getMinute(): number;
     getSecond(): number;
     getSolar(): Solar;
+    getJieQiTable(): Record<string, Solar>;
   }
 }

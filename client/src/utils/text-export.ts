@@ -5,12 +5,14 @@ import { getDaxianList } from '@core/ziwei'
 import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from './format.ts'
 import { ZODIAC_SYMBOLS, PLANET_SYMBOLS, ASPECT_SYMBOLS, ROMAN, formatDegree } from '@core/natal'
 import { t as translate, getLocale } from '../i18n/index.ts'
-import { getYearGanzi, getTwelveMeteor, getTwelveSpirit, getRelation, getJeonggi, getStemRelation, getBranchRelation } from '@core/pillars'
+import { getYearGanzi, getTwelveMeteor, getTwelveSpirit, getRelation, getJeonggi, getStemRelation, getBranchRelation, getDayPillarForDate } from '@core/pillars'
 import {
   formatHelpSipsinRatio,
   buildSinsalSummaryLine,
   buildRelationsSummaryLine,
   calculateMonthPillarBasisFromInput,
+  buildJieQiDateKeyMap,
+  formatMonthlyJieQiCell,
 } from '@core/index'
 import { PILLAR_TABLE_LABELS, pillarLabelForExport } from './pillar-table-labels.ts'
 import {
@@ -18,7 +20,8 @@ import {
   formatCalculationBasisLines,
   formatMonthPillarBasisLines,
 } from './birth-info-format.ts'
-import { MONTHLY_DATA, isKongwang, calculateMonthGanzi } from '@core/monthly-data'
+import { isKongwang, calculateMonthGanzi } from '@core/monthly-data'
+import { YUN_METHOD_NOTES } from './yun-method-notes.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -33,7 +36,12 @@ function makeT(locale?: Locale) {
 }
 
 /** 사주 결과를 CLI 형식 텍스트로 변환 */
-export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: number): string {
+export function sajuToText(
+  result: SajuResult,
+  locale?: Locale,
+  monthlyYear?: number,
+  selectedDaewoonIdx?: number,
+): string {
   const t = makeT(locale)
   const {
     input, pillars, daewoon, daewoonMeta, relations, gongmang,
@@ -166,6 +174,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   for (const line of formatMonthPillarBasisLines(calculateMonthPillarBasisFromInput(input))) {
     lines.push(`- ${line}`)
   }
+  lines.push('- ※ 절기 시·분: lunar-javascript + KST(+1h). 년·월주는 입춘·12節 기준.')
   lines.push('')
 
   const headerLabels = ['時柱', '日柱', '月柱', '年柱']
@@ -550,6 +559,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
         lines.push(`- **1運**: ${dm.firstGanzi} · ${dm.firstStartDate.getFullYear()}년부터`)
       }
     }
+    lines.push(YUN_METHOD_NOTES.daewoon)
     lines.push('')
     
     // 역순 정렬 (10운부터 0운까지)
@@ -671,29 +681,29 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     const dayGanziIdx = HGANJI.indexOf(dayGanzi)
     const gongmangBranches: string[] = dayGanziIdx >= 0 ? GONGMANG_TABLE[Math.trunc(dayGanziIdx / 10)] : []
     
-    // 현재 활성 대운 찾기 (실제 대운 시작 나이 기준)
+    // 선택 대운 (UI와 동일 — 미지정 시 현재 나이 기준 활성 대운)
     const currentYear = new Date().getFullYear()
-    const currentAge = currentYear - input.year // 만 나이
+    const currentAge = currentYear - input.year
 
-    let activeDaewoonIdx = 0
-    for (let i = 0; i < daewoon.length; i++) {
-      if (daewoon[i].age <= currentAge) {
-        activeDaewoonIdx = i
-      } else {
-        break
+    let dwIdx = selectedDaewoonIdx
+    if (dwIdx === undefined || dwIdx < 0 || dwIdx >= daewoon.length) {
+      dwIdx = 0
+      for (let i = 0; i < daewoon.length; i++) {
+        if (daewoon[i].age <= currentAge) dwIdx = i
+        else break
       }
     }
-    const activeDw = daewoon[activeDaewoonIdx]
-    const nextDw   = daewoon[activeDaewoonIdx + 1]
-    const daewunStartAge = activeDw?.age ?? 0
-    const daewunEndAge   = nextDw ? nextDw.age - 1 : daewunStartAge + 9
 
-    // 연도 범위: 실제 대운 구간에 맞춰 표시
-    const startYear = input.year + daewunStartAge
-    const endYear   = input.year + daewunEndAge
+    const targetDw = daewoon[dwIdx] ?? daewoon[0]
+    const startYear = input.year + (targetDw?.age ?? 0)
+    const endYear = startYear + 10
+
+    lines.push(`- **선택 대운**: ${targetDw.age}세~ (${startYear}년~${endYear - 1}년)`)
+    lines.push(YUN_METHOD_NOTES.sewoon)
+    lines.push('')
 
     const sewunData: any[] = []
-    for (let year = startYear; year <= endYear; year++) {
+    for (let year = startYear; year < endYear; year++) {
       const age = year - input.year
       
       const ganzi = getYearGanzi(year)
@@ -715,7 +725,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       
       // 12신살 계산 및 명칭 정밀화
       // 12신살 계산 (getTwelveSpirit이 이미 한자 포함: 예: 망신살(亡神))
-      const spirit = getTwelveSpirit(yearBranch, branch)
+      const spirit = formatSinsal(getTwelveSpirit(yearBranch, branch))
       
       sewunData.push({
         year,
@@ -817,7 +827,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     lines.push('')
     lines.push(sectionTitle('월운 (月運)'))
     lines.push('')
-    lines.push('※ 월운은 양력 1~12월 기준이며, 각 칸 간지는 월두법으로 산출·고정됩니다. 절기 시각별 流月 전환과는 다를 수 있습니다.')
+    lines.push(YUN_METHOD_NOTES.monthly)
     lines.push('')
 
     // 월운 데이터: 지정 연도(monthlyYear) 1월~12월 동적 생성
@@ -897,14 +907,6 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
       })
     }
 
-    // 월별 절기 매핑 (1월~12월 고정)
-    const solarTermMap: Record<number, string> = {
-      1: '소한(小寒)', 2: '입춘(立春)', 3: '경칩(驚蟄)', 4: '청명(清明)',
-      5: '입하(入夏)', 6: '망종(芒種)', 7: '소서(小暑)', 8: '입추(立秋)',
-      9: '백로(白露)', 10: '한로(寒露)', 11: '입동(立冬)',
-      '대설': '대설(大雪)',
-      12: '대설(大雪)',
-    }
     const stemSipsinMap: Record<string, string> = {
       '正官': '정관(正官)',
       '偏官': '편관(偏官)',
@@ -939,9 +941,9 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     const monthlySeparatorRow = Array(monthlyData.length + 1).fill('---').join(' | ')
     lines.push(`| ${monthlySeparatorRow} |`)
     
-    // 절기 행
+    // 절기 행 (lunar + KST, 월별 전체)
     const monthlySolarTermRow = ['절기', ...monthlyData.map((m) => {
-      return solarTermMap[m.month] || `${m.month}월`
+      return formatMonthlyJieQiCell(m.year, m.month, '<br>').replace(/\|/g, '\\|')
     })].join(' | ')
     lines.push(`| ${monthlySolarTermRow} |`)
     
@@ -1004,6 +1006,7 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
   const endM = dlEnd.getMonth() + 1
   const endD = dlEnd.getDate()
   lines.push(`(${startY}.${startM}.${startD} ~ ${endY}.${endM}.${endD})`)
+  lines.push(YUN_METHOD_NOTES.daily)
   lines.push('')
 
   // 합충형파해 한글 매핑
@@ -1012,40 +1015,8 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     '破': '파', '害': '해', '怨嗔': '원진', '鬼門': '귀문관살',
   }
 
-  // 절기 데이터 맵 생성 (날짜 범위에 포함된 연도)
-  const DL_JIEQI_HAN = [
-    "小寒","大寒","立春","雨水","驚蟄","春分",
-    "清明","穀雨","立夏","小滿","芒種","夏至",
-    "小暑","大暑","立秋","處暑","白露","秋分",
-    "寒露","霜降","立冬","小雪","大雪","冬至",
-  ]
-  const DL_JIEQI_KOR = [
-    "소한","대한","입춘","우수","경칩","춘분",
-    "청명","곡우","입하","소만","망종","하지",
-    "소서","대서","입추","처서","백로","추분",
-    "한로","상강","입동","소설","대설","동지",
-  ]
-  const DL_JIEQI_FALLBACK: Record<number, string> = {
-    4:"惊蛰", 7:"谷雨", 9:"小满", 10:"芒种", 15:"处暑",
-  }
-  const dlJieQiMap: Record<string, { name: string; time: string }> = {}
-  new Set([dlToday.getFullYear(), dlEnd.getFullYear()]).forEach(yr => {
-    try {
-      const tbl = Solar.fromYmd(yr, 1, 1).getLunar().getJieQiTable()
-      DL_JIEQI_HAN.forEach((han, idx) => {
-        let data = tbl[han] ?? tbl[DL_JIEQI_FALLBACK[idx] ?? '']
-        if (!data) return
-        const parts = data.toYmdHms().split(/[-: ]/).map(Number)
-        const dt = new Date(parts[0], parts[1]-1, parts[2], parts[3], parts[4])
-        dt.setHours(dt.getHours() + 1)
-        const key = `${dt.getFullYear()}-${dt.getMonth()+1}-${dt.getDate()}`
-        dlJieQiMap[key] = {
-          name: DL_JIEQI_KOR[idx],
-          time: `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`,
-        }
-      })
-    } catch (_e) {}
-  })
+  // 절기 데이터 맵 (일운 달력과 동일 — lunar-javascript + KST)
+  const dlJieQiMap = buildJieQiDateKeyMap([dlToday.getFullYear(), dlEnd.getFullYear()])
 
   // 일운 공망 지지 집합 (원국 일주 기준)
   const dlDayGanzi = pillars[1]?.pillar.ganzi || ''
@@ -1066,8 +1037,9 @@ export function sajuToText(result: SajuResult, locale?: Locale, monthlyYear?: nu
     try {
       const solar = Solar.fromYmd(y, m, d)
       const lunar = solar.getLunar()
-      const dStem   = lunar.getDayGan()
-      const dBranch = lunar.getDayZhi()
+      const dayGanzi = getDayPillarForDate(y, m, d)
+      const dStem   = dayGanzi[0]
+      const dBranch = dayGanzi[1]
       const lunarMonth = lunar.getMonth()
       const lunarDay   = lunar.getDay()
 

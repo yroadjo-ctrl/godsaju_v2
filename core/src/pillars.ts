@@ -17,6 +17,12 @@ import type {
   Element, Relation, RelationResult, PairRelation, AllRelations,
   TransitItem, JwaEntry, InjongEntry, JasiMethod,
 } from './types.ts';
+import {
+  getLunarMonthGanIndex,
+  getLunarYearGanIndex,
+  calcLunarSolarTerms,
+  calcLunarMonthBoundaryTerms,
+} from './jieqi-lunar.ts';
 
 // =============================================
 // 유틸리티
@@ -33,18 +39,7 @@ function pymod(a: number, b: number): number {
 }
 
 // =============================================
-// 절기 상수 (월 시작분)
-// =============================================
-
-const MONTH = [
-  0, 21355, 42843, 64498, 86335, 108366, 130578, 152958,
-  175471, 198077, 220728, 243370, 265955, 288432, 310767,
-  332928, 354903, 376685, 398290, 419736, 441060, 462295,
-  483493, 504693, 525949,
-];
-
-// =============================================
-// 기준점 (1996-02-04 22:08 병자년 입춘)
+// 기준점 (1996-02-04 22:08 병자년 입춘 — 일·시주 연산용)
 // =============================================
 
 const UNIT = {
@@ -250,34 +245,15 @@ export function calcPillarIndices(
     UNIT.year, UNIT.month, UNIT.day, year, month, day,
   );
 
-  // 경과 연수
+  // 경과 연수 (레거시 필드 — 년주는 getLunarYearGanIndex 사용)
   let so24 = div(displ2min, 525949);
   if (displ2min >= 0) so24 += 1;
 
-  // 년주
-  let so24year = (so24 % 60) * -1 + 12;
-  if (so24year < 0) so24year += 60;
-  else if (so24year > 59) so24year -= 60;
+  // 년주 — lunar 입춘 기준
+  let so24year = getLunarYearGanIndex(year, month, day, hour, min);
 
-  // 월주
-  let monthmin100 = displ2min % 525949;
-  monthmin100 = 525949 - monthmin100;
-  if (monthmin100 < 0) monthmin100 += 525949;
-  else if (monthmin100 >= 525949) monthmin100 -= 525949;
-
-  let so24monthIdx = 0;
-  for (let i = 0; i < 12; i++) {
-    const j = i * 2;
-    if (MONTH[j] <= monthmin100 && monthmin100 < MONTH[j + 2]) {
-      so24monthIdx = i;
-    }
-  }
-
-  let t = so24year % 10;
-  t = t % 5;
-  t = t * 12 + 2 + so24monthIdx;
-  let so24month = t;
-  if (so24month > 59) so24month -= 60;
+  // 월주 — lunar 12節 + 五虎遁
+  let so24month = getLunarMonthGanIndex(so24year, year, month, day, hour, min, HGANJI);
 
   // 일주
   let so24day = displ2day % 60;
@@ -326,7 +302,7 @@ export function calcPillarIndices(
   // 야자시(split): 일주는 당일 유지하되, 시주 천간은 다음날 일간 기준
   const isYajasi = i === 0 && hour === 23 && jasiMethod === 'split';
   const dayForHour = isYajasi ? (so24day + 1) % 60 : so24day;
-  t = dayForHour % 10;
+  let t = dayForHour % 10;
   t = t % 5;
   t = t * 12 + i;
   const so24hour = t;
@@ -339,7 +315,7 @@ export function calcPillarIndices(
 // =============================================
 
 /**
- * 절기 시간 구하기 - 입기, 중기, 출기 날짜/시각
+ * 절기 시간 구하기 - 입기, 중기, 출기 날짜/시각 (lunar-javascript + KST)
  */
 export function calcSolarTerms(
   year: number, month: number, day: number, hour: number, min: number,
@@ -348,56 +324,11 @@ export function calcSolarTerms(
   midName: number; midYear: number; midMonth: number; midDay: number; midHour: number; midMin: number;
   outgiName: number; outgiYear: number; outgiMonth: number; outgiDay: number; outgiHour: number; outgiMin: number;
 } {
-  const [, , so24month] = calcPillarIndices(year, month, day, hour, min);
-
-  const displ2min = minutesBetween(
-    UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
-    year, month, day, hour, min,
-  );
-
-  let monthmin100 = (displ2min % 525949) * -1;
-  if (monthmin100 < 0) monthmin100 += 525949;
-  else if (monthmin100 >= 525949) monthmin100 -= 525949;
-
-  let ii = so24month % 12 - 2;
-  if (ii === -2) ii = 10;
-  else if (ii === -1) ii = 11;
-
-  const ingiName = ii * 2;
-  const midName = ii * 2 + 1;
-  const outgiName = ii * 2 + 2;
-
-  const j = ii * 2;
-  let tmin = displ2min + (monthmin100 - MONTH[j]);
-  const [ingiYear, ingiMonth, ingiDay, ingiHour, ingiMin] = dateFromMinutes(
-    tmin, UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
-  );
-
-  tmin = displ2min + (monthmin100 - MONTH[j + 1]);
-  const [midYear, midMonth, midDay, midHour, midMin] = dateFromMinutes(
-    tmin, UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
-  );
-
-  tmin = displ2min + (monthmin100 - MONTH[j + 2]);
-  const [outgiYear, outgiMonth, outgiDay, outgiHour, outgiMin] = dateFromMinutes(
-    tmin, UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
-  );
-
-  return {
-    ingiName, ingiYear, ingiMonth, ingiDay, ingiHour, ingiMin,
-    midName, midYear, midMonth, midDay, midHour, midMin,
-    outgiName, outgiYear, outgiMonth, outgiDay, outgiHour, outgiMin,
-  };
+  return calcLunarSolarTerms(year, month, day, hour, min);
 }
 
-/** 월지(月支) → 명리 월 절기 슬롯 (0=丑月 … 11=子月) */
-const BRANCH_TO_MONTH_II: Record<string, number> = {
-  '丑': 0, '寅': 1, '卯': 2, '辰': 3, '巳': 4, '午': 5,
-  '未': 6, '申': 7, '酉': 8, '戌': 9, '亥': 10, '子': 11,
-};
-
 /**
- * 월주 지지 기준 절입·절출 시각 — calcSolarTerms와 달리 월주와 일치하는 節 경계
+ * 월주 지지 기준 절입·절출 시각 (lunar-javascript + KST)
  */
 export function calcMonthBoundaryTerms(
   year: number, month: number, day: number, hour: number, min: number,
@@ -406,38 +337,7 @@ export function calcMonthBoundaryTerms(
   ingiName: number; ingiYear: number; ingiMonth: number; ingiDay: number; ingiHour: number; ingiMin: number;
   outgiName: number; outgiYear: number; outgiMonth: number; outgiDay: number; outgiHour: number; outgiMin: number;
 } {
-  const ii = BRANCH_TO_MONTH_II[monthBranch];
-  if (ii === undefined) {
-    throw new Error(`Unknown month branch: ${monthBranch}`);
-  }
-
-  const displ2min = minutesBetween(
-    UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
-    year, month, day, hour, min,
-  );
-
-  let monthmin100 = (displ2min % 525949) * -1;
-  if (monthmin100 < 0) monthmin100 += 525949;
-  else if (monthmin100 >= 525949) monthmin100 -= 525949;
-
-  const ingiName = ii * 2;
-  const outgiName = ii * 2 + 2;
-
-  const j = ii * 2;
-  let tmin = displ2min + (monthmin100 - MONTH[j]);
-  const [ingiYear, ingiMonth, ingiDay, ingiHour, ingiMin] = dateFromMinutes(
-    tmin, UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
-  );
-
-  tmin = displ2min + (monthmin100 - MONTH[j + 2]);
-  const [outgiYear, outgiMonth, outgiDay, outgiHour, outgiMin] = dateFromMinutes(
-    tmin, UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
-  );
-
-  return {
-    ingiName, ingiYear, ingiMonth, ingiDay, ingiHour, ingiMin,
-    outgiName, outgiYear, outgiMonth, outgiDay, outgiHour, outgiMin,
-  };
+  return calcLunarMonthBoundaryTerms(year, month, day, hour, min, monthBranch);
 }
 
 // =============================================
@@ -451,6 +351,11 @@ export function getFourPillars(
 ): [string, string, string, string] {
   const [, y, m, d, h] = calcPillarIndices(year, month, day, hour, minute, jasiMethod);
   return [HGANJI[y], HGANJI[m], HGANJI[d], HGANJI[h]];
+}
+
+/** 일운 일진 — 양력 날짜의 일주 (출생시·야자시 무관, 사주원국 일주와 동일 알고리즘) */
+export function getDayPillarForDate(year: number, month: number, day: number): string {
+  return getFourPillars(year, month, day, 12, 0)[2];
 }
 
 // =============================================

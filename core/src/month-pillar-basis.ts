@@ -1,7 +1,8 @@
 import type { BirthInput, JasiMethod } from './types.ts';
 import { HGANJI } from './constants.ts';
 import { getAdjustedBirthDateTime } from './birth-time-adjustment.ts';
-import { calcPillarIndices, calcMonthBoundaryTerms, toHangul } from './pillars.ts';
+import { calcPillarIndices, toHangul } from './pillars.ts';
+import { calcLunarMonthBoundaryTerms } from './jieqi-lunar.ts';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -87,7 +88,7 @@ export function calculateMonthPillarBasis(
   const monthGanziKor = toHangul(monthGanzi[0]) + toHangul(monthGanzi[1]);
   const monthBranchKor = toHangul(monthBranch);
 
-  const terms = calcMonthBoundaryTerms(year, month, day, hour, minute, monthBranch);
+  const terms = calcLunarMonthBoundaryTerms(year, month, day, hour, minute, monthBranch);
   const boundary = termNameFromIngiName(terms.ingiName);
   const nextBoundary = termNameFromIngiName(terms.outgiName);
 

@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
 import { calculateMonthGanzi } from '@core/monthly-data'
+import { formatMonthlyJieQiCell } from '@core/jieqi-lunar'
+import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
 
 interface Props {
   currentYear: number
   currentMonth: number
+  /** App과 복사 상태 동기화용 — 지정 시 controlled */
+  displayYear?: number
   pillars: string[][]
   dayStem: string
   yearBranch: string
@@ -25,21 +29,6 @@ interface MonthlyItem {
   interactions: string
   isGongmang: boolean
   solarTerm: string
-}
-
-const MONTH_TO_SOLAR_TERM: Record<number, string> = {
-  1: '소한(小寒)',
-  2: '입춘(立春)',
-  3: '경칩(驚蟄)',
-  4: '청명(清明)',
-  5: '입하(入夏)',
-  6: '망종(芒種)',
-  7: '소서(小暑)',
-  8: '입추(立秋)',
-  9: '백로(白露)',
-  10: '한로(寒露)',
-  11: '입동(立冬)',
-  12: '대설(大雪)',
 }
 
 const STEM_SIPSIN_MAP: Record<string, string> = {
@@ -109,31 +98,31 @@ function buildMonthlyItems(
       sinsal: formatSinsal(getTwelveSpirit(yearBranch, branch)),
       interactions: interArr.length > 0 ? interArr.join('\n') : '',
       isGongmang: gmSet.has(branch),
-      solarTerm: MONTH_TO_SOLAR_TERM[month] || '',
+      solarTerm: formatMonthlyJieQiCell(displayYear, month),
     })
   }
   return items
 }
 
 export default function MonthlyTable({
-  currentYear, currentMonth, pillars, dayStem, yearBranch, gongmangBranches, onYearChange,
+  currentYear, currentMonth, displayYear: displayYearProp,
+  pillars, dayStem, yearBranch, gongmangBranches, onYearChange,
 }: Props) {
   const { t } = useLocale()
-  const [displayYear, setDisplayYear] = useState(currentYear)
+  const [internalYear, setInternalYear] = useState(currentYear)
+  const isControlled = displayYearProp !== undefined
+  const displayYear = isControlled ? displayYearProp : internalYear
   const gmSet = new Set(gongmangBranches)
   const monthlyItems = buildMonthlyItems(displayYear, pillars, dayStem, yearBranch, gmSet)
 
-  const handlePrevYear = () => {
-    const newYear = displayYear - 1
-    setDisplayYear(newYear)
+  const changeYear = (newYear: number) => {
+    if (!isControlled) setInternalYear(newYear)
     onYearChange?.(newYear)
   }
 
-  const handleNextYear = () => {
-    const newYear = displayYear + 1
-    setDisplayYear(newYear)
-    onYearChange?.(newYear)
-  }
+  const handlePrevYear = () => changeYear(displayYear - 1)
+
+  const handleNextYear = () => changeYear(displayYear + 1)
 
   return (
     <div className="space-y-4">
@@ -158,7 +147,7 @@ export default function MonthlyTable({
         </div>
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-        ※ 월운은 양력 1~12월 기준이며, 각 칸 간지는 월두법으로 산출·고정됩니다. 절기 시각별 流月 전환과는 다를 수 있습니다.
+        {YUN_METHOD_NOTES.monthly}
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
@@ -182,7 +171,7 @@ export default function MonthlyTable({
           <tbody>
             <tr>
               {monthlyItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
+                <td key={idx} className="border border-black px-2 py-1 text-center text-xs whitespace-pre-line leading-tight">
                   {item.solarTerm}
                 </td>
               ))}
