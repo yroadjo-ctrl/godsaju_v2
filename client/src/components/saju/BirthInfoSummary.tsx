@@ -42,7 +42,7 @@ export default function BirthInfoSummary({ input }: Props) {
   return (
     <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       <h2 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-3">
-        출생정보
+        출생정보 <span className="font-hanja">(出生情報)</span>
       </h2>
 
       <div className="overflow-x-auto">

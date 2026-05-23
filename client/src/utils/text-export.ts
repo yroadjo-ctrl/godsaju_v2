@@ -159,7 +159,7 @@ export function sajuToText(
     return line
   }
 
-  lines.push(sectionTitle('출생정보'))
+  lines.push(sectionTitle('출생정보(出生情報)'))
   lines.push('')
   lines.push('| 이름 | 생년월일시 | 시간(12간지) / 통자시·야자시 / 성별 | 출생위치 |')
   lines.push('| --- | --- | --- | --- |')
