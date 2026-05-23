@@ -595,7 +595,7 @@ export function sajuToText(
   // 小運 (대운 전)
   if (soun.length > 0) {
     lines.push('')
-    lines.push(sectionTitle('小運 (小運)'))
+    lines.push(sectionTitle('소운(小運)'))
     lines.push(YUN_METHOD_NOTES.soun)
     if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
     lines.push(YUN_METHOD_NOTES.yongsinTransit)

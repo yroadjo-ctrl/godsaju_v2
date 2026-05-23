@@ -30,13 +30,13 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
     return (
       <section>
         <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
-          小運 <span className="font-hanja">(小運)</span>
+          소운 <span className="font-hanja">(小運)</span>
         </h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
           {YUN_METHOD_NOTES.soun}
         </p>
         <p className="text-sm text-gray-400 dark:text-gray-500">
-          대운 시작과 동일 시점 — 표시할 小運이 없습니다.
+          대운 시작과 동일 시점 — 표시할 소운(小運)이 없습니다.
         </p>
       </section>
     )
@@ -45,7 +45,7 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
   return (
     <section>
       <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
-        小運 <span className="font-hanja">(小運)</span>
+        소운 <span className="font-hanja">(小運)</span>
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
         {YUN_METHOD_NOTES.soun}

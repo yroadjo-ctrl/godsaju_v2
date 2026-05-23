@@ -131,7 +131,7 @@ export default function SajuView({
         />
       </div>
 
-      {/* 小運 */}
+      {/* 소운(小運) */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <SounTable
           soun={result.soun}
