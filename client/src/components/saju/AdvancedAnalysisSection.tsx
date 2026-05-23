@@ -116,8 +116,6 @@ export default function AdvancedAnalysisSection({ johu, hapHwa, gyeokguk }: Prop
       <div className="rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2.5 text-sm">
         <p className="font-medium text-gray-900 dark:text-gray-100">
           격국(格局)
-          {' '}
-          <span className="font-hanja text-base">{gyeokguk.hanja}</span>
           {gyeokguk.category === '화격' && (
             <span className="ml-1.5 text-xs font-normal text-emerald-700 dark:text-emerald-400">
               (화격·化格)
