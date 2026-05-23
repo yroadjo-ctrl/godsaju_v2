@@ -11,6 +11,8 @@ import { STEM_INFO } from './constants.ts';
 import { calculateOhaengSipsinStats, calculateOhaengSipsinStatsWeighted } from './ohaeng-analysis.ts';
 import { calculateSinGangYak } from './singang-analysis.ts';
 import { calculateYongsin } from './yongsin-analysis.ts';
+import { calculateSoun } from './soun.ts';
+import { calculateTaewonTaesik } from './taewon-taesik.ts';
 import { calculateJohu } from './johu-analysis.ts';
 import { calculateHapHwa } from './hap-hwa-analysis.ts';
 import { calculateGyeokguk } from './gyeokguk-analysis.ts';
@@ -524,14 +526,44 @@ export function calculateSaju(input: BirthInput): SajuResult {
   const ohaengSipsinWeighted = calculateOhaengSipsinStatsWeighted(pillars as PillarDetail[], input.unknownTime);
   const hapHwa = calculateHapHwa(pillars as PillarDetail[], relations, ohaengSipsinWeighted);
   const ohaengSipsinAdjusted = hapHwa.adjustedOhaeng;
-  const sinGangYak = calculateSinGangYak(pillars as PillarDetail[], input.unknownTime);
+  const sinGangYak = calculateSinGangYak(
+    pillars as PillarDetail[],
+    input.unknownTime,
+    ohaengSipsinWeighted,
+  );
   const johu = calculateJohu(pillars as PillarDetail[]);
-  const gyeokguk = calculateGyeokguk(pillars as PillarDetail[], sinGangYak, ohaengSipsinAdjusted);
+  const gyeokguk = calculateGyeokguk(
+    pillars as PillarDetail[],
+    sinGangYak,
+    ohaengSipsinAdjusted,
+    hapHwa,
+  );
   const yongsin = calculateYongsin(sinGangYak, ohaengSipsinAdjusted, { johu, gyeokguk, hapHwa });
+  const soun = calculateSoun(
+    isMale,
+    year,
+    month,
+    day,
+    dwHour,
+    dwMinute,
+    daewoon[0]?.age ?? 0,
+    dayStem,
+    yearBranch,
+    gmSet,
+    input.jasiMethod,
+    input.unknownTime,
+  );
+  const taewonTaesik = calculateTaewonTaesik(
+    pillars[2].pillar.stem,
+    pillars[2].pillar.branch,
+    dayStem,
+    dp[1],
+  );
   return {
     input,
     pillars: pillars as any, // PillarDetailExtended는 PillarDetail의 확장
     daewoon,
+    soun,
     relations,
     godSinsal,
     gongmang,
@@ -546,5 +578,6 @@ export function calculateSaju(input: BirthInput): SajuResult {
     sinGangYak,
     yongsin,
     daewoonMeta,
+    taewonTaesik,
   };
 }

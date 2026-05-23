@@ -1,8 +1,10 @@
 import type { Element, OhaengSipsinStats, SinGangYakStats } from './types.ts';
 import type { JohuStats } from './johu-analysis.ts';
 import type { GyeokgukStats } from './gyeokguk-analysis.ts';
-import type { HapHwaStats } from './hap-hwa-analysis.ts';
+import type { HapHwaStats, HwaGeukInfo } from './hap-hwa-analysis.ts';
 import { ELEMENT_HANJA } from './constants.ts';
+
+export type YongsinPrimarySource = '억부' | '조후' | '화격';
 
 export interface YongsinElementInfo {
   element: Element;
@@ -21,20 +23,25 @@ export interface YongsinStats {
   dayElement: Element;
   sinGangLevel: string;
   isStrong: boolean;
-  /** 억부용신 (主) */
+  /** 주용신 (主用神) */
   primary: YongsinElementInfo;
-  /** 희신 (輔) */
+  /** 희신 (喜神) */
   secondary: YongsinElementInfo;
   /** 기신 (忌) */
   avoid: YongsinElementInfo[];
+  /** 주용신 선정 근거 */
+  primarySource: YongsinPrimarySource;
+  /** 억부용신 (조후·화격 우선 시 보조) */
+  eokbuPrimary?: YongsinElementInfo;
   summary: string;
   explanation: string;
-  /** 조후·격국·합화 보정 레이어 */
+  /** 조후용신 (輔 또는 主) */
   johuPrimary?: YongsinElementInfo;
   johuSummary?: string;
   gyeokgukPattern?: string;
   gyeokgukSummary?: string;
   hapHwaSummary?: string;
+  hwaGeukSummary?: string;
   ohaengBasis?: string;
 }
 
@@ -88,15 +95,51 @@ function elementInfo(
   };
 }
 
+function customElementInfo(
+  el: Element,
+  role: string,
+  roleHanja: string,
+  percent: number,
+): YongsinElementInfo {
+  return {
+    element: el,
+    label: ELEMENT_KOR[el],
+    hanja: ELEMENT_HANJA[el],
+    sipsinRole: role,
+    sipsinHanja: roleHanja,
+    percent,
+  };
+}
+
 function percentMap(ohaeng: OhaengSipsinStats): Record<Element, number> {
   return Object.fromEntries(ohaeng.elements.map(e => [e.element, e.percent])) as Record<Element, number>;
+}
+
+function shouldPrioritizeJohu(
+  johu: JohuStats,
+  eokbuEl: Element,
+  pct: Record<Element, number>,
+): boolean {
+  const extremeSeason = johu.season === 'winter' || johu.season === 'summer';
+  if (!extremeSeason) return false;
+  if (johu.primary === eokbuEl) return false;
+  const johuPct = pct[johu.primary] ?? 0;
+  return johuPct < 20 || extremeSeason;
+}
+
+function pickHwaGeukPrimary(
+  hwaGeuk: HwaGeukInfo[],
+  pct: Record<Element, number>,
+): HwaGeukInfo | undefined {
+  if (hwaGeuk.length === 0) return undefined;
+  return [...hwaGeuk].sort((a, b) => (pct[b.element] ?? 0) - (pct[a.element] ?? 0))[0];
 }
 
 function buildYongsinResult(
   sinGangYak: SinGangYakStats,
   dayEl: Element,
-  primary: YongsinElementInfo,
-  secondary: YongsinElementInfo,
+  eokbuPrimary: YongsinElementInfo,
+  eokbuSecondary: YongsinElementInfo,
   avoid: YongsinElementInfo[],
   summary: string,
   explanation: string,
@@ -107,29 +150,74 @@ function buildYongsinResult(
   const johu = options?.johu;
   const gyeokguk = options?.gyeokguk;
   const hapHwa = options?.hapHwa;
+  const pct = percentMap(ohaengSipsin);
 
-  const johuPrimary = johu ? {
-    element: johu.primary,
-    label: ELEMENT_KOR[johu.primary],
-    hanja: ELEMENT_HANJA[johu.primary],
-    sipsinRole: '조후',
-    sipsinHanja: '調候',
-    percent: ohaengSipsin.elements.find(e => e.element === johu.primary)?.percent ?? 0,
-  } : undefined;
+  const johuPrimaryInfo = johu ? customElementInfo(
+    johu.primary,
+    '조후',
+    '調候',
+    pct[johu.primary] ?? 0,
+  ) : undefined;
+
+  const hwaGeukPick = hapHwa ? pickHwaGeukPrimary(hapHwa.hwaGeuk, pct) : undefined;
+
+  let primarySource: YongsinPrimarySource = '억부';
+  let primary = eokbuPrimary;
+  let secondary = eokbuSecondary;
+  let eokbuPrimaryOut: YongsinElementInfo | undefined;
+
+  if (hwaGeukPick) {
+    primarySource = '화격';
+    eokbuPrimaryOut = eokbuPrimary;
+    primary = customElementInfo(
+      hwaGeukPick.element,
+      '화神',
+      '化神',
+      pct[hwaGeukPick.element] ?? 0,
+    );
+    secondary = johuPrimaryInfo ?? eokbuSecondary;
+    summary = `${primary.label}(${primary.hanja}) · 화격용신(化格用神)`;
+    explanation =
+      `${hwaGeukPick.summary}이(가) 성립하여 化神 ${primary.label}(${primary.hanja})을(를) 주용신(主用神)으로 봅니다. ` +
+      `억부용신(抑扶用神)은 ${eokbuPrimary.label}(${eokbuPrimary.hanja})입니다. ` +
+      explanation;
+  } else if (johu && johuPrimaryInfo && shouldPrioritizeJohu(johu, eokbuPrimary.element, pct)) {
+    primarySource = '조후';
+    eokbuPrimaryOut = eokbuPrimary;
+    primary = johuPrimaryInfo;
+    secondary = eokbuSecondary;
+    summary = `${primary.label}(${primary.hanja}) · 조후용신(調候用神)`;
+    explanation =
+      `${johu.seasonLabel}(${johu.seasonHanja}) 계절·월지 ${johu.monthBranch}에서 조후(調候)가 우선하여 ` +
+      `${primary.label}(${primary.hanja})을(를) 주용신(主用神)으로 봅니다. ` +
+      `억부용신(抑扶用神)은 ${eokbuPrimary.label}(${eokbuPrimary.hanja})입니다. ` +
+      explanation;
+  }
 
   const extraNotes: string[] = [];
-  if (johu) extraNotes.push(`조후: ${johu.summary}`);
-  if (gyeokguk) extraNotes.push(`격국: ${gyeokguk.summary}`);
+  if (johu && primarySource !== '조후') extraNotes.push(`조후(調候): ${johu.summary}`);
+  if (gyeokguk) extraNotes.push(`격국(格局): ${gyeokguk.summary}`);
   if (hapHwa && hapHwa.events.some(e => e.established)) {
-    extraNotes.push(`합화: ${hapHwa.summary}`);
+    extraNotes.push(`합화(合化): ${hapHwa.summary}`);
   }
-  if (extraNotes.length > 0) {
+  if (extraNotes.length > 0 && primarySource === '억부') {
+    explanation += ` ${extraNotes.join(' · ')}.`;
+  } else if (extraNotes.length > 0) {
     explanation += ` ${extraNotes.join(' · ')}.`;
   }
 
+  const method =
+    primarySource === '화격' ? '화격·조후·억부 종합'
+      : primarySource === '조후' ? '조후·억부·격국 종합'
+        : extraNotes.length > 0 ? '억부·조후·격국 종합' : '억부용신';
+  const methodHanja =
+    primarySource === '화격' ? '化格·調候·抑扶'
+      : primarySource === '조후' ? '調候·抑扶·格局'
+        : extraNotes.length > 0 ? '抑扶·調候·格局' : '抑扶用神';
+
   return {
-    method: extraNotes.length > 0 ? '억부·조후·격국 종합' : '억부용신',
-    methodHanja: extraNotes.length > 0 ? '抑扶·調候·格局' : '抑扶用神',
+    method,
+    methodHanja,
     dayStem: sinGangYak.dayStem,
     dayStemKor: sinGangYak.dayStemKor,
     dayElement: dayEl,
@@ -138,18 +226,21 @@ function buildYongsinResult(
     primary,
     secondary,
     avoid,
+    primarySource,
+    eokbuPrimary: eokbuPrimaryOut,
     summary,
     explanation,
-    johuPrimary,
+    johuPrimary: johuPrimaryInfo,
     johuSummary: johu?.summary,
     gyeokgukPattern: gyeokguk?.hanja,
     gyeokgukSummary: gyeokguk?.summary,
     hapHwaSummary: hapHwa?.summary,
+    hwaGeukSummary: hapHwa?.hwaGeuk.map(h => `${h.name}(${h.hanja})`).join(' · ') || undefined,
     ohaengBasis: ohaengSipsin.basisLabel,
   };
 }
 
-/** 신강·신약·오행 비율 기준 억부용신 */
+/** 신강·신약·오행 비율 기준 억부용신 (조후·화격 우선 반영) */
 export function calculateYongsin(
   sinGangYak: SinGangYakStats,
   ohaengSipsin: OhaengSipsinStats,
@@ -171,9 +262,9 @@ export function calculateYongsin(
       elementInfo(cycle.wealth, 'wealth', pct[cycle.wealth] ?? 0, WEAK_ROLES),
     ];
 
-    const summary = `${primary.label}(${primary.hanja}) · 억부용신`;
+    const summary = `${primary.label}(${primary.hanja}) · 억부용신(抑扶用神)`;
     const explanation =
-      `${sinGangYak.level}으로 일간이 약하므로, 같은 오행·생해 주는 오행을 돕는 억부법을 씁니다. ` +
+      `${sinGangYak.level}으로 일간이 약하므로, 같은 오행·생해 주는 오행을 돕는 억부법(抑扶)을 씁니다. ` +
       `용신(用神)은 ${primary.label}(${primary.hanja}, ${primary.sipsinRole}/${primary.sipsinHanja}), ` +
       `희신(喜神)은 ${secondary.label}(${secondary.hanja}, ${secondary.sipsinRole}/${secondary.sipsinHanja})입니다. ` +
       `기신(忌神)은 ${avoid.map(a => `${a.label}(${a.hanja})`).join('·')} 쪽입니다.`;
@@ -199,9 +290,9 @@ export function calculateYongsin(
     elementInfo(cycle.input, 'input', pct[cycle.input] ?? 0, STRONG_ROLES),
   ];
 
-  const summary = `${primary.label}(${primary.hanja}) · 억부용신`;
+  const summary = `${primary.label}(${primary.hanja}) · 억부용신(抑扶用神)`;
   const explanation =
-    `${sinGangYak.level}으로 일간이 강하므로, 설기·극제·재성으로 기운을 빼는 억부법을 씁니다. ` +
+    `${sinGangYak.level}으로 일간이 강하므로, 설기·극제·재성으로 기운을 빼는 억부법(抑扶)을 씁니다. ` +
     `용신(用神)은 ${primary.label}(${primary.hanja}, ${primary.sipsinRole}/${primary.sipsinHanja}), ` +
     `희신(喜神)은 ${secondary.label}(${secondary.hanja}, ${secondary.sipsinRole}/${secondary.sipsinHanja})입니다. ` +
     `기신(忌神)은 ${avoid.map(a => `${a.label}(${a.hanja})`).join('·')} 쪽입니다.`;

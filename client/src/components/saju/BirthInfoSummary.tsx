@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { BirthInput } from '@core/types'
 import { getBirthTimeAdjustmentInfo, resolveSolarBirthDateTime } from '@core/index'
-import { buildBirthInfoDisplay } from '../../utils/birth-info-format.ts'
+import { buildBirthInfoDisplay, formatLunarBirthDisplay } from '../../utils/birth-info-format.ts'
 import BirthTimeAdjustmentNotice from '../BirthTimeAdjustmentNotice.tsx'
 
 interface Props {
@@ -10,6 +10,8 @@ interface Props {
 
 export default function BirthInfoSummary({ input }: Props) {
   const info = useMemo(() => buildBirthInfoDisplay(input), [input])
+
+  const lunarBirth = useMemo(() => formatLunarBirthDisplay(input), [input])
 
   const solarConversion = useMemo(() => {
     if (!input.calendarType || input.calendarType === 'solar') return null
@@ -57,8 +59,17 @@ export default function BirthInfoSummary({ input }: Props) {
             <tr className="text-gray-800 dark:text-gray-100">
               <td className="py-2.5 pr-3 align-top">{info.name}</td>
               <td className="py-2.5 pr-3 align-top">
-                <span className="text-gray-500 dark:text-gray-400 text-xs mr-1">{info.calendarLabel}</span>
-                {info.birthDate}
+                <div className="leading-snug">
+                  <div>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs mr-1">{info.calendarLabel}</span>
+                    {info.birthDate}
+                  </div>
+                  {lunarBirth && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      (음력 {lunarBirth})
+                    </div>
+                  )}
+                </div>
               </td>
               <td className="py-2.5 pr-3 align-top">
                 {info.unknownTime ? (

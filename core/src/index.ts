@@ -5,7 +5,8 @@ export { calculateJohu, getSeasonFromBranch } from './johu-analysis.ts'
 export { calculateHapHwa } from './hap-hwa-analysis.ts'
 export { calculateGyeokguk } from './gyeokguk-analysis.ts'
 export type { JohuStats } from './johu-analysis.ts'
-export type { HapHwaStats, HapHwaEvent } from './hap-hwa-analysis.ts'
+export type { HapHwaStats, HapHwaEvent, HwaGeukInfo } from './hap-hwa-analysis.ts'
+export type { YongsinPrimarySource } from './yongsin-analysis.ts'
 export type { GyeokgukStats, GyeokgukCategory } from './gyeokguk-analysis.ts'
 export { calculateSinGangYak, SINGANG_LEVELS, HELP_SIPSIN_LABEL, formatHelpSipsinRatio } from './singang-analysis.ts'
 export { calculateYongsin } from './yongsin-analysis.ts'
@@ -18,6 +19,16 @@ export {
 export type { RelationTabId, RelationTabDef, RelationListItem } from './relation-tabs.ts'
 export { calculateDaewoonMeta, daewoonAgeFromBirth, MS_PER_SAJU_YEAR } from './daewoon-meta.ts'
 export type { DaewoonMeta } from './daewoon-meta.ts'
+export { calculateSoun } from './soun.ts'
+export type { SounItem } from './soun.ts'
+export { calculateTaewonTaesik } from './taewon-taesik.ts'
+export type { TaewonTaesikStats, TaewonTaesikPillar } from './taewon-taesik.ts'
+export {
+  annotateTransit,
+  classifyYongsinRole,
+  detectFuYinFanYin,
+} from './transit-analysis.ts'
+export type { TransitAnnotation, YongsinTransitRole } from './transit-analysis.ts'
 export {
   calculateMonthPillarBasis,
   calculateMonthPillarBasisFromInput,

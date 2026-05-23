@@ -1,4 +1,4 @@
-import type { Element, PillarDetail } from './types.ts';
+import type { Element, OhaengSipsinStats, PillarDetail } from './types.ts';
 import { BRANCH_ELEMENT, STEM_INFO } from './constants.ts';
 import { getHiddenStems, getRelation, getTwelveMeteor } from './pillars.ts';
 
@@ -13,8 +13,13 @@ export const SINGANG_LEVELS: SinGangLevel[] = [
 /** 生·比 = 일간을 돕는 십성 (인성·비겁) */
 export const HELP_SIPSIN_LABEL = '인성(印星)·비겁(比劫)';
 
+function formatWeight(n: number): string {
+  const rounded = Math.round(n * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 export function formatHelpSipsinRatio(helpCount: number, totalCount: number): string {
-  return `${helpCount} / ${totalCount} ${HELP_SIPSIN_LABEL}`;
+  return `${formatWeight(helpCount)} / ${formatWeight(totalCount)} ${HELP_SIPSIN_LABEL}`;
 }
 
 export interface DeungFlag {
@@ -34,10 +39,16 @@ export interface SinGangYakStats {
   /** 신강 계열이면 true */
   isStrong: boolean;
   conclusion: string;
-  /** 0~100, 50=중화. 원국 세력 비율(지장간·합화 미포함) */
+  /** 0~100, 50=중화 */
   strengthPercent: number;
   helpCount: number;
   totalCount: number;
+  /** 득세 산출 기준 */
+  basisLabel: string;
+  /** 표면 십성 기준 (비교용) */
+  surfaceStrengthPercent?: number;
+  surfaceHelpCount?: number;
+  surfaceTotalCount?: number;
 }
 
 const STEM_KOR: Record<string, string> = {
@@ -50,6 +61,8 @@ const ELEMENT_KOR: Record<Element, string> = {
   tree: '목', fire: '화', earth: '토', metal: '금', water: '수',
 };
 
+const HELP_SIPSIN_HANJA = new Set(['比肩', '劫財', '正印', '偏印']);
+
 /** 왕·록·생·대 — 통근·득력 판정 */
 const STRONG_METEOR_HANJA = new Set(['長生', '冠帶', '乾祿', '帝旺']);
 
@@ -61,8 +74,6 @@ const SEASON_BRANCHES: Record<Element, string[]> = {
   metal: ['申', '酉'],
   water: ['亥', '子'],
 };
-
-const HELP_SIPSIN = new Set(['比肩', '劫財', '正印', '偏印']);
 
 function parseSipsinHanja(sipsin: string): string | null {
   const m = sipsin.match(/\(([^)]+)\)/);
@@ -96,12 +107,11 @@ function isDeungryeong(dayStem: string, monthBranch: string): boolean {
 }
 
 function isHelpSipsin(hanja: string | null): boolean {
-  return hanja != null && HELP_SIPSIN.has(hanja);
+  return hanja != null && HELP_SIPSIN_HANJA.has(hanja);
 }
 
-function countDeungse(
+function countDeungseFromPillars(
   pillars: PillarDetail[],
-  dayStem: string,
   indices: number[],
 ): { help: number; total: number } {
   let help = 0;
@@ -123,6 +133,17 @@ function countDeungse(
     }
   }
 
+  return { help, total };
+}
+
+function countDeungseFromWeighted(ohaeng: OhaengSipsinStats): { help: number; total: number } {
+  let help = 0;
+  let total = 0;
+  for (const s of ohaeng.sipsin) {
+    if (s.count <= 0) continue;
+    total += s.count;
+    if (HELP_SIPSIN_HANJA.has(s.hanja)) help += s.count;
+  }
   return { help, total };
 }
 
@@ -158,6 +179,7 @@ function resolveLevel(
 export function calculateSinGangYak(
   pillars: PillarDetail[],
   unknownTime?: boolean,
+  weightedOhaeng?: OhaengSipsinStats,
 ): SinGangYakStats {
   const dayStem = pillars[1].pillar.stem;
   const dayBranch = pillars[1].pillar.branch;
@@ -170,7 +192,9 @@ export function calculateSinGangYak(
   const deungji = hasTonggeun(dayStem, dayBranch);
   const deungsi = !unknownTime && hasTonggeun(dayStem, hourBranch);
 
-  const { help, total } = countDeungse(pillars, dayStem, indices);
+  const surface = countDeungseFromPillars(pillars, indices);
+  const weighted = weightedOhaeng ? countDeungseFromWeighted(weightedOhaeng) : null;
+  const { help, total } = weighted && weighted.total > 0 ? weighted : surface;
   const helpRatio = total > 0 ? help / total : 0.5;
   const deungse = helpRatio > 0.5;
 
@@ -188,6 +212,11 @@ export function calculateSinGangYak(
     ? Math.round(Math.min(100, Math.max(0, helpRatio * 100)))
     : 50;
 
+  const surfaceRatio = surface.total > 0 ? surface.help / surface.total : 0.5;
+  const surfaceStrengthPercent = surface.total > 0
+    ? Math.round(Math.min(100, Math.max(0, surfaceRatio * 100)))
+    : 50;
+
   return {
     dayStem,
     dayStemKor: STEM_KOR[dayStem] ?? dayStem,
@@ -199,6 +228,10 @@ export function calculateSinGangYak(
     strengthPercent,
     helpCount: help,
     totalCount: total,
+    basisLabel: weighted && weighted.total > 0 ? '지장간 가중' : '표면 십성',
+    surfaceStrengthPercent: weighted && weighted.total > 0 ? surfaceStrengthPercent : undefined,
+    surfaceHelpCount: weighted && weighted.total > 0 ? surface.help : undefined,
+    surfaceTotalCount: weighted && weighted.total > 0 ? surface.total : undefined,
   };
 }
 

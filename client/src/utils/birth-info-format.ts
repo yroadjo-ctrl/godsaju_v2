@@ -3,6 +3,7 @@ import type { MonthPillarBasis } from '@core/index'
 import {
   calendarTypeLabel,
   resolveSolarBirthDateTime,
+  solarToLunar,
   getBirthTimeAdjustmentInfo,
   formatClockTime,
   formatSignedMinutes,
@@ -27,6 +28,20 @@ export interface BirthInfoDisplay {
   gender: string
   location: string
   unknownTime: boolean
+}
+
+/** 양력 입력 → 음력 생일 표기 (윤달 포함) */
+export function formatLunarBirthDisplay(input: BirthInput): string | null {
+  const cal = input.calendarType ?? 'solar'
+  if (cal !== 'solar') return null
+  try {
+    const solar = resolveSolarBirthDateTime(input)
+    const lunar = solarToLunar(solar.year, solar.month, solar.day)
+    const leap = lunar.isLeap ? ' (윤달)' : ''
+    return `${lunar.lunarYear}년 ${lunar.lunarMonth}월 ${lunar.lunarDay}일${leap}`
+  } catch {
+    return null
+  }
 }
 
 export function buildBirthInfoDisplay(input: BirthInput): BirthInfoDisplay {
@@ -99,6 +114,11 @@ export function formatCalculationBasisLines(input: BirthInput): string[] {
     } catch {
       lines.push('(양력 변환 실패 — 입력값 확인 필요)')
       return lines
+    }
+  } else {
+    const lunarText = formatLunarBirthDisplay(input)
+    if (lunarText) {
+      lines.push(`음력 생일: ${lunarText}`)
     }
   }
 

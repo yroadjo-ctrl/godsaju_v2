@@ -1,8 +1,9 @@
 import type { Element, OhaengSipsinStats, PillarDetail, SinGangYakStats } from './types.ts';
+import type { HapHwaStats } from './hap-hwa-analysis.ts';
 import { getJeonggi, getRelation, getTwelveMeteor } from './pillars.ts';
 import { ELEMENT_HANJA } from './constants.ts';
 
-export type GyeokgukCategory = '정격' | '종격' | '특수격';
+export type GyeokgukCategory = '정격' | '종격' | '특수격' | '화격';
 
 export interface GyeokgukStats {
   name: string;
@@ -44,17 +45,22 @@ function meteorHanja(unseong: string): string | null {
   return m ? m[1] : null;
 }
 
+function gyeokgukSummary(hangul: string, hanja: string): string {
+  return `${hangul}(${hanja})`;
+}
+
 function dominantElement(ohaeng: OhaengSipsinStats): { element: Element; percent: number } | null {
   const sorted = [...ohaeng.elements].sort((a, b) => b.percent - a.percent);
   if (sorted[0]?.percent <= 0) return null;
   return { element: sorted[0].element, percent: sorted[0].percent };
 }
 
-/** 월령·신강약 기준 격국 */
+/** 월령·신강약·화격 기준 격국 */
 export function calculateGyeokguk(
   pillars: PillarDetail[],
   sinGangYak: SinGangYakStats,
   ohaeng: OhaengSipsinStats,
+  hapHwa?: HapHwaStats,
 ): GyeokgukStats {
   const dayStem = pillars[1].pillar.stem;
   const monthStem = pillars[2].pillar.stem;
@@ -67,6 +73,22 @@ export function calculateGyeokguk(
 
   const dom = dominantElement(ohaeng);
 
+  if (hapHwa?.hwaGeuk?.[0]) {
+    const hw = hapHwa.hwaGeuk[0];
+    return {
+      name: hw.name,
+      hanja: hw.hanja,
+      category: '화격',
+      basisSipsinHanja: '化神',
+      basisSipsinHangul: '화神',
+      basisSource: hw.source,
+      summary: gyeokgukSummary(hw.name, hw.hanja),
+      explanation:
+        `${hw.source}이(가) 성립하여 ${hw.summary}. ` +
+        `합화(合化) 성공 시 화격(化格)으로 분류합니다.`,
+    };
+  }
+
   if (!sinGangYak.isStrong && sinGangYak.score <= 0 && dom && dom.percent >= 55) {
     const el = dom.element;
     return {
@@ -76,7 +98,7 @@ export function calculateGyeokguk(
       basisSipsinHanja: '-',
       basisSipsinHangul: '-',
       basisSource: `일간 ${STEM_KOR[dayStem]}(${dayStem}) 극약 · ${ELEMENT_KOR[el]} ${dom.percent}%`,
-      summary: `從${ELEMENT_HANJA[el]}格 (종${ELEMENT_KOR[el]}격)`,
+      summary: gyeokgukSummary(`종${ELEMENT_KOR[el]}격`, `從${ELEMENT_HANJA[el]}格`),
       explanation:
         `일간 세력이 매우 약하고 ${ELEMENT_KOR[el]}(化) 기운이 ${dom.percent}%로 압도적이어서 ` +
         `종${ELEMENT_KOR[el]}격(從${ELEMENT_KOR[el]}格)으로 봅니다.`,
@@ -91,7 +113,7 @@ export function calculateGyeokguk(
       basisSipsinHanja: '比劫',
       basisSipsinHangul: '비겁',
       basisSource: `일간 ${STEM_KOR[dayStem]}(${dayStem}) · ${ELEMENT_KOR[dom.element]} ${dom.percent}%`,
-      summary: '專旺格 (전왕격)',
+      summary: gyeokgukSummary('전왕격', '專旺格'),
       explanation:
         `일간과 같은 오행 ${ELEMENT_KOR[dom.element]}이 ${dom.percent}%로 편중되고 신강하여 전왕격(專旺格)에 가깝습니다.`,
     };
@@ -114,7 +136,7 @@ export function calculateGyeokguk(
         basisSipsinHanja: '劫財',
         basisSipsinHangul: '겁재',
         basisSource: `월지 ${monthBranch} 12운성 ${monthMeteor}`,
-        summary: '月刃格 (월인격)',
+        summary: gyeokgukSummary('월인격', '月刃格'),
         explanation: `월지 ${monthBranch}가 일간 ${STEM_KOR[dayStem]}(${dayStem})의 帝旺(제왕)에 해당하여 월刃격(月刃格)으로 봅니다.`,
       };
     }
@@ -126,7 +148,7 @@ export function calculateGyeokguk(
         basisSipsinHanja: '比肩',
         basisSipsinHangul: '비견',
         basisSource: `월지 ${monthBranch} 12운성 ${monthMeteor}`,
-        summary: '建祿格 (건록격)',
+        summary: gyeokgukSummary('건록격', '建祿格'),
         explanation: `월지 ${monthBranch}가 일간의 建祿·冠帶(건록·관대)에 해당하여 건록격(建祿格)으로 봅니다.`,
       };
     }
@@ -141,7 +163,7 @@ export function calculateGyeokguk(
       basisSipsinHanja: basisRel.hanja,
       basisSipsinHangul: basisRel.hangul,
       basisSource,
-      summary: `${geuk.name} (${basisRel.hangul}격)`,
+      summary: gyeokgukSummary(`${basisRel.hangul}격`, geuk.hanja),
       explanation:
         `${basisSource} 기준 십성 ${basisRel.hangul}(${basisRel.hanja})이 월령 주도하여 ` +
         `${geuk.name}(정격)으로 분류합니다.`,
@@ -155,7 +177,7 @@ export function calculateGyeokguk(
     basisSipsinHanja: basisRel?.hanja ?? '-',
     basisSipsinHangul: basisRel?.hangul ?? '-',
     basisSource,
-    summary: '雜格 (잡격)',
+    summary: gyeokgukSummary('잡격', '雜格'),
     explanation: '월령 십성이 뚜렷하지 않아 잡격(雜格)으로 분류합니다.',
   };
 }

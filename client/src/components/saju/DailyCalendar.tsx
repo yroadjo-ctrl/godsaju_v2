@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Solar } from 'lunar-javascript'
 import { getRelation, getHiddenStems, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation, getDayPillarForDate } from '@core/pillars'
+import { annotateTransit } from '@core/index'
+import type { YongsinStats } from '@core/types'
 import { buildJieQiCalendarMap } from '@core/jieqi-lunar'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import { HGANJI, GONGMANG_TABLE } from '@core/constants'
@@ -38,10 +40,11 @@ interface Props {
   dayStem?: string;
   yearBranch?: string;
   natalPillars?: string[]; // [시주, 일주, 월주, 년주] 간지 문자열
+  yongsin?: YongsinStats;
   onSelectedDateChange?: (date: Date | null) => void;
 }
 
-const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onSelectedDateChange }) => {
+const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, yongsin, onSelectedDateChange }) => {
   const [viewDate, setViewDate] = useState(new Date());
   
   // 오늘 날짜 (고정, 주황색)
@@ -258,9 +261,12 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
           일운 <span className="font-hanja">(日運)</span>
         </h3>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-        {YUN_METHOD_NOTES.daily}
-      </p>
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed space-y-1">
+        <p>{YUN_METHOD_NOTES.daily}</p>
+        {yongsin && natalPillars?.length ? (
+          <p>{YUN_METHOD_NOTES.yongsinTransit}</p>
+        ) : null}
+      </div>
       
       <div className="w-full bg-white rounded-xl border border-slate-200 shadow-sm p-4">
         {/* 달력 헤더: 월 이동 */}
@@ -398,6 +404,19 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, onS
                           return null;
                         })()}
                       </div>
+
+                      {/* 伏吟·反吟 · 용신 */}
+                      {(() => {
+                        if (!yongsin || !natalPillars?.length) return null;
+                        const ann = annotateTransit(ganzi.ganzi, natalPillars, yongsin);
+                        if (ann.fuYinFanYin === '-' && ann.yongsinLabel === '-') return null;
+                        return (
+                          <div className="mt-0.5 text-[7px] text-slate-700 text-center leading-tight px-0.5">
+                            {ann.fuYinFanYin !== '-' && <div>{ann.fuYinFanYin}</div>}
+                            {ann.yongsinLabel !== '-' && <div>{ann.yongsinLabel}</div>}
+                          </div>
+                        );
+                      })()}
 
                       {/* 합충형파해 이모지 + Popover */}
                       {(() => {

@@ -12,6 +12,12 @@ const ELEMENT_DOT: Record<string, string> = {
   water: 'bg-[#3366FF]',
 }
 
+const SOURCE_LABEL: Record<string, string> = {
+  '억부': '억부(抑扶)',
+  '조후': '조후(調候)',
+  '화격': '화격(化格)',
+}
+
 function ElementRow({
   tag,
   tagClass,
@@ -45,6 +51,8 @@ function ElementRow({
 }
 
 export default function YongsinSection({ yongsin }: Props) {
+  const sourceLabel = SOURCE_LABEL[yongsin.primarySource] ?? yongsin.primarySource
+
   return (
     <section>
       <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
@@ -52,7 +60,8 @@ export default function YongsinSection({ yongsin }: Props) {
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
         일간 <span className="font-hanja font-medium">{yongsin.dayStemKor}({yongsin.dayStem})</span>
-        {' '}· {yongsin.method}({yongsin.methodHanja}) · 신강약 {yongsin.sinGangLevel}
+        {' '}· {yongsin.method}({yongsin.methodHanja}) · 신강약(身強弱) {yongsin.sinGangLevel}
+        {' '}· 주용신(主用神): {sourceLabel}
       </p>
 
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -73,6 +82,13 @@ export default function YongsinSection({ yongsin }: Props) {
             tagClass="bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
             info={yongsin.secondary}
           />
+          {yongsin.eokbuPrimary && yongsin.primarySource !== '억부' && (
+            <ElementRow
+              tag="억부"
+              tagClass="bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+              info={yongsin.eokbuPrimary}
+            />
+          )}
           {yongsin.avoid.map(a => (
             <ElementRow
               key={a.element}
@@ -87,14 +103,19 @@ export default function YongsinSection({ yongsin }: Props) {
           <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
             {yongsin.explanation}
           </p>
-          {yongsin.johuPrimary && (
+          {yongsin.johuPrimary && yongsin.primarySource !== '조후' && (
             <p className="mt-1.5 text-xs text-sky-700 dark:text-sky-400">
-              조후용신: {yongsin.johuPrimary.label}({yongsin.johuPrimary.hanja})
+              조후용신(調候用神): {yongsin.johuPrimary.label}({yongsin.johuPrimary.hanja})
+            </p>
+          )}
+          {yongsin.hwaGeukSummary && yongsin.primarySource !== '화격' && (
+            <p className="mt-0.5 text-xs text-violet-700 dark:text-violet-400">
+              화격(化格): {yongsin.hwaGeukSummary}
             </p>
           )}
           {yongsin.gyeokgukSummary && (
             <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
-              격국: {yongsin.gyeokgukSummary}
+              격국(格局): {yongsin.gyeokgukSummary}
             </p>
           )}
         </div>

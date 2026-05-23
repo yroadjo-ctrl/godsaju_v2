@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import type { DaewoonItem } from '@core/types'
+import type { DaewoonItem, YongsinStats } from '@core/types'
+import { annotateTransit } from '@core/index'
 import { getYearGanzi, getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
@@ -11,7 +12,8 @@ interface Props {
   dayStem: string
   yearBranch: string
   gongmangBranches: [string, string]
-  pillars: string[][]
+  natalGanzis: string[]
+  yongsin: YongsinStats
 }
 
 interface SewoonItem {
@@ -24,6 +26,8 @@ interface SewoonItem {
   sinsal: string
   isGongmang: boolean
   interactions: string
+  fuYinFanYin: string
+  yongsinLabel: string
 }
 
 const STEM_SIPSIN_MAP: Record<string, string> = {
@@ -36,7 +40,8 @@ function buildSewoonItems(
   startYear: number, endYear: number,
   birthYear: number, dayStem: string, yearBranch: string,
   gmSet: Set<string>,
-  pillars: string[][],
+  natalGanzis: string[],
+  yongsin: YongsinStats,
 ): SewoonItem[] {
   const items: SewoonItem[] = []
   const posLabels = ['시', '일', '월', '년']
@@ -50,11 +55,12 @@ function buildSewoonItems(
     const jeonggi = getJeonggi(branch)
     const bRel = getRelation(dayStem, jeonggi)
     const branchSipsin = bRel ? bRel.hanja : '?'
+    const ann = annotateTransit(ganzi, natalGanzis, yongsin)
 
     const interArr: string[] = []
-    pillars.forEach((p, idx) => {
-      const natalStem = p[0]
-      const natalBranch = p[1]
+    natalGanzis.forEach((natal, idx) => {
+      const natalStem = natal[0]
+      const natalBranch = natal[1]
       const pos = posLabels[idx]
 
       const sRel = getStemRelation(natalStem, stem)
@@ -86,6 +92,8 @@ function buildSewoonItems(
       sinsal: formatSinsal(getTwelveSpirit(yearBranch, branch)),
       isGongmang: gmSet.has(branch),
       interactions: interArr.length > 0 ? interArr.join('\n') : '',
+      fuYinFanYin: ann.fuYinFanYin,
+      yongsinLabel: ann.yongsinLabel,
     })
   }
   return items
@@ -102,7 +110,7 @@ export function findActiveDaewoonIndexByAge(daewoon: DaewoonItem[], currentAge: 
 }
 
 export default function SewoonTable({
-  daewoon, displayIndex, birthYear, dayStem, yearBranch, gongmangBranches, pillars,
+  daewoon, displayIndex, birthYear, dayStem, yearBranch, gongmangBranches, natalGanzis, yongsin,
 }: Props) {
   const gmSet = useMemo(() => new Set(gongmangBranches), [gongmangBranches])
 
@@ -119,9 +127,10 @@ export default function SewoonTable({
       dayStem,
       yearBranch,
       gmSet,
-      pillars,
+      natalGanzis,
+      yongsin,
     )
-  }, [targetDaewoon, startYearForSewoon, endYearForSewoon, birthYear, dayStem, yearBranch, gmSet, pillars])
+  }, [targetDaewoon, startYearForSewoon, endYearForSewoon, birthYear, dayStem, yearBranch, gmSet, natalGanzis, yongsin])
 
   if (sewoonItems.length === 0) return null
 
@@ -135,8 +144,11 @@ export default function SewoonTable({
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 대운: {periodLabel}
       </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
         {YUN_METHOD_NOTES.sewoon}
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+        {YUN_METHOD_NOTES.yongsinTransit}
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
@@ -242,6 +254,20 @@ export default function SewoonTable({
               {[...sewoonItems].reverse().map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep min-h-[50px]">
                   {item.interactions || '-'}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {[...sewoonItems].reverse().map((item, idx) => (
+                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
+                  {item.fuYinFanYin}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {[...sewoonItems].reverse().map((item, idx) => (
+                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight">
+                  {item.yongsinLabel}
                 </td>
               ))}
             </tr>

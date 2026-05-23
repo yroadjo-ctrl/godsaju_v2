@@ -1,4 +1,5 @@
 import PillarTable from './PillarTable.tsx'
+import TaewonTaesikSection from './TaewonTaesikSection.tsx'
 import OhaengSipsinSection from './OhaengSipsinSection.tsx'
 import AdvancedAnalysisSection from './AdvancedAnalysisSection.tsx'
 import SinGangSection from './SinGangSection.tsx'
@@ -7,6 +8,7 @@ import SpecialSinsalTable from './SpecialSinsalTable.tsx'
 import RelationList from './RelationList.tsx'
 import JwaInjongTable from './JwaInjongTable.tsx'
 import DaewoonTable from './DaewoonTable.tsx'
+import SounTable from './SounTable.tsx'
 import SewoonTable from './SewoonTable.tsx'
 import MonthlyTable from './MonthlyTable.tsx'
 import DailyCalendar from './DailyCalendar.tsx'
@@ -67,6 +69,11 @@ export default function SajuView({
         />
       </section>
 
+      {/* 胎元 · 胎息 */}
+      <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <TaewonTaesikSection stats={result.taewonTaesik} />
+      </section>
+
       {/* 오행·십성 분석 */}
       <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <OhaengSipsinSection
@@ -124,13 +131,24 @@ export default function SajuView({
         />
       </div>
 
+      {/* 小運 */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <SounTable
+          soun={result.soun}
+          natalGanzis={ganzis}
+          yongsin={result.yongsin}
+          unknownTime={input.unknownTime}
+        />
+      </div>
+
       {/* 대운 */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <DaewoonTable
           daewoon={result.daewoon}
           daewoonMeta={result.daewoonMeta}
           unknownTime={input.unknownTime}
-          pillars={result.pillars.map(p => p.pillar.ganzi)}
+          natalGanzis={ganzis}
+          yongsin={result.yongsin}
           selectedIdx={selectedDaewoonIdx}
           autoIndex={autoDaewoonIdx}
           onSelectDaewoon={onSelectedDaewoonIdxChange}
@@ -146,7 +164,8 @@ export default function SajuView({
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           gongmangBranches={result.gongmang.branches}
-          pillars={result.pillars.map(p => p.pillar.ganzi)}
+          natalGanzis={ganzis}
+          yongsin={result.yongsin}
         />
       </div>
 
@@ -160,6 +179,7 @@ export default function SajuView({
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           gongmangBranches={result.gongmang.branches}
+          yongsin={result.yongsin}
           onYearChange={onMonthlyDisplayYearChange}
         />
       </div>
@@ -170,6 +190,7 @@ export default function SajuView({
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           natalPillars={natalPillars}
+          yongsin={result.yongsin}
           onSelectedDateChange={() => {}}
         />
       </div>

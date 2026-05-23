@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import type { DaewoonItem, DaewoonMeta } from '@core/types'
+import type { DaewoonItem, DaewoonMeta, YongsinStats } from '@core/types'
+import { annotateTransit } from '@core/index'
 import { getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
@@ -9,7 +10,8 @@ interface Props {
   daewoon: DaewoonItem[]
   daewoonMeta: DaewoonMeta
   unknownTime?: boolean
-  pillars: string[][]
+  natalGanzis: string[]
+  yongsin: YongsinStats
   selectedIdx: number
   autoIndex: number
   onSelectDaewoon: (idx: number) => void
@@ -27,20 +29,27 @@ interface DaewoonTableItem {
   sinsal: string
   isGongmang: boolean
   interactions: string
+  fuYinFanYin: string
+  yongsinLabel: string
 }
 
-function buildDaewoonTableItems(daewoon: DaewoonItem[], pillars: string[][]): DaewoonTableItem[] {
+function buildDaewoonTableItems(
+  daewoon: DaewoonItem[],
+  natalGanzis: string[],
+  yongsin: YongsinStats,
+): DaewoonTableItem[] {
   const posLabels = ['시', '일', '월', '년']
 
   return daewoon.map((dw) => {
     const stem = dw.ganzi[0]
     const branch = dw.ganzi[1]
+    const ann = annotateTransit(dw.ganzi, natalGanzis, yongsin)
 
     const interArr: string[] = []
 
-    pillars.forEach((p, idx) => {
-      const natalStem = p[0]
-      const natalBranch = p[1]
+    natalGanzis.forEach((natal, idx) => {
+      const natalStem = natal[0]
+      const natalBranch = natal[1]
       const pos = posLabels[idx]
 
       const sRel = getStemRelation(natalStem, stem)
@@ -74,12 +83,14 @@ function buildDaewoonTableItems(daewoon: DaewoonItem[], pillars: string[][]): Da
       sinsal: dw.sinsal,
       isGongmang: dw.isGongmang,
       interactions: interArr.length > 0 ? interArr.join('\n') : '',
+      fuYinFanYin: ann.fuYinFanYin,
+      yongsinLabel: ann.yongsinLabel,
     }
   })
 }
 
 export default function DaewoonTable({
-  daewoon, daewoonMeta, unknownTime, pillars, selectedIdx, autoIndex, onSelectDaewoon,
+  daewoon, daewoonMeta, unknownTime, natalGanzis, yongsin, selectedIdx, autoIndex, onSelectDaewoon,
 }: Props) {
   const { t } = useLocale()
 
@@ -94,7 +105,10 @@ export default function DaewoonTable({
     )
   }
 
-  const daewoonTableItems = useMemo(() => buildDaewoonTableItems(daewoon, pillars), [daewoon, pillars])
+  const daewoonTableItems = useMemo(
+    () => buildDaewoonTableItems(daewoon, natalGanzis, yongsin),
+    [daewoon, natalGanzis, yongsin],
+  )
 
   return (
     <section>
@@ -126,6 +140,9 @@ export default function DaewoonTable({
       )}
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
         {YUN_METHOD_NOTES.daewoon}
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+        {YUN_METHOD_NOTES.yongsinTransit}
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
         열을 클릭하면 해당 대운 구간의 세운을 아래에서 볼 수 있습니다.
@@ -244,6 +261,20 @@ export default function DaewoonTable({
               {[...daewoonTableItems].reverse().map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep min-h-[50px]">
                   {item.interactions || '-'}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {[...daewoonTableItems].reverse().map((item, idx) => (
+                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
+                  {item.fuYinFanYin}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {[...daewoonTableItems].reverse().map((item, idx) => (
+                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight">
+                  {item.yongsinLabel}
                 </td>
               ))}
             </tr>

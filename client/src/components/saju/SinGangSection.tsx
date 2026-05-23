@@ -21,7 +21,7 @@ export default function SinGangSection({ stats }: Props) {
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
         일간 <span className="font-hanja font-medium">{stats.dayStemKor}({stats.dayStem})</span>
-        {' '}· 득령(월령)·득지(일지)·득시(시지)·득세(원국 세력)
+        {' '}· 득령(得令)·득지(得地)·득시(得時)·득세(得勢) · {stats.basisLabel} 기준
       </p>
 
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -105,8 +105,13 @@ export default function SinGangSection({ stats }: Props) {
       </div>
 
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-        ※ 주황 채움=인성·비겁 비율(일간 제외 칸 기준). 굵은 글자=득력 4항목 종합 판정.
-        ※ 득지=일지, 득시=시지. 신강·신약은 표면 십성 기준(지장간·합화 미반영).
+        ※ 주황 채움=인성·비겁 비율({stats.basisLabel} 기준). 굵은 글자=득력 4항목 종합 판정.
+        ※ 득지(得地)=일지, 득시(得時)=시지.
+        {stats.surfaceStrengthPercent != null && stats.surfaceHelpCount != null && stats.surfaceTotalCount != null && (
+          <>
+            {' '}표면 십성 기준: {formatHelpSipsinRatio(stats.surfaceHelpCount, stats.surfaceTotalCount)} → 약 {stats.surfaceStrengthPercent}%
+          </>
+        )}
       </p>
     </section>
   )

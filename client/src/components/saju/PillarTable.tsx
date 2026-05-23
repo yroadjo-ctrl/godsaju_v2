@@ -4,8 +4,6 @@ import {
   branchColorClass,
   stemSolidBgClass,
   branchSolidBgClass,
-  elementSolidBgClass,
-  stemElement,
 } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
 import { PILLAR_TABLE_LABELS, type PillarRowLabel } from '../../utils/pillar-table-labels.ts'

@@ -13,6 +13,7 @@ import {
   calculateMonthPillarBasisFromInput,
   buildJieQiDateKeyMap,
   formatMonthlyJieQiCell,
+  annotateTransit,
 } from '@core/index'
 import { PILLAR_TABLE_LABELS, pillarLabelForExport } from './pillar-table-labels.ts'
 import {
@@ -44,10 +45,11 @@ export function sajuToText(
 ): string {
   const t = makeT(locale)
   const {
-    input, pillars, daewoon, daewoonMeta, relations, gongmang,
+    input, pillars, daewoon, soun, daewoonMeta, relations, gongmang,
     ohaengSipsin, ohaengSipsinWeighted, ohaengSipsinAdjusted,
-    hapHwa, johu, gyeokguk, sinGangYak, yongsin,
+    hapHwa, johu, gyeokguk, sinGangYak, yongsin, taewonTaesik,
   } = result
+  const natalGanzis = pillars.map((p) => p.pillar.ganzi)
   const lines: string[] = []
 
   // 음양오행 변환 맵 (PillarTable.tsx와 동일)
@@ -239,6 +241,15 @@ export function sajuToText(
   }).join(' | ')} |`)
 
   lines.push('')
+  lines.push(sectionTitle('태원(胎元) · 태식(胎息)'))
+  lines.push('')
+  lines.push(`※ ${taewonTaesik.methodNote}`)
+  lines.push('')
+  lines.push('| 구분 | 간지 | 천간십성 | 지지십성 | 納音 |')
+  lines.push('| --- | --- | --- | --- | --- |')
+  lines.push(`| 태원(胎元) | ${taewonTaesik.taewon.ganzi} | ${taewonTaesik.taewon.stemSipsin} | ${taewonTaesik.taewon.branchSipsin} | ${taewonTaesik.taewon.nayeon} |`)
+  lines.push(`| 태식(胎息) | ${taewonTaesik.taesik.ganzi} | ${taewonTaesik.taesik.stemSipsin} | ${taewonTaesik.taesik.branchSipsin} | ${taewonTaesik.taesik.nayeon} |`)
+  lines.push('')
 
   // 오행·십성 분석
   const appendOhaengBlock = (title: string, os: typeof ohaengSipsin) => {
@@ -303,15 +314,37 @@ export function sajuToText(
 
   // 조후·합화·격국
   if (johu && hapHwa && gyeokguk) {
-    lines.push(sectionTitle('조후 · 합화 · 격국'))
+    lines.push(sectionTitle('조후(調候) · 합화(合化) · 격국(格局)'))
     lines.push('')
     lines.push(`- **조후(調候)**: ${johu.summary}`)
     lines.push(`  ${johu.explanation}`)
-    lines.push(`- **합화(合化)**: ${hapHwa.summary}`)
-    for (const e of hapHwa.events) {
-      lines.push(`  - ${e.label}: ${e.established ? '성립' : '불성립'} (${e.reason})`)
+    if (johu.secondaryLabel) {
+      lines.push(`  - 조후희신(調候喜神): ${johu.secondaryLabel}`)
     }
-    lines.push(`- **격국(格局)**: ${gyeokguk.summary} — ${gyeokguk.explanation}`)
+    if (johu.avoidLabel) {
+      lines.push(`  - 조후기신(調候忌神): ${johu.avoidLabel}`)
+    }
+    lines.push(`- **합화(合化)**: ${hapHwa.summary}`)
+    if (hapHwa.hwaGeuk.length > 0) {
+      for (const h of hapHwa.hwaGeuk) {
+        lines.push(`  - **화격(化格)**: ${h.name}(${h.hanja}) — ${h.source}`)
+      }
+    }
+    const pairEvents = hapHwa.events.filter(e => e.kind === 'stem' || e.kind === 'branch')
+    const bureauEvents = hapHwa.events.filter(e => e.kind === 'triple' || e.kind === 'directional')
+    const pairKindLabel: Record<string, string> = {
+      stem: '천간합(天干合)',
+      branch: '지지합(地支合)',
+    }
+    for (const e of pairEvents) {
+      lines.push(`  - ${pairKindLabel[e.kind] ?? ''} ${e.label}: ${e.established ? '성립' : '불성립'} (${e.reason})`)
+    }
+    for (const e of bureauEvents) {
+      const kind = e.kind === 'triple' ? '삼합(三合)' : '방합(方合)'
+      lines.push(`  - ${kind} ${e.label}: ${e.established ? '성립' : '불성립'} (${e.reason})`)
+    }
+    const gyeokgukTag = gyeokguk.category === '화격' ? ' · 화격(化格)' : ''
+    lines.push(`- **격국(格局)${gyeokgukTag}**: ${gyeokguk.summary} — ${gyeokguk.explanation}`)
     lines.push('')
   }
 
@@ -327,10 +360,13 @@ export function sajuToText(
     }
     lines.push('')
     lines.push(`- **결론**: ${sg.level} — ${sg.conclusion}`)
-    lines.push(`- **득력**: ${sg.score}/4 (득령·득지·득시·득세)`)
-    lines.push(`- **일간 세력 비율**: ${formatHelpSipsinRatio(sg.helpCount, sg.totalCount)} → 약 ${sg.strengthPercent}% (일간 제외 원국 십성 칸 중 인성·비겁 해당)`)
+    lines.push(`- **득력(得勢)**: ${sg.score}/4 (득령·득지·득시·득세)`)
+    lines.push(`- **일간 세력 비율**: ${formatHelpSipsinRatio(sg.helpCount, sg.totalCount)} → 약 ${sg.strengthPercent}% (${sg.basisLabel} 기준)`)
+    if (sg.surfaceStrengthPercent != null && sg.surfaceHelpCount != null && sg.surfaceTotalCount != null) {
+      lines.push(`- **표면 십성 기준**: ${formatHelpSipsinRatio(sg.surfaceHelpCount, sg.surfaceTotalCount)} → 약 ${sg.surfaceStrengthPercent}%`)
+    }
     lines.push('')
-    lines.push('※ 득지=일지, 득시=시지. 표면 십성 기준(지장간·합화 미반영).')
+    lines.push('※ 득지(得地)=일지, 득시(得時)=시지. 득세(得勢)는 지장간 가중 십성 비율 반영.')
     lines.push('')
   }
 
@@ -339,17 +375,26 @@ export function sajuToText(
     const ys = yongsin
     lines.push(sectionTitle(`용신 (用神) (일간 ${ys.dayStemKor}(${ys.dayStem}), ${ys.method}/${ys.methodHanja}, 신강약 ${ys.sinGangLevel})`))
     lines.push('')
-    lines.push(`- **용신(用神)**: ${ys.primary.label}(${ys.primary.hanja}) · ${ys.primary.sipsinRole}(${ys.primary.sipsinHanja}) · 원국 ${ys.primary.percent > 0 ? `${ys.primary.percent}%` : '-'}`)
+    const sourceHanja = ys.primarySource === '화격' ? '化格'
+      : ys.primarySource === '조후' ? '調候'
+        : '抑扶'
+    lines.push(`- **용신(用神)**: ${ys.primary.label}(${ys.primary.hanja}) · ${ys.primary.sipsinRole}(${ys.primary.sipsinHanja}) · 원국 ${ys.primary.percent > 0 ? `${ys.primary.percent}%` : '-'} · 주용신(主用神): ${ys.primarySource}(${sourceHanja})`)
     lines.push(`- **희신(喜神)**: ${ys.secondary.label}(${ys.secondary.hanja}) · ${ys.secondary.sipsinRole}(${ys.secondary.sipsinHanja}) · 원국 ${ys.secondary.percent > 0 ? `${ys.secondary.percent}%` : '-'}`)
+    if (ys.eokbuPrimary && ys.primarySource !== '억부') {
+      lines.push(`- **억부용신(抑扶用神)**: ${ys.eokbuPrimary.label}(${ys.eokbuPrimary.hanja}) · ${ys.eokbuPrimary.sipsinRole}(${ys.eokbuPrimary.sipsinHanja})`)
+    }
     lines.push(`- **기신(忌神)**: ${ys.avoid.map(a => `${a.label}(${a.hanja})`).join(' · ')}`)
     lines.push(`- **요약**: ${ys.summary}`)
     lines.push(`- **설명**: ${ys.explanation}`)
     lines.push('')
-    if (yongsin.johuSummary) {
-      lines.push(`- **조후용신**: ${yongsin.johuSummary}`)
+    if (yongsin.johuSummary && yongsin.primarySource !== '조후') {
+      lines.push(`- **조후용신(調候用神)**: ${yongsin.johuSummary}`)
+    }
+    if (yongsin.hwaGeukSummary) {
+      lines.push(`- **화격(化格)**: ${yongsin.hwaGeukSummary}`)
     }
     if (yongsin.gyeokgukSummary) {
-      lines.push(`- **격국**: ${yongsin.gyeokgukSummary}`)
+      lines.push(`- **격국(格局)**: ${yongsin.gyeokgukSummary}`)
     }
     lines.push('')
     lines.push(`※ ${yongsin.method}(${yongsin.methodHanja}) · 오행 기준: ${yongsin.ohaengBasis ?? '원국'}`)
@@ -547,6 +592,25 @@ export function sajuToText(
     lines.push('')
   }
 
+  // 小運 (대운 전)
+  if (soun.length > 0) {
+    lines.push('')
+    lines.push(sectionTitle('小運 (小運)'))
+    lines.push(YUN_METHOD_NOTES.soun)
+    if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
+    lines.push(YUN_METHOD_NOTES.yongsinTransit)
+    lines.push('')
+
+    const revSoun = [...soun].reverse()
+    lines.push(`| ${['나이', ...revSoun.map((s) => `${s.age}세`)].join(' | ')} |`)
+    lines.push(`| ${['연도', ...revSoun.map((s) => `${s.year}年`)].join(' | ')} |`)
+    lines.push(`| ${['간지', ...revSoun.map((s) => s.ganzi)].join(' | ')} |`)
+    lines.push(`| ${['12운성', ...revSoun.map((s) => s.unseong)].join(' | ')} |`)
+    lines.push(`| ${['伏吟反吟', ...revSoun.map((s) => annotateTransit(s.ganzi, natalGanzis, yongsin).fuYinFanYin)].join(' | ')} |`)
+    lines.push(`| ${['용신', ...revSoun.map((s) => annotateTransit(s.ganzi, natalGanzis, yongsin).yongsinLabel)].join(' | ')} |`)
+    lines.push('')
+  }
+
   // 대운 (마크단운 표 형식, 가로 배열)
   if (daewoon.length > 0) {
     lines.push(sectionTitle(input.unknownTime ? `대운 (大運) (${t('saju.unknownTimeWarning')})` : '대운 (大運)'))
@@ -560,6 +624,7 @@ export function sajuToText(
       }
     }
     lines.push(YUN_METHOD_NOTES.daewoon)
+    lines.push(YUN_METHOD_NOTES.yongsinTransit)
     lines.push('')
     
     // 역순 정렬 (10운부터 0운까지)
@@ -665,6 +730,16 @@ export function sajuToText(
       return interArr.length > 0 ? interArr.join(' / ') : '-';
     })].join(' | ')
     lines.push(`| ${interactionRow} |`)
+
+    const fuYinRow = ['伏吟反吟', ...reversedDaewoon.map((dw) =>
+      annotateTransit(dw.ganzi, natalGanzis, yongsin).fuYinFanYin,
+    )].join(' | ')
+    lines.push(`| ${fuYinRow} |`)
+
+    const yongsinRow = ['용신', ...reversedDaewoon.map((dw) =>
+      annotateTransit(dw.ganzi, natalGanzis, yongsin).yongsinLabel,
+    )].join(' | ')
+    lines.push(`| ${yongsinRow} |`)
   }
 
   // 세운 (Annual Cycles - 기존 엔진 함수 활용)
@@ -700,6 +775,7 @@ export function sajuToText(
 
     lines.push(`- **선택 대운**: ${targetDw.age}세~ (${startYear}년~${endYear - 1}년)`)
     lines.push(YUN_METHOD_NOTES.sewoon)
+    lines.push(YUN_METHOD_NOTES.yongsinTransit)
     lines.push('')
 
     const sewunData: any[] = []
@@ -822,12 +898,23 @@ export function sajuToText(
       return interArr.length > 0 ? interArr.join(' / ') : '-';
     })].join(' | ')
     lines.push(`| ${sewunInteractionRow} |`)
+
+    const sewunFuYinRow = ['伏吟反吟', ...sewunData.map((s) =>
+      annotateTransit(s.ganzi, natalGanzis, yongsin).fuYinFanYin,
+    )].join(' | ')
+    lines.push(`| ${sewunFuYinRow} |`)
+
+    const sewunYongsinRow = ['용신', ...sewunData.map((s) =>
+      annotateTransit(s.ganzi, natalGanzis, yongsin).yongsinLabel,
+    )].join(' | ')
+    lines.push(`| ${sewunYongsinRow} |`)
     
     // 월운 섹션
     lines.push('')
     lines.push(sectionTitle('월운 (月運)'))
     lines.push('')
     lines.push(YUN_METHOD_NOTES.monthly)
+    lines.push(YUN_METHOD_NOTES.yongsinTransit)
     lines.push('')
 
     // 월운 데이터: 지정 연도(monthlyYear) 1월~12월 동적 생성
@@ -987,6 +1074,16 @@ export function sajuToText(
     // 합충형파해 행
     const monthlyInteractionsRow = ['합충형파해', ...monthlyData.map(m => m.interactions || '-')].join(' | ')
     lines.push(`| ${monthlyInteractionsRow} |`)
+
+    const monthlyFuYinRow = ['伏吟反吟', ...monthlyData.map((m) =>
+      annotateTransit(m.ganzi, natalGanzis, yongsin).fuYinFanYin,
+    )].join(' | ')
+    lines.push(`| ${monthlyFuYinRow} |`)
+
+    const monthlyYongsinRow = ['용신', ...monthlyData.map((m) =>
+      annotateTransit(m.ganzi, natalGanzis, yongsin).yongsinLabel,
+    )].join(' | ')
+    lines.push(`| ${monthlyYongsinRow} |`)
   }
 
   // 일운 (日運) - 오늘 ~ 다음달 오늘-1일
@@ -1007,6 +1104,7 @@ export function sajuToText(
   const endD = dlEnd.getDate()
   lines.push(`(${startY}.${startM}.${startD} ~ ${endY}.${endM}.${endD})`)
   lines.push(YUN_METHOD_NOTES.daily)
+  lines.push(YUN_METHOD_NOTES.yongsinTransit)
   lines.push('')
 
   // 합충형파해 한글 매핑
@@ -1025,8 +1123,8 @@ export function sajuToText(
     ? new Set(GONGMANG_TABLE[Math.trunc(dlDayGanziIdx / 10)] ?? [])
     : new Set()
 
-  lines.push('| 날짜(음력) / 절기 | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 | 합충형파해 | 비고 |')
-  lines.push('|---|---|---|---|---|---|---|---|---|')
+  lines.push('| 날짜(음력) / 절기 | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 | 합충형파해 | 伏吟反吟 | 용신 | 비고 |')
+  lines.push('|---|---|---|---|---|---|---|---|---|---|---|')
 
   const dlCurrent = new Date(dlToday)
   while (dlCurrent <= dlEnd) {
@@ -1093,10 +1191,13 @@ export function sajuToText(
       const stemColStr   = `${stemAttrDl.um}(${dStem})`
       const branchColStr = `${branchAttrDl.um}(${dBranch})`
 
+      const dayGanziFull = getDayPillarForDate(y, m, d)
+      const ann = annotateTransit(dayGanziFull, natalGanzis, yongsin)
+
       // 공망 비고
       const bigoStr = dlGongmangBranches.has(dBranch) ? '空亡' : ''
 
-      lines.push(`| ${dateStr} | ${stemSipsinStr} | ${stemColStr} | ${branchColStr} | ${branchSipsinStr} | ${meteorStr} | ${spiritStr} | ${interStr} | ${bigoStr} |`)
+      lines.push(`| ${dateStr} | ${stemSipsinStr} | ${stemColStr} | ${branchColStr} | ${branchSipsinStr} | ${meteorStr} | ${spiritStr} | ${interStr} | ${ann.fuYinFanYin} | ${ann.yongsinLabel} | ${bigoStr} |`)
     } catch (_e) {
       // 날짜 처리 오류 무시
     }

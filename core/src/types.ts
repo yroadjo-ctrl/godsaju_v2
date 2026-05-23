@@ -5,6 +5,8 @@ import type { JohuStats } from './johu-analysis.ts';
 import type { HapHwaStats } from './hap-hwa-analysis.ts';
 import type { GyeokgukStats } from './gyeokguk-analysis.ts';
 import type { DaewoonMeta } from './daewoon-meta.ts';
+import type { SounItem } from './soun.ts';
+import type { TaewonTaesikStats } from './taewon-taesik.ts';
 
 /** 오행 (Five Elements) */
 export type Element = 'tree' | 'fire' | 'earth' | 'metal' | 'water';
@@ -13,9 +15,12 @@ export type { OhaengSipsinStats, ElementStat, SipsinStat, BalanceStatus } from '
 export type { SinGangYakStats, SinGangLevel, DeungFlag } from './singang-analysis.ts';
 export type { YongsinStats, YongsinElementInfo } from './yongsin-analysis.ts';
 export type { JohuStats } from './johu-analysis.ts';
-export type { HapHwaStats, HapHwaEvent } from './hap-hwa-analysis.ts';
+export type { HapHwaStats, HapHwaEvent, HwaGeukInfo } from './hap-hwa-analysis.ts';
+export type { YongsinPrimarySource } from './yongsin-analysis.ts';
 export type { GyeokgukStats, GyeokgukCategory } from './gyeokguk-analysis.ts';
 export type { DaewoonMeta } from './daewoon-meta.ts';
+export type { SounItem } from './soun.ts';
+export type { TaewonTaesikStats, TaewonTaesikPillar } from './taewon-taesik.ts';
 
 /** 음양 (Yin-Yang) */
 export type YinYang = '+' | '-';
@@ -198,6 +203,8 @@ export interface SajuResult {
   pillars: PillarDetail[];
   /** 대운 */
   daewoon: DaewoonItem[];
+  /** 小運 (대운 전) */
+  soun: SounItem[];
   /** 대운수·順逆行 */
   daewoonMeta: DaewoonMeta;
   /** 팔자 관계 */
@@ -226,6 +233,8 @@ export interface SajuResult {
   sinGangYak: SinGangYakStats;
   /** 용신 (억부용신) */
   yongsin: YongsinStats;
+  /** 胎元 · 胎息 */
+  taewonTaesik: TaewonTaesikStats;
 }
 
 // =============================================

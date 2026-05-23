@@ -1,20 +1,22 @@
 import { useState } from 'react'
+import type { YongsinStats } from '@core/types'
+import { annotateTransit } from '@core/index'
 import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
 import { calculateMonthGanzi } from '@core/monthly-data'
 import { formatMonthlyJieQiCell } from '@core/jieqi-lunar'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
-import { useLocale } from '../../i18n/index.ts'
-
 interface Props {
   currentYear: number
   currentMonth: number
   /** App과 복사 상태 동기화용 — 지정 시 controlled */
   displayYear?: number
-  pillars: string[][]
+  /** [시, 일, 월, 년] 간지 문자열 */
+  pillars: string[]
   dayStem: string
   yearBranch: string
   gongmangBranches: [string, string]
+  yongsin: YongsinStats
   onYearChange?: (year: number) => void
 }
 
@@ -27,6 +29,8 @@ interface MonthlyItem {
   unseong: string
   sinsal: string
   interactions: string
+  fuYinFanYin: string
+  yongsinLabel: string
   isGongmang: boolean
   solarTerm: string
 }
@@ -45,8 +49,10 @@ const BRANCH_SIPSIN_MAP: Record<string, string> = {
 
 function buildMonthlyItems(
   displayYear: number,
-  pillars: string[][], dayStem: string, yearBranch: string,
+  pillars: string[], dayStem: string, yearBranch: string,
   gmSet: Set<string>,
+  natalGanzis: string[],
+  yongsin: YongsinStats,
 ): MonthlyItem[] {
   const items: MonthlyItem[] = []
   const posLabels = ["시", "일", "월", "년"]
@@ -88,6 +94,8 @@ function buildMonthlyItems(
       }
     })
 
+    const ann = annotateTransit(ganzi, natalGanzis, yongsin)
+
     items.push({
       year: displayYear,
       month,
@@ -97,6 +105,8 @@ function buildMonthlyItems(
       unseong: getTwelveMeteor(dayStem, branch),
       sinsal: formatSinsal(getTwelveSpirit(yearBranch, branch)),
       interactions: interArr.length > 0 ? interArr.join('\n') : '',
+      fuYinFanYin: ann.fuYinFanYin,
+      yongsinLabel: ann.yongsinLabel,
       isGongmang: gmSet.has(branch),
       solarTerm: formatMonthlyJieQiCell(displayYear, month),
     })
@@ -106,14 +116,14 @@ function buildMonthlyItems(
 
 export default function MonthlyTable({
   currentYear, currentMonth, displayYear: displayYearProp,
-  pillars, dayStem, yearBranch, gongmangBranches, onYearChange,
+  pillars, dayStem, yearBranch, gongmangBranches, yongsin, onYearChange,
 }: Props) {
-  const { t } = useLocale()
   const [internalYear, setInternalYear] = useState(currentYear)
   const isControlled = displayYearProp !== undefined
   const displayYear = isControlled ? displayYearProp : internalYear
   const gmSet = new Set(gongmangBranches)
-  const monthlyItems = buildMonthlyItems(displayYear, pillars, dayStem, yearBranch, gmSet)
+  const natalGanzis = pillars.map((p) => (typeof p === 'string' ? p : `${p[0]}${p[1]}`))
+  const monthlyItems = buildMonthlyItems(displayYear, pillars, dayStem, yearBranch, gmSet, natalGanzis, yongsin)
 
   const changeYear = (newYear: number) => {
     if (!isControlled) setInternalYear(newYear)
@@ -146,8 +156,11 @@ export default function MonthlyTable({
           </button>
         </div>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
         {YUN_METHOD_NOTES.monthly}
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+        {YUN_METHOD_NOTES.yongsinTransit}
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
@@ -260,6 +273,20 @@ export default function MonthlyTable({
               {monthlyItems.map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep">
                   {item.interactions || '-'}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {monthlyItems.map((item, idx) => (
+                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
+                  {item.fuYinFanYin}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              {monthlyItems.map((item, idx) => (
+                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight">
+                  {item.yongsinLabel}
                 </td>
               ))}
             </tr>

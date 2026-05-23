@@ -1,5 +1,14 @@
 import type { Element, OhaengSipsinStats, PillarDetail, AllRelations } from './types.ts';
-import { STEM_COMBINES, BRANCH_COMBINES_6, BRANCH_ELEMENT } from './constants.ts';
+import {
+  STEM_COMBINES,
+  BRANCH_COMBINES_6,
+  BRANCH_ELEMENT,
+  TRIPLE_COMPOSES,
+  TRIPLE_COMPOSE_ELEMENTS,
+  DIRECTIONAL_COMPOSES,
+  DIRECTIONAL_COMPOSE_ELEMENTS,
+  ELEMENT_HANJA,
+} from './constants.ts';
 import { getStemRelation, getBranchRelation } from './pillars.ts';
 import {
   type ElementCounts,
@@ -13,8 +22,8 @@ import {
 import { buildOhaengSipsinFromCounts } from './ohaeng-analysis.ts';
 
 export interface HapHwaEvent {
-  kind: 'stem' | 'branch';
-  pillarIndices: [number, number];
+  kind: 'stem' | 'branch' | 'triple' | 'directional';
+  pillarIndices: number[];
   label: string;
   transformElement: Element;
   transformLabel: string;
@@ -23,8 +32,21 @@ export interface HapHwaEvent {
   reason: string;
 }
 
+export interface HwaGeukInfo {
+  /** 화목격 등 */
+  name: string;
+  /** 化木格 등 */
+  hanja: string;
+  element: Element;
+  /** 근거 합·局 */
+  source: string;
+  summary: string;
+}
+
 export interface HapHwaStats {
   events: HapHwaEvent[];
+  /** 성립한 화격(化格) */
+  hwaGeuk: HwaGeukInfo[];
   /** 합화 반영 오행·십성 (미성립 시 입력과 동일) */
   adjustedOhaeng: OhaengSipsinStats;
   summary: string;
@@ -34,16 +56,23 @@ const ELEMENT_KOR: Record<Element, string> = {
   tree: '목', fire: '화', earth: '토', metal: '금', water: '수',
 };
 
+const HWA_GEUK_HANJA: Record<Element, string> = {
+  tree: '化木格', fire: '化火格', earth: '化土格', metal: '化金格', water: '化水格',
+};
+
+const HWA_GEUK_NAME: Record<Element, string> = {
+  tree: '화목격', fire: '화화격', earth: '화토격', metal: '화금격', water: '화수격',
+};
+
 function pairKey(a: number, b: number): string {
   return `${Math.min(a, b)},${Math.max(a, b)}`;
 }
 
 function monthSupportsTransform(monthBranch: string, transform: Element): boolean {
   if (BRANCH_ELEMENT[monthBranch] === transform) return true;
-  const seasonElements: Element[] = [];
   const branchEl = BRANCH_ELEMENT[monthBranch];
-  if (branchEl) seasonElements.push(branchEl);
-  return seasonElements.includes(transform);
+  if (branchEl) return branchEl === transform;
+  return false;
 }
 
 function hasClashBetween(
@@ -83,7 +112,44 @@ function cloneCountsFromOhaeng(base: OhaengSipsinStats): {
   return { elements, sipsin, totalWeight };
 }
 
-/** 지장간 가중 오행에 합화 보정 적용 */
+function buildHwaGeuk(
+  element: Element,
+  source: string,
+  kind: HapHwaEvent['kind'],
+): HwaGeukInfo {
+  const kindLabel =
+    kind === 'triple' ? '삼합화격(三合化格)'
+      : kind === 'directional' ? '방합화격(方合化格)'
+        : '화격(化格)';
+  return {
+    name: HWA_GEUK_NAME[element],
+    hanja: HWA_GEUK_HANJA[element],
+    element,
+    source,
+    summary: `${kindLabel} — ${source} → ${ELEMENT_KOR[element]}(${ELEMENT_HANJA[element]})`,
+  };
+}
+
+function dedupeHwaGeuk(list: HwaGeukInfo[]): HwaGeukInfo[] {
+  const seen = new Set<Element>();
+  return list.filter(h => {
+    if (seen.has(h.element)) return false;
+    seen.add(h.element);
+    return true;
+  });
+}
+
+function findBranchIndices(pillars: PillarDetail[], indices: number[], branches: string[]): number[] {
+  const want = new Set(branches);
+  const found: number[] = [];
+  for (const i of indices) {
+    const b = pillars[i].pillar.branch;
+    if (want.has(b) && !found.includes(i)) found.push(i);
+  }
+  return found;
+}
+
+/** 지장간 가중 오행에 합화·삼합·방합 보정 적용 */
 export function calculateHapHwa(
   pillars: PillarDetail[],
   relations: AllRelations,
@@ -92,9 +158,11 @@ export function calculateHapHwa(
   const monthBranch = pillars[2].pillar.branch;
   const dayStem = pillars[1].pillar.stem;
   const events: HapHwaEvent[] = [];
+  const hwaGeukCandidates: HwaGeukInfo[] = [];
   const { elements, sipsin, totalWeight } = cloneCountsFromOhaeng(baseOhaeng);
 
   const indices = baseOhaeng.totalCharSlots <= 6 ? [1, 2, 3] : [0, 1, 2, 3];
+  const branchSet = new Set(indices.map(i => pillars[i].pillar.branch));
 
   for (let a = 0; a < indices.length; a++) {
     for (let b = a + 1; b < indices.length; b++) {
@@ -135,6 +203,9 @@ export function calculateHapHwa(
           addElementWeight(elements, transform, w * 2);
           addSipsinWeight(sipsin, dayStem, p1.stem, -w);
           addSipsinWeight(sipsin, dayStem, p2.stem, -w);
+          hwaGeukCandidates.push(
+            buildHwaGeuk(transform, `${p1.stem}${p2.stem}合${ELEMENT_KOR[transform]}`, 'stem'),
+          );
         }
       }
 
@@ -166,8 +237,67 @@ export function calculateHapHwa(
           addElementWeight(elements, BRANCH_ELEMENT[p1.branch], -w);
           addElementWeight(elements, BRANCH_ELEMENT[p2.branch], -w);
           addElementWeight(elements, bTransform, w * 2);
+          hwaGeukCandidates.push(
+            buildHwaGeuk(bTransform, `${p1.branch}${p2.branch}合${ELEMENT_KOR[bTransform]}`, 'branch'),
+          );
         }
       }
+    }
+  }
+
+  for (const triple of TRIPLE_COMPOSES) {
+    if (!triple.every(b => branchSet.has(b))) continue;
+    const key = triple.join(',');
+    const transform = TRIPLE_COMPOSE_ELEMENTS[key] as Element;
+    const supported = monthSupportsTransform(monthBranch, transform);
+    const established = supported;
+    const label = `${triple.join('')}三合${ELEMENT_KOR[transform]}`;
+    const reason = established
+      ? `삼합(三合) ${ELEMENT_KOR[transform]}局 — 월령 ${monthBranch}이(가) 化神을(를) 도움`
+      : `삼합(三合) ${ELEMENT_KOR[transform]}局 — 월령 ${monthBranch}이(가) 化神을(를) 돕지 못함`;
+
+    events.push({
+      kind: 'triple',
+      pillarIndices: findBranchIndices(pillars, indices, triple),
+      label,
+      transformElement: transform,
+      transformLabel: ELEMENT_KOR[transform],
+      established,
+      reason,
+    });
+
+    if (established) {
+      const w = 0.45;
+      addElementWeight(elements, transform, w);
+      hwaGeukCandidates.push(buildHwaGeuk(transform, label, 'triple'));
+    }
+  }
+
+  for (const dir of DIRECTIONAL_COMPOSES) {
+    if (!dir.every(b => branchSet.has(b))) continue;
+    const key = dir.join(',');
+    const transform = DIRECTIONAL_COMPOSE_ELEMENTS[key] as Element;
+    const supported = monthSupportsTransform(monthBranch, transform);
+    const established = supported;
+    const label = `${dir.join('')}方合${ELEMENT_KOR[transform]}`;
+    const reason = established
+      ? `방합(方合) ${ELEMENT_KOR[transform]}方 — 월령 ${monthBranch}이(가) 化神을(를) 도움`
+      : `방합(方合) ${ELEMENT_KOR[transform]}方 — 월령 ${monthBranch}이(가) 化神을(를) 돕지 못함`;
+
+    events.push({
+      kind: 'directional',
+      pillarIndices: findBranchIndices(pillars, indices, dir),
+      label,
+      transformElement: transform,
+      transformLabel: ELEMENT_KOR[transform],
+      established,
+      reason,
+    });
+
+    if (established) {
+      const w = 0.4;
+      addElementWeight(elements, transform, w);
+      hwaGeukCandidates.push(buildHwaGeuk(transform, label, 'directional'));
     }
   }
 
@@ -183,12 +313,20 @@ export function calculateHapHwa(
     '지장간·합화 보정',
   );
 
+  const hwaGeuk = dedupeHwaGeuk(hwaGeukCandidates);
   const establishedEvents = events.filter(e => e.established);
-  const summary = establishedEvents.length > 0
-    ? establishedEvents.map(e => e.label).join(' · ')
+  const summaryParts: string[] = [];
+  if (hwaGeuk.length > 0) {
+    summaryParts.push(hwaGeuk.map(h => `${h.name}(${h.hanja})`).join(' · '));
+  }
+  if (establishedEvents.length > 0) {
+    summaryParts.push(establishedEvents.map(e => e.label).join(' · '));
+  }
+  const summary = summaryParts.length > 0
+    ? summaryParts.join(' | ')
     : events.length > 0
-      ? `합 ${events.length}건 (성립 0건)`
-      : '원국 천·지 합 없음';
+      ? `합·局 ${events.length}건 (성립 0건)`
+      : '원국 천·지 합·삼합·방합 없음';
 
-  return { events, adjustedOhaeng, summary };
+  return { events, hwaGeuk, adjustedOhaeng, summary };
 }
