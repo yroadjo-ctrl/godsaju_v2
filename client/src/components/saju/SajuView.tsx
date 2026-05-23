@@ -12,6 +12,8 @@ import SewoonTable, { findActiveDaewoonIndexByAge } from './SewoonTable.tsx'
 import MonthlyTable from './MonthlyTable.tsx'
 import DailyCalendar from './DailyCalendar.tsx'
 import CopyButton from '../CopyButton.tsx'
+import BirthInfoSummary from './BirthInfoSummary.tsx'
+import MonthPillarBasisNotice from './MonthPillarBasisNotice.tsx'
 import { sajuToText } from '../../utils/text-export.ts'
 import type { BirthInput } from '@core/types'
 import { useLocale } from '../../i18n/index.ts'
@@ -45,6 +47,8 @@ export default function SajuView({ input }: Props) {
 
   return (
     <div className="space-y-6">
+      <BirthInfoSummary input={input} />
+
       {/* 명식 테이블 */}
       <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center justify-between mb-3">
@@ -56,6 +60,7 @@ export default function SajuView({ input }: Props) {
             label={t('copy.aiCopy')}
           />
         </div>
+        <MonthPillarBasisNotice input={input} className="mb-3" />
         <PillarTable
           pillars={result.pillars} 
           unknownTime={input.unknownTime} 

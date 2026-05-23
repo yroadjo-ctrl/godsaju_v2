@@ -12,6 +12,12 @@ export {
 export type { RelationTabId, RelationTabDef, RelationListItem } from './relation-tabs.ts'
 export { calculateDaewoonMeta, daewoonAgeFromBirth, MS_PER_SAJU_YEAR } from './daewoon-meta.ts'
 export type { DaewoonMeta } from './daewoon-meta.ts'
+export {
+  calculateMonthPillarBasis,
+  calculateMonthPillarBasisFromInput,
+  formatMonthPillarBasisDateTime,
+} from './month-pillar-basis.ts'
+export type { MonthPillarBasis } from './month-pillar-basis.ts'
 export type { YongsinStats, YongsinElementInfo } from './yongsin-analysis.ts'
 export type { OhaengSipsinStats, ElementStat, SipsinStat, BalanceStatus } from './ohaeng-analysis.ts'
 export type { SinGangYakStats, SinGangLevel, DeungFlag } from './singang-analysis.ts'
@@ -71,7 +77,7 @@ export {
   analyzePillarRelations, analyzeAllRelations,
   checkTripleCompose, checkDirectionalCompose,
   findTransits, calculateJwabeop, calculateInjongbeop,
-  calcPillarIndices, calcSolarTerms, getGongmang, getYearGanzi,
+  calcPillarIndices, calcSolarTerms, calcMonthBoundaryTerms, getGongmang, getYearGanzi,
 } from './pillars.ts'
 
 // 월운 데이터

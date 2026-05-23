@@ -390,6 +390,56 @@ export function calcSolarTerms(
   };
 }
 
+/** 월지(月支) → 명리 월 절기 슬롯 (0=丑月 … 11=子月) */
+const BRANCH_TO_MONTH_II: Record<string, number> = {
+  '丑': 0, '寅': 1, '卯': 2, '辰': 3, '巳': 4, '午': 5,
+  '未': 6, '申': 7, '酉': 8, '戌': 9, '亥': 10, '子': 11,
+};
+
+/**
+ * 월주 지지 기준 절입·절출 시각 — calcSolarTerms와 달리 월주와 일치하는 節 경계
+ */
+export function calcMonthBoundaryTerms(
+  year: number, month: number, day: number, hour: number, min: number,
+  monthBranch: string,
+): {
+  ingiName: number; ingiYear: number; ingiMonth: number; ingiDay: number; ingiHour: number; ingiMin: number;
+  outgiName: number; outgiYear: number; outgiMonth: number; outgiDay: number; outgiHour: number; outgiMin: number;
+} {
+  const ii = BRANCH_TO_MONTH_II[monthBranch];
+  if (ii === undefined) {
+    throw new Error(`Unknown month branch: ${monthBranch}`);
+  }
+
+  const displ2min = minutesBetween(
+    UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
+    year, month, day, hour, min,
+  );
+
+  let monthmin100 = (displ2min % 525949) * -1;
+  if (monthmin100 < 0) monthmin100 += 525949;
+  else if (monthmin100 >= 525949) monthmin100 -= 525949;
+
+  const ingiName = ii * 2;
+  const outgiName = ii * 2 + 2;
+
+  const j = ii * 2;
+  let tmin = displ2min + (monthmin100 - MONTH[j]);
+  const [ingiYear, ingiMonth, ingiDay, ingiHour, ingiMin] = dateFromMinutes(
+    tmin, UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
+  );
+
+  tmin = displ2min + (monthmin100 - MONTH[j + 2]);
+  const [outgiYear, outgiMonth, outgiDay, outgiHour, outgiMin] = dateFromMinutes(
+    tmin, UNIT.year, UNIT.month, UNIT.day, UNIT.hour, UNIT.min,
+  );
+
+  return {
+    ingiName, ingiYear, ingiMonth, ingiDay, ingiHour, ingiMin,
+    outgiName, outgiYear, outgiMonth, outgiDay, outgiHour, outgiMin,
+  };
+}
+
 // =============================================
 // 4주 계산 API
 // =============================================
