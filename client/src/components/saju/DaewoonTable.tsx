@@ -4,21 +4,24 @@ import { annotateTransit } from '@core/index'
 import { getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
-import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
+import { YUN_DAewoon_UI_NOTES } from '../../utils/yun-method-notes.ts'
+import { formatDaewoonAgeBridgeNote } from '../../utils/yun-age-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { isBeforeFirstDaewoon, getFirstDaewoonStartYear } from '../../utils/yun-period.ts'
+import { isBeforeFirstDaewoon, getFirstDaewoonStartYear, findActiveDaewoonIndex } from '../../utils/yun-period.ts'
 import { formatDaewoonStartCell } from '@core/jieqi-lunar'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
   daewoon: DaewoonItem[]
   daewoonMeta: DaewoonMeta
+  birthYear: number
+  birthMonth: number
+  birthDay: number
   unknownTime?: boolean
   natalGanzis: string[]
   yongsin: YongsinStats
   selectedIdx: number
   autoIndex: number
-  currentAge: number
   onSelectDaewoon: (idx: number) => void
 }
 
@@ -97,7 +100,7 @@ function buildDaewoonTableItems(
 }
 
 export default function DaewoonTable({
-  daewoon, daewoonMeta, unknownTime, natalGanzis, yongsin, selectedIdx, autoIndex, currentAge, onSelectDaewoon,
+  daewoon, daewoonMeta, birthYear, birthMonth, birthDay, unknownTime, natalGanzis, yongsin, selectedIdx, autoIndex, onSelectDaewoon,
 }: Props) {
   const { t } = useLocale()
 
@@ -117,10 +120,14 @@ export default function DaewoonTable({
     [daewoon, natalGanzis, yongsin],
   )
 
-  const beforeFirstDaewoon = isBeforeFirstDaewoon(currentAge, daewoon)
+  const beforeFirstDaewoon = isBeforeFirstDaewoon(daewoon)
   const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
-  const currentDaewoonGanzi = !beforeFirstDaewoon && autoIndex >= 0
-    ? daewoon[autoIndex]?.ganzi ?? null
+  const ageBridgeNote = formatDaewoonAgeBridgeNote(
+    birthYear, birthMonth, birthDay, daewoon[0], daewoonMeta,
+  )
+  const activeIdx = autoIndex >= 0 ? autoIndex : findActiveDaewoonIndex(daewoon)
+  const currentDaewoonGanzi = !beforeFirstDaewoon && activeIdx >= 0
+    ? daewoon[activeIdx]?.ganzi ?? null
     : null
   const currentYear = new Date().getFullYear()
 
@@ -151,21 +158,22 @@ export default function DaewoonTable({
           )}
         </p>
       </div>
+      {ageBridgeNote && (
+        <p className="text-xs text-amber-700 dark:text-amber-300 mb-2 leading-relaxed">
+          {ageBridgeNote}
+        </p>
+      )}
       {unknownTime && (
         <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
           {t('saju.unknownTimeWarning')}
         </p>
       )}
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
-        {YUN_METHOD_NOTES.daewoon}
-      </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
-        {YUN_METHOD_NOTES.daewoonFirstYear}
-      </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
-        {YUN_METHOD_NOTES.yongsinTransit}
-      </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+      {YUN_DAewoon_UI_NOTES.map((line) => (
+        <p key={line} className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
+          {line}
+        </p>
+      ))}
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 mt-1">
         열을 클릭하면 해당 대운 구간의 세운을 아래에서 볼 수 있습니다.
       </p>
       <div className="overflow-x-auto border rounded-lg">

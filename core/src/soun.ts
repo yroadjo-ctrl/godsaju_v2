@@ -6,6 +6,7 @@
  */
 import type { JasiMethod } from './types.ts';
 import { HGANJI, YANGGAN } from './constants.ts';
+import { getManAgeInCalendarYear } from './age.ts';
 import {
   calcPillarIndices,
   getRelation,
@@ -34,7 +35,13 @@ function getSipsinHanja(dayStem: string, targetStem: string): string {
   return rel?.hanja ?? '?';
 }
 
-/** 대운 시작 만나이 전까지 매년 1주 */
+/** 小運 칸 수 — 1운 startDate 연도 − 출생 연도 (대운 전 매년 1주) */
+export function getSounYearCount(birthYear: number, firstDaewoonStart: Date | undefined): number {
+  if (!firstDaewoonStart) return 0;
+  return Math.max(0, firstDaewoonStart.getFullYear() - birthYear);
+}
+
+/** 대운 시작 전까지 매년 1주 */
 export function calculateSoun(
   isMale: boolean,
   birthYear: number,
@@ -42,7 +49,7 @@ export function calculateSoun(
   day: number,
   hour: number,
   minute: number,
-  firstDaewoonAge: number,
+  sounYearCount: number,
   dayStem: string,
   yearBranch: string,
   gongmangSet: Set<string>,
@@ -59,19 +66,20 @@ export function calculateSoun(
   const flow = isForward ? 1 : -1;
   const startIdx = unknownTime ? sm : sh;
 
-  const count = Math.max(0, firstDaewoonAge);
+  const count = Math.max(0, sounYearCount);
   const items: SounItem[] = [];
 
-  for (let age = 0; age < count; age++) {
-    const idx = pymod(startIdx + flow * age, HGANJI.length);
+  for (let i = 0; i < count; i++) {
+    const calendarYear = birthYear + i;
+    const idx = pymod(startIdx + flow * i, HGANJI.length);
     const ganzi = HGANJI[idx];
     const stem = ganzi[0];
     const branch = ganzi[1];
     const jeonggi = getJeonggi(branch);
 
     items.push({
-      age,
-      year: birthYear + age,
+      age: getManAgeInCalendarYear(birthYear, month, day, calendarYear),
+      year: calendarYear,
       ganzi,
       stemSipsin: getSipsinHanja(dayStem, stem),
       branchSipsin: getSipsinHanja(dayStem, jeonggi),

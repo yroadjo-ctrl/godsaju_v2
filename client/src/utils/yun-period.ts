@@ -1,7 +1,7 @@
 import type { DaewoonItem } from '@core/types'
 import { getEffectiveCalendarYearForLichun, getLiuNianGanziAtDate, getLiuYueGanziAtDate } from '@core/yun-transit'
 
-/** 첫 대운 시작 나이 (칸 헤더 age) */
+/** 첫 대운 시작 나이 (칸 헤더 — startDate 시점 만나이) */
 export function getFirstDaewoonAge(daewoon: DaewoonItem[]): number {
   return daewoon[0]?.age ?? 0
 }
@@ -12,38 +12,41 @@ export function getFirstDaewoonStartYear(daewoon: DaewoonItem[]): number | null 
   return start ? start.getFullYear() : null
 }
 
-/** 첫 대운 시작 전 — 소운(小運) 구간 (대운수>0 이고 현재 나이 < 첫 대운 age) */
-export function isBeforeFirstDaewoon(currentAge: number, daewoon: DaewoonItem[]): boolean {
-  const firstAge = getFirstDaewoonAge(daewoon)
-  return firstAge > 0 && currentAge < firstAge
+/** 첫 대운 시작 전 — 소운(小運) 구간 */
+export function isBeforeFirstDaewoon(daewoon: DaewoonItem[], now: Date = new Date()): boolean {
+  const first = daewoon[0]?.startDate
+  if (!first) return false
+  return now.getTime() < first.getTime()
 }
 
-/** 현재 나이에 해당하는 대운 칸 — 대운 전이면 -1 */
-export function findActiveDaewoonIndexByAge(daewoon: DaewoonItem[], currentAge: number): number {
-  if (daewoon.length === 0 || isBeforeFirstDaewoon(currentAge, daewoon)) {
+/** 현재 시각 기준 활성 대운 칸 — startDate 기준 */
+export function findActiveDaewoonIndex(daewoon: DaewoonItem[], now: Date = new Date()): number {
+  if (daewoon.length === 0 || isBeforeFirstDaewoon(daewoon, now)) {
     return -1
   }
-  for (let i = 0; i < daewoon.length; i++) {
-    const d = daewoon[i]
-    if (currentAge >= d.age && currentAge <= d.age + 9) {
+  const t = now.getTime()
+  for (let i = daewoon.length - 1; i >= 0; i--) {
+    if (t >= daewoon[i].startDate.getTime()) {
       return i
     }
   }
-  if (currentAge >= daewoon[daewoon.length - 1].age) {
-    return daewoon.length - 1
-  }
   return -1
+}
+
+/** @deprecated findActiveDaewoonIndex 사용 */
+export function findActiveDaewoonIndexByAge(daewoon: DaewoonItem[], _currentAge: number): number {
+  return findActiveDaewoonIndex(daewoon)
 }
 
 /** 세운 표 올해 하이라이트 — 대운 시작 후에만 */
 export function shouldHighlightSewoonYear(
   year: number,
   currentYear: number,
-  currentAge: number,
   daewoon: DaewoonItem[],
+  now: Date = new Date(),
 ): boolean {
   if (year !== currentYear) return false
-  if (isBeforeFirstDaewoon(currentAge, daewoon)) return false
+  if (isBeforeFirstDaewoon(daewoon, now)) return false
   return true
 }
 

@@ -26,16 +26,18 @@ import {
   formatMonthPillarBasisLines,
 } from './birth-info-format.ts'
 import { isKongwang } from '@core/monthly-data'
-import { YUN_METHOD_NOTES } from './yun-method-notes.ts'
+import { YUN_METHOD_NOTES, YUN_DAewoon_EXPORT_NOTES, YUN_SEWOON_EXPORT_NOTES, YUN_SOUN_EXPORT_NOTES } from './yun-method-notes.ts'
 import { formatCurrentYunLine, type CurrentYunContext, SOUN_EMPTY_REASON } from './ganzi-display.ts'
+import { formatDaewoonAgeBridgeNote } from './yun-age-notes.ts'
 import {
-  findActiveDaewoonIndexByAge,
+  findActiveDaewoonIndex,
   isBeforeFirstDaewoon,
   getFirstDaewoonStartYear,
   getCurrentLiuNianGanzi,
   getCurrentLiuYueGanzi,
   getEffectiveYunCalendarYear,
 } from './yun-period.ts'
+import { getManAgeInCalendarYear } from '@core/age'
 import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import type { Locale } from '../i18n/index.ts'
 
@@ -176,11 +178,10 @@ export function sajuToText(
   const now = new Date()
   const currentYear = now.getFullYear()
   const currentMonth = now.getMonth() + 1
-  const currentAge = currentYear - input.year
   const effectiveYunYear = getEffectiveYunCalendarYear(now)
   const currentSounGanzi = soun.find((s) => s.year === effectiveYunYear)?.ganzi ?? null
-  const beforeFirstDaewoon = isBeforeFirstDaewoon(currentAge, daewoon)
-  const activeDwIdx = daewoon.length > 0 ? findActiveDaewoonIndexByAge(daewoon, currentAge) : -1
+  const beforeFirstDaewoon = isBeforeFirstDaewoon(daewoon, now)
+  const activeDwIdx = daewoon.length > 0 ? findActiveDaewoonIndex(daewoon, now) : -1
   const currentDaewoonGanzi = !beforeFirstDaewoon && activeDwIdx >= 0
     ? daewoon[activeDwIdx]?.ganzi ?? null
     : null
@@ -642,7 +643,7 @@ export function sajuToText(
     lines.push('')
     lines.push(sectionTitle('소운(小運)'))
     pushCurrentYun('소운', currentSounGanzi, null, currentSounGanzi ? { kind: 'year', year: effectiveYunYear } : null)
-    lines.push(YUN_METHOD_NOTES.soun)
+    for (const line of YUN_SOUN_EXPORT_NOTES) lines.push(line)
     if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
     lines.push(YUN_METHOD_NOTES.yongsinTransit)
     lines.push('')
@@ -660,7 +661,7 @@ export function sajuToText(
     lines.push('')
     lines.push(sectionTitle('소운(小運)'))
     pushCurrentYun('소운', null, null, null, SOUN_EMPTY_REASON)
-    lines.push(YUN_METHOD_NOTES.soun)
+    for (const line of YUN_SOUN_EXPORT_NOTES) lines.push(line)
     if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
     lines.push('')
   }
@@ -683,12 +684,12 @@ export function sajuToText(
         lines.push(`- **1運**: ${dm.firstGanzi} · ${dm.firstStartDate.getFullYear()}년부터`)
       }
     }
-    lines.push(YUN_METHOD_NOTES.daewoon)
-    lines.push(YUN_METHOD_NOTES.daewoonFirstYear)
-    lines.push(YUN_METHOD_NOTES.yongsinTransit)
+    const bridgeNote = formatDaewoonAgeBridgeNote(
+      input.year, input.month, input.day, daewoon[0], daewoonMeta,
+    )
+    if (bridgeNote) lines.push(bridgeNote)
+    for (const line of YUN_DAewoon_EXPORT_NOTES) lines.push(line)
     lines.push('')
-    
-    // 역순 정렬 (10운부터 0운까지)
     const reversedDaewoon = [...daewoon].reverse()
     
     // 헤더 행: 운 번호
@@ -828,28 +829,28 @@ export function sajuToText(
     const dayGanziIdx = HGANJI.indexOf(dayGanzi)
     const gongmangBranches: string[] = dayGanziIdx >= 0 ? GONGMANG_TABLE[Math.trunc(dayGanziIdx / 10)] : []
     
-    // 선택 대운 (UI와 동일 — 미지정 시 현재 나이 기준 활성 대운)
+    // 선택 대운 (UI와 동일 — 미지정 시 현재 시각 기준 활성 대운)
     let dwIdx = selectedDaewoonIdx
     if (dwIdx === undefined || dwIdx < 0 || dwIdx >= daewoon.length) {
-      dwIdx = 0
-      for (let i = 0; i < daewoon.length; i++) {
-        if (daewoon[i].age <= currentAge) dwIdx = i
-        else break
-      }
+      dwIdx = activeDwIdx >= 0 ? activeDwIdx : 0
     }
 
     const targetDw = daewoon[dwIdx] ?? daewoon[0]
-    const startYear = input.year + (targetDw?.age ?? 0)
-    const endYear = startYear + 10
+    const startYear = targetDw?.startDate?.getFullYear() ?? input.year
+    const nextDw = daewoon[dwIdx + 1]
+    const endYear = nextDw ? nextDw.startDate.getFullYear() : startYear + 10
 
     lines.push(`- **선택 대운**: ${targetDw.age}세~ (${startYear}년~${endYear - 1}년)`)
-    lines.push(YUN_METHOD_NOTES.sewoon)
-    lines.push(YUN_METHOD_NOTES.yongsinTransit)
+    const sewoonBridge = formatDaewoonAgeBridgeNote(
+      input.year, input.month, input.day, targetDw,
+    )
+    if (sewoonBridge) lines.push(sewoonBridge)
+    for (const line of YUN_SEWOON_EXPORT_NOTES) lines.push(line)
     lines.push('')
 
     const sewunData: any[] = []
     for (let year = startYear; year < endYear; year++) {
-      const age = year - input.year
+      const age = getManAgeInCalendarYear(input.year, input.month, input.day, year)
       
       const ganzi = getLiuNianGanziForCalendarYear(year)
       const stem = ganzi.charAt(0)

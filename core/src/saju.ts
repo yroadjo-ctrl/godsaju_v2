@@ -11,12 +11,13 @@ import { STEM_INFO } from './constants.ts';
 import { calculateOhaengSipsinStats, calculateOhaengSipsinStatsWeighted } from './ohaeng-analysis.ts';
 import { calculateSinGangYak } from './singang-analysis.ts';
 import { calculateYongsin } from './yongsin-analysis.ts';
-import { calculateSoun } from './soun.ts';
+import { calculateSoun, getSounYearCount } from './soun.ts';
 import { calculateTaewonTaesik } from './taewon-taesik.ts';
 import { calculateJohu } from './johu-analysis.ts';
 import { calculateHapHwa } from './hap-hwa-analysis.ts';
 import { calculateGyeokguk } from './gyeokguk-analysis.ts';
 import { calculateDaewoonMeta } from './daewoon-meta.ts';
+import { getManAgeInCalendarYear } from './age.ts';
 import { formatNayeon } from './nayeon.ts';
 import { getAdjustedBirthDateTime } from './birth-calendar.ts';
 import type {
@@ -484,8 +485,8 @@ export function calculateSaju(input: BirthInput): SajuResult {
     }
   });
   const daewoon: DaewoonItem[] = rawDaewoon.map((dw, i) => {
-    // 칸 헤더 나이: 대운 시작 연도 기준 10년 단위 (0·10·20…)
-    const age = dw.startDate.getFullYear() - year;
+    // 칸 헤더 나이: startDate 연도 12/31 만나이 (세운·대운수 표기와 동일 기준)
+    const age = getManAgeInCalendarYear(year, month, day, dw.startDate.getFullYear());
     const dwStem = dw.ganzi[0];
     const dwBranch = dw.ganzi[1];
     const dwStemSipsin = getSipsin(dayStem, dwStem);
@@ -546,7 +547,7 @@ export function calculateSaju(input: BirthInput): SajuResult {
     day,
     dwHour,
     dwMinute,
-    daewoon[0]?.age ?? 0,
+    getSounYearCount(year, daewoon[0]?.startDate),
     dayStem,
     yearBranch,
     gmSet,

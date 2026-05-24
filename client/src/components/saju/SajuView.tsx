@@ -28,7 +28,6 @@ interface Props {
   onSelectedDaewoonIdxChange: (idx: number) => void
   autoDaewoonIdx: number
   displayDaewoonIdx: number
-  currentAge: number
 }
 
 export default function SajuView({
@@ -40,7 +39,6 @@ export default function SajuView({
   onSelectedDaewoonIdxChange,
   autoDaewoonIdx,
   displayDaewoonIdx,
-  currentAge,
 }: Props) {
   const { t } = useLocale()
 
@@ -148,12 +146,14 @@ export default function SajuView({
         <DaewoonTable
           daewoon={result.daewoon}
           daewoonMeta={result.daewoonMeta}
+          birthYear={input.year}
+          birthMonth={input.month}
+          birthDay={input.day}
           unknownTime={input.unknownTime}
           natalGanzis={ganzis}
           yongsin={result.yongsin}
           selectedIdx={selectedDaewoonIdx}
           autoIndex={autoDaewoonIdx}
-          currentAge={currentAge}
           onSelectDaewoon={onSelectedDaewoonIdxChange}
         />
       </div>
@@ -164,6 +164,8 @@ export default function SajuView({
           daewoon={result.daewoon}
           displayIndex={displayDaewoonIdx}
           birthYear={input.year}
+          birthMonth={input.month}
+          birthDay={input.day}
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           gongmangBranches={result.gongmang.branches}

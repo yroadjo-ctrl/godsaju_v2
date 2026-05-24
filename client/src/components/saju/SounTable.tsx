@@ -5,7 +5,7 @@ import {
   stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass,
   formatSinsal, getStemAttr, getBranchAttr,
 } from '../../utils/format.ts'
-import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
+import { YUN_SOUN_UI_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
 import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
 import { getEffectiveYunCalendarYear } from '../../utils/yun-period.ts'
@@ -43,10 +43,11 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
           yunLabel="소운"
           emptyReason={SOUN_EMPTY_REASON}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
-          {YUN_METHOD_NOTES.soun}
-          {unknownTime && ' · 출생 시각 미입력 — 月柱 기준.'}
-        </p>
+        {YUN_SOUN_UI_NOTES.slice(0, 2).map((line, i) => (
+          <p key={line} className={`text-xs text-gray-500 dark:text-gray-400 leading-relaxed ${i === 1 ? 'mb-2' : 'mb-1'}`}>
+            {line}{i === 1 && unknownTime && ' · 출생 시각 미입력 — 月柱 기준.'}
+          </p>
+        ))}
       </section>
     )
   }
@@ -59,13 +60,14 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
         currentGanzi={currentSounGanzi}
         context={currentSounGanzi ? { kind: 'year', year: effectiveYear } : null}
       />
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
-        {YUN_METHOD_NOTES.soun}
-        {unknownTime && ' · 출생 시각 미입력 — 月柱 기준.'}
-      </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-        {YUN_METHOD_NOTES.yongsinTransit}
-      </p>
+      {YUN_SOUN_UI_NOTES.map((line, i) => (
+        <p
+          key={line}
+          className={`text-xs text-gray-500 dark:text-gray-400 leading-relaxed ${i === YUN_SOUN_UI_NOTES.length - 1 ? 'mb-3' : 'mb-1'}`}
+        >
+          {line}{i === 1 && unknownTime && ' · 출생 시각 미입력 — 月柱 기준.'}
+        </p>
+      ))}
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
           <thead>

@@ -8,7 +8,7 @@ import ThemeToggle from './ThemeToggle.tsx'
 import LanguageToggle from './LanguageToggle.tsx'
 import { useLocale } from '../i18n/index.ts'
 import SajuView from './saju/SajuView.tsx'
-import { findActiveDaewoonIndexByAge } from '../utils/yun-period.ts'
+import { findActiveDaewoonIndex } from '../utils/yun-period.ts'
 import ZiweiView from './ziwei/ZiweiView.tsx'
 import NatalView from './natal/NatalView.tsx'
 import { calculateSaju } from '@core/saju'
@@ -44,10 +44,9 @@ function AppContent() {
     [birthInput],
   )
 
-  const currentAge = birthInput ? new Date().getFullYear() - birthInput.year : 0
   const autoDaewoonIdx = useMemo(
-    () => (sajuResult ? findActiveDaewoonIndexByAge(sajuResult.daewoon, currentAge) : 0),
-    [sajuResult, currentAge],
+    () => (sajuResult ? findActiveDaewoonIndex(sajuResult.daewoon) : 0),
+    [sajuResult],
   )
 
   const [monthlyDisplayYear, setMonthlyDisplayYear] = useState(() => new Date().getFullYear())
@@ -176,7 +175,6 @@ function AppContent() {
                 onSelectedDaewoonIdxChange={setSelectedDaewoonIdx}
                 autoDaewoonIdx={autoDaewoonIdx}
                 displayDaewoonIdx={displayDaewoonIdx}
-                currentAge={currentAge}
               />
             )}
             {tab === 'ziwei' && <ZiweiView input={birthInput} />}
