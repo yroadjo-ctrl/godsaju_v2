@@ -37,7 +37,33 @@ function formatTermDate(d: Date): string {
   return `${y}-${m}-${day} ${h}:${min}`;
 }
 
-/** 대운수·順逆行 — 순행: 절입→출생 일수÷3, 역행: 출생→절출(근접 시 절입) */
+/**
+ * 대운수용 절기까지 일수 — getDaewoon과 동일 기준.
+ * 順行: 출생 → 다음 節(절출) · 逆行: 출생 → 이전 節(절입)
+ */
+export function calcDaysForDaewoonSu(
+  isForward: boolean,
+  birth: Date,
+  ingi: Date,
+  outgi: Date,
+): { daysForSu: number; termDate: Date; termLabel: string } {
+  if (isForward) {
+    const daysForSu = Math.max(0, (outgi.getTime() - birth.getTime()) / MS_PER_DAY);
+    return {
+      daysForSu,
+      termDate: outgi,
+      termLabel: `節出(절출) ${formatTermDate(outgi)}`,
+    };
+  }
+  const daysForSu = Math.max(0, Math.abs(birth.getTime() - ingi.getTime()) / MS_PER_DAY);
+  return {
+    daysForSu,
+    termDate: ingi,
+    termLabel: `節入(절입) ${formatTermDate(ingi)}`,
+  };
+}
+
+/** 대운수·順逆行 — 3日=1年 (calcDaysForDaewoonSu와 getDaewoon 공통) */
 export function calculateDaewoonMeta(
   isMale: boolean,
   year: number,
@@ -65,33 +91,7 @@ export function calculateDaewoonMeta(
     terms.outgiYear, terms.outgiMonth - 1, terms.outgiDay, terms.outgiHour, terms.outgiMin,
   );
 
-  let daysForSu: number;
-  let termDate: Date;
-  let termLabel: string;
-
-  if (isForward) {
-    // 순행(陽男 등): 당월 절입부터 출생까지 — 포스텔러·전통 표기와 동일
-    daysForSu = (birth.getTime() - ingi.getTime()) / MS_PER_DAY;
-    if (daysForSu < 0) {
-      daysForSu = (outgi.getTime() - birth.getTime()) / MS_PER_DAY;
-      termDate = outgi;
-      termLabel = `節出(절출) ${formatTermDate(outgi)}`;
-    } else {
-      termDate = ingi;
-      termLabel = `節入(절입) ${formatTermDate(ingi)}`;
-    }
-  } else {
-    // 역행: 출생 이후 절출까지; 절출 직후 출생이면 절입까지 역산
-    daysForSu = (birth.getTime() - outgi.getTime()) / MS_PER_DAY;
-    if (daysForSu < 1) {
-      daysForSu = (birth.getTime() - ingi.getTime()) / MS_PER_DAY;
-      termDate = ingi;
-      termLabel = `節入(절입) ${formatTermDate(ingi)}`;
-    } else {
-      termDate = outgi;
-      termLabel = `節出(절출) ${formatTermDate(outgi)}`;
-    }
-  }
+  const { daysForSu, termDate, termLabel } = calcDaysForDaewoonSu(isForward, birth, ingi, outgi);
 
   const daysToTerm = Math.round(daysForSu * 10) / 10;
   const daewoonSu = Math.round((daysForSu / 3) * 10) / 10;

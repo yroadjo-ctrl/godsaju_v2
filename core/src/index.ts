@@ -17,7 +17,7 @@ export {
   RELATION_TABS, collectRelationListItems, formatRelationListItem, countByTab,
 } from './relation-tabs.ts'
 export type { RelationTabId, RelationTabDef, RelationListItem } from './relation-tabs.ts'
-export { calculateDaewoonMeta, daewoonAgeFromBirth, MS_PER_SAJU_YEAR } from './daewoon-meta.ts'
+export { calculateDaewoonMeta, calcDaysForDaewoonSu, daewoonAgeFromBirth, MS_PER_SAJU_YEAR } from './daewoon-meta.ts'
 export type { DaewoonMeta } from './daewoon-meta.ts'
 export { calculateSoun } from './soun.ts'
 export type { SounItem } from './soun.ts'
