@@ -6,10 +6,12 @@ interface Props {
   /** 소운 · 대운 · 세운 · 월운 · 일운 */
   yunLabel: string
   currentGanzi?: string | null
+  /** 대운·세운 미시작 시 — 없음 (YYYY년에 시작) */
+  pendingStartYear?: number | null
 }
 
-export default function YunSectionHeading({ title, yunLabel, currentGanzi }: Props) {
-  const currentLine = formatCurrentYunLine(yunLabel, currentGanzi)
+export default function YunSectionHeading({ title, yunLabel, currentGanzi, pendingStartYear }: Props) {
+  const currentLine = formatCurrentYunLine(yunLabel, currentGanzi, pendingStartYear)
 
   return (
     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">

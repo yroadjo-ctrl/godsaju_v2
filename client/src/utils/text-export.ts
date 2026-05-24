@@ -24,7 +24,7 @@ import {
 import { isKongwang, calculateMonthGanzi } from '@core/monthly-data'
 import { YUN_METHOD_NOTES } from './yun-method-notes.ts'
 import { formatCurrentYunLine } from './ganzi-display.ts'
-import { findActiveDaewoonIndexByAge } from '../components/saju/SewoonTable.tsx'
+import { findActiveDaewoonIndexByAge, isBeforeFirstDaewoon, getFirstDaewoonStartYear } from './yun-period.ts'
 import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import type { Locale } from '../i18n/index.ts'
 
@@ -167,15 +167,18 @@ export function sajuToText(
   const currentMonth = now.getMonth() + 1
   const currentAge = currentYear - input.year
   const currentSounGanzi = soun.find((s) => s.year === currentYear)?.ganzi ?? null
-  const currentDaewoonGanzi = daewoon.length > 0
-    ? daewoon[findActiveDaewoonIndexByAge(daewoon, currentAge)]?.ganzi ?? null
+  const beforeFirstDaewoon = isBeforeFirstDaewoon(currentAge, daewoon)
+  const activeDwIdx = daewoon.length > 0 ? findActiveDaewoonIndexByAge(daewoon, currentAge) : -1
+  const currentDaewoonGanzi = !beforeFirstDaewoon && activeDwIdx >= 0
+    ? daewoon[activeDwIdx]?.ganzi ?? null
     : null
-  const currentSewoonGanzi = getYearGanzi(currentYear)
+  const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
+  const currentSewoonGanzi = beforeFirstDaewoon ? null : getYearGanzi(currentYear)
   const currentMonthGanzi = calculateMonthGanzi(currentYear, currentMonth)
   const currentDayGanzi = getDayPillarForDate(currentYear, currentMonth, now.getDate())
 
-  const pushCurrentYun = (label: string, ganzi: string | null | undefined) => {
-    const line = formatCurrentYunLine(label, ganzi)
+  const pushCurrentYun = (label: string, ganzi: string | null | undefined, pendingYear?: number | null) => {
+    const line = formatCurrentYunLine(label, ganzi, pendingYear)
     if (line) lines.push(line)
   }
 
@@ -639,7 +642,7 @@ export function sajuToText(
   // 대운 (마크단운 표 형식, 가로 배열)
   if (daewoon.length > 0) {
     lines.push(sectionTitle(input.unknownTime ? `대운 (大運) (${t('saju.unknownTimeWarning')})` : '대운 (大運)'))
-    pushCurrentYun('대운', currentDaewoonGanzi)
+    pushCurrentYun('대운', currentDaewoonGanzi, pendingStartYear)
     const dm = daewoonMeta
     if (dm) {
       lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanzi}) (정밀 ${dm.daewoonSu})`)
@@ -775,7 +778,7 @@ export function sajuToText(
   if (dayStem && yearBranch) {
     lines.push('') // 빈 줄
     lines.push(sectionTitle('세운 (歲運)'))
-    pushCurrentYun('세운', currentSewoonGanzi)
+    pushCurrentYun('세운', currentSewoonGanzi, pendingStartYear)
     lines.push('')
     
     // 공망 계산

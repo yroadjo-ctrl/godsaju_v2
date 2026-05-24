@@ -5,6 +5,7 @@ import { getYearGanzi, getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
+import { isBeforeFirstDaewoon, shouldHighlightSewoonYear, getFirstDaewoonStartYear } from '../../utils/yun-period.ts'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -100,16 +101,6 @@ function buildSewoonItems(
   return items
 }
 
-export function findActiveDaewoonIndexByAge(daewoon: DaewoonItem[], currentAge: number): number {
-  for (let i = 0; i < daewoon.length; i++) {
-    const d = daewoon[i]
-    if (currentAge >= d.age && currentAge <= d.age + 9) {
-      return i
-    }
-  }
-  return 0
-}
-
 export default function SewoonTable({
   daewoon, displayIndex, birthYear, dayStem, yearBranch, gongmangBranches, natalGanzis, yongsin,
 }: Props) {
@@ -136,7 +127,10 @@ export default function SewoonTable({
   if (sewoonItems.length === 0) return null
 
   const currentYear = new Date().getFullYear()
-  const currentSewoonGanzi = getYearGanzi(currentYear)
+  const currentAge = currentYear - birthYear
+  const beforeFirstDaewoon = isBeforeFirstDaewoon(currentAge, daewoon)
+  const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
+  const currentSewoonGanzi = beforeFirstDaewoon ? null : getYearGanzi(currentYear)
   const periodLabel = `${targetDaewoon.age}세~ (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
 
   return (
@@ -145,6 +139,7 @@ export default function SewoonTable({
         title={<>세운 <span className="font-hanja">(歲運)</span></>}
         yunLabel="세운"
         currentGanzi={currentSewoonGanzi}
+        pendingStartYear={pendingStartYear}
       />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 대운: {periodLabel}
@@ -160,7 +155,7 @@ export default function SewoonTable({
           <thead>
             <tr className="bg-gray-100">
               {[...sewoonItems].reverse().map((item, idx) => {
-                const isCurrentYear = item.year === currentYear
+                const isCurrentYear = shouldHighlightSewoonYear(item.year, currentYear, currentAge, daewoon)
                 return (
                   <th
                     key={idx}

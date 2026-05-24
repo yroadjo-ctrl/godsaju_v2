@@ -8,7 +8,7 @@ import ThemeToggle from './ThemeToggle.tsx'
 import LanguageToggle from './LanguageToggle.tsx'
 import { useLocale } from '../i18n/index.ts'
 import SajuView from './saju/SajuView.tsx'
-import { findActiveDaewoonIndexByAge } from './saju/SewoonTable.tsx'
+import { findActiveDaewoonIndexByAge } from '../utils/yun-period.ts'
 import ZiweiView from './ziwei/ZiweiView.tsx'
 import NatalView from './natal/NatalView.tsx'
 import { calculateSaju } from '@core/saju'
@@ -63,7 +63,9 @@ function AppContent() {
     setSelectedDaewoonIdx(autoDaewoonIdx)
   }, [sajuResult?.daewoon, autoDaewoonIdx])
 
-  const displayDaewoonIdx = selectedDaewoonIdx >= 0 ? selectedDaewoonIdx : autoDaewoonIdx
+  const displayDaewoonIdx = selectedDaewoonIdx >= 0
+    ? selectedDaewoonIdx
+    : (autoDaewoonIdx >= 0 ? autoDaewoonIdx : 0)
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 relative">
@@ -174,6 +176,7 @@ function AppContent() {
                 onSelectedDaewoonIdxChange={setSelectedDaewoonIdx}
                 autoDaewoonIdx={autoDaewoonIdx}
                 displayDaewoonIdx={displayDaewoonIdx}
+                currentAge={currentAge}
               />
             )}
             {tab === 'ziwei' && <ZiweiView input={birthInput} />}

@@ -6,6 +6,7 @@ import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass,
 import { useLocale } from '../../i18n/index.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
+import { isBeforeFirstDaewoon, getFirstDaewoonStartYear } from '../../utils/yun-period.ts'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -15,6 +16,7 @@ interface Props {
   yongsin: YongsinStats
   selectedIdx: number
   autoIndex: number
+  currentAge: number
   onSelectDaewoon: (idx: number) => void
 }
 
@@ -91,7 +93,7 @@ function buildDaewoonTableItems(
 }
 
 export default function DaewoonTable({
-  daewoon, daewoonMeta, unknownTime, natalGanzis, yongsin, selectedIdx, autoIndex, onSelectDaewoon,
+  daewoon, daewoonMeta, unknownTime, natalGanzis, yongsin, selectedIdx, autoIndex, currentAge, onSelectDaewoon,
 }: Props) {
   const { t } = useLocale()
 
@@ -111,7 +113,11 @@ export default function DaewoonTable({
     [daewoon, natalGanzis, yongsin],
   )
 
-  const currentDaewoonGanzi = daewoon[autoIndex]?.ganzi ?? null
+  const beforeFirstDaewoon = isBeforeFirstDaewoon(currentAge, daewoon)
+  const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
+  const currentDaewoonGanzi = !beforeFirstDaewoon && autoIndex >= 0
+    ? daewoon[autoIndex]?.ganzi ?? null
+    : null
 
   return (
     <section>
@@ -119,6 +125,7 @@ export default function DaewoonTable({
         title={<>대운 <span className="font-hanja">(大運)</span></>}
         yunLabel="대운"
         currentGanzi={currentDaewoonGanzi}
+        pendingStartYear={pendingStartYear}
       />
       <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
         <span className="font-medium text-gray-700 dark:text-gray-200">
@@ -158,8 +165,8 @@ export default function DaewoonTable({
             <tr className="bg-gray-100">
               {[...daewoonTableItems].reverse().map((item, idx) => {
                 const actualIdx = daewoonTableItems.length - 1 - idx
-                const isActive = actualIdx === autoIndex
-                const isSelected = actualIdx === selectedIdx && actualIdx !== autoIndex
+                const isActive = autoIndex >= 0 && actualIdx === autoIndex
+                const isSelected = selectedIdx >= 0 && actualIdx === selectedIdx && actualIdx !== autoIndex
                 return (
                   <th
                     key={idx}
