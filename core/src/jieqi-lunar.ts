@@ -347,6 +347,29 @@ function jieIndexLabel(jieIndex: number): string {
   return JIEQI_LIST[jieIndex] ?? String(jieIndex);
 }
 
+/** 24절기 한글·한자 (jieIndex 0–23) */
+export function jieqiKorHanja(jieIndex: number): { kor: string; hanja: string } {
+  const hanja = JIEQI_LIST[jieIndex] ?? JIEQI_FALLBACK[jieIndex] ?? '?';
+  const kor = JIEQI_KOR_24[jieIndex] ?? '?';
+  return { kor, hanja };
+}
+
+/** 대운수 절기 라벨 — 예: 백로(白露) 절출 1982-09-08 08:31 */
+export function formatDaewoonTermLabel(
+  jieIndex: number,
+  kind: 'ingi' | 'outgi',
+  termDate: Date,
+): string {
+  const { kor, hanja } = jieqiKorHanja(jieIndex);
+  const suffix = kind === 'ingi' ? '절입' : '절출';
+  const y = termDate.getFullYear();
+  const m = String(termDate.getMonth() + 1).padStart(2, '0');
+  const day = String(termDate.getDate()).padStart(2, '0');
+  const h = String(termDate.getHours()).padStart(2, '0');
+  const min = String(termDate.getMinutes()).padStart(2, '0');
+  return `${kor}(${hanja}) ${suffix} ${y}-${m}-${day} ${h}:${min}`;
+}
+
 /** 일운 달력용 — 해당 연도 24절기를 월·일 키로 */
 export function buildJieQiCalendarMap(
   year: number,

@@ -117,7 +117,7 @@ export default function DaewoonTable({
       </h3>
       <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
         <span className="font-medium text-gray-700 dark:text-gray-200">
-          대운수 : {daewoonMeta.daewoonSuDisplay}({daewoonMeta.monthGanziKor})
+          대운수 : {daewoonMeta.daewoonSuDisplay}({daewoonMeta.monthGanzi})
         </span>
         <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
           (정밀 {daewoonMeta.daewoonSu})

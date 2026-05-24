@@ -1,6 +1,7 @@
 import type { JasiMethod } from './types.ts';
 import { HGANJI, YANGGAN } from './constants.ts';
-import { calcSolarTerms, calcPillarIndices, toHangul } from './pillars.ts';
+import { calcSolarTerms, calcPillarIndices } from './pillars.ts';
+import { formatDaewoonTermLabel } from './jieqi-lunar.ts';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export const MS_PER_SAJU_YEAR = 365.242196 * MS_PER_DAY;
@@ -19,22 +20,13 @@ export interface DaewoonMeta {
   termLabel: string;
   firstGanzi: string;
   firstStartDate: Date;
-  /** 월주 한글 (대운수 병기, 예: 무신) */
-  monthGanziKor: string;
+  /** 월주 간지 (대운수 병기, 예: 戊申) */
+  monthGanzi: string;
 }
 
 export function daewoonAgeFromBirth(birth: Date, start: Date): number {
   const years = (start.getTime() - birth.getTime()) / MS_PER_SAJU_YEAR;
   return Math.max(0, Math.round(years));
-}
-
-function formatTermDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${y}-${m}-${day} ${h}:${min}`;
 }
 
 /**
@@ -46,20 +38,22 @@ export function calcDaysForDaewoonSu(
   birth: Date,
   ingi: Date,
   outgi: Date,
+  ingiName: number,
+  outgiName: number,
 ): { daysForSu: number; termDate: Date; termLabel: string } {
   if (isForward) {
     const daysForSu = Math.max(0, (outgi.getTime() - birth.getTime()) / MS_PER_DAY);
     return {
       daysForSu,
       termDate: outgi,
-      termLabel: `節出(절출) ${formatTermDate(outgi)}`,
+      termLabel: formatDaewoonTermLabel(outgiName, 'outgi', outgi),
     };
   }
   const daysForSu = Math.max(0, Math.abs(birth.getTime() - ingi.getTime()) / MS_PER_DAY);
   return {
     daysForSu,
     termDate: ingi,
-    termLabel: `節入(절입) ${formatTermDate(ingi)}`,
+    termLabel: formatDaewoonTermLabel(ingiName, 'ingi', ingi),
   };
 }
 
@@ -76,7 +70,6 @@ export function calculateDaewoonMeta(
 ): DaewoonMeta {
   const [, sy, sm] = calcPillarIndices(year, month, day, hour, minute, jasiMethod);
   const monthGanzi = HGANJI[sm];
-  const monthGanziKor = toHangul(monthGanzi[0]) + toHangul(monthGanzi[1]);
 
   const yearStem = HGANJI[sy][0];
   const isYangGan = YANGGAN.includes(yearStem);
@@ -91,7 +84,9 @@ export function calculateDaewoonMeta(
     terms.outgiYear, terms.outgiMonth - 1, terms.outgiDay, terms.outgiHour, terms.outgiMin,
   );
 
-  const { daysForSu, termDate, termLabel } = calcDaysForDaewoonSu(isForward, birth, ingi, outgi);
+  const { daysForSu, termDate, termLabel } = calcDaysForDaewoonSu(
+    isForward, birth, ingi, outgi, terms.ingiName, terms.outgiName,
+  );
 
   const daysToTerm = Math.round(daysForSu * 10) / 10;
   const daewoonSu = Math.round((daysForSu / 3) * 10) / 10;
@@ -110,6 +105,6 @@ export function calculateDaewoonMeta(
     termLabel,
     firstGanzi: firstDaewoon?.ganzi ?? '',
     firstStartDate,
-    monthGanziKor,
+    monthGanzi,
   };
 }

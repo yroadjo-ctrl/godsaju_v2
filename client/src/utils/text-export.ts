@@ -616,7 +616,7 @@ export function sajuToText(
     lines.push(sectionTitle(input.unknownTime ? `대운 (大運) (${t('saju.unknownTimeWarning')})` : '대운 (大運)'))
     const dm = daewoonMeta
     if (dm) {
-      lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanziKor}) (정밀 ${dm.daewoonSu})`)
+      lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanzi}) (정밀 ${dm.daewoonSu})`)
       lines.push(`- **順逆行**: ${dm.directionKor}(${dm.direction})`)
       lines.push(`- **절기 기준**: ${dm.termLabel} (출생→절기 ${dm.daysToTerm}일, 3일=1년)`)
       if (dm.firstGanzi) {
