@@ -6,6 +6,7 @@ import { calculateMonthGanzi } from '@core/monthly-data'
 import { formatMonthlyJieQiCell } from '@core/jieqi-lunar'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
+import YunSectionHeading from './YunSectionHeading.tsx'
 interface Props {
   currentYear: number
   currentMonth: number
@@ -124,6 +125,7 @@ export default function MonthlyTable({
   const gmSet = new Set(gongmangBranches)
   const natalGanzis = pillars.map((p) => (typeof p === 'string' ? p : `${p[0]}${p[1]}`))
   const monthlyItems = buildMonthlyItems(displayYear, pillars, dayStem, yearBranch, gmSet, natalGanzis, yongsin)
+  const currentMonthGanzi = calculateMonthGanzi(currentYear, currentMonth)
 
   const changeYear = (newYear: number) => {
     if (!isControlled) setInternalYear(newYear)
@@ -136,10 +138,12 @@ export default function MonthlyTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">
-          월운 <span className="font-hanja">(月運)</span>
-        </h3>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <YunSectionHeading
+          title={<>월운 <span className="font-hanja">(月運)</span></>}
+          yunLabel="월운"
+          currentGanzi={currentMonthGanzi}
+        />
         <div className="flex items-center gap-3 text-sm">
           <button
             onClick={handlePrevYear}

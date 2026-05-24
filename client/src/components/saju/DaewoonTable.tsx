@@ -5,6 +5,7 @@ import { getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
+import YunSectionHeading from './YunSectionHeading.tsx'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -110,11 +111,15 @@ export default function DaewoonTable({
     [daewoon, natalGanzis, yongsin],
   )
 
+  const currentDaewoonGanzi = daewoon[autoIndex]?.ganzi ?? null
+
   return (
     <section>
-      <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
-        대운 <span className="font-hanja">(大運)</span>
-      </h3>
+      <YunSectionHeading
+        title={<>대운 <span className="font-hanja">(大運)</span></>}
+        yunLabel="대운"
+        currentGanzi={currentDaewoonGanzi}
+      />
       <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
         <span className="font-medium text-gray-700 dark:text-gray-200">
           대운수 : {daewoonMeta.daewoonSuDisplay}({daewoonMeta.monthGanzi})

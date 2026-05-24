@@ -4,6 +4,7 @@ import { annotateTransit } from '@core/index'
 import { getYearGanzi, getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
+import YunSectionHeading from './YunSectionHeading.tsx'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -134,13 +135,17 @@ export default function SewoonTable({
 
   if (sewoonItems.length === 0) return null
 
+  const currentYear = new Date().getFullYear()
+  const currentSewoonGanzi = getYearGanzi(currentYear)
   const periodLabel = `${targetDaewoon.age}세~ (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
 
   return (
     <section>
-      <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
-        세운 <span className="font-hanja">(歲運)</span>
-      </h3>
+      <YunSectionHeading
+        title={<>세운 <span className="font-hanja">(歲運)</span></>}
+        yunLabel="세운"
+        currentGanzi={currentSewoonGanzi}
+      />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 대운: {periodLabel}
       </p>
@@ -155,7 +160,7 @@ export default function SewoonTable({
           <thead>
             <tr className="bg-gray-100">
               {[...sewoonItems].reverse().map((item, idx) => {
-                const isCurrentYear = item.year === new Date().getFullYear()
+                const isCurrentYear = item.year === currentYear
                 return (
                   <th
                     key={idx}

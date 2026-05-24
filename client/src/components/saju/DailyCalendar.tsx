@@ -6,6 +6,7 @@ import type { YongsinStats } from '@core/types'
 import { buildJieQiCalendarMap } from '@core/jieqi-lunar'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import { HGANJI, GONGMANG_TABLE } from '@core/constants'
+import YunSectionHeading from './YunSectionHeading.tsx'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 
@@ -50,6 +51,11 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, yon
   // 오늘 날짜 (고정, 주황색)
   const today = new Date();
   const todayStr = dateToString(today);
+  const currentDayGanzi = getDayPillarForDate(
+    today.getFullYear(),
+    today.getMonth() + 1,
+    today.getDate(),
+  );
   
   // 선택된 날짜 (클릭 시 파란색, 오늘 제외)
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
@@ -256,11 +262,11 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, yon
    return (
     <div className="w-full mt-6">
       {/* 일운 타이틀 */}
-      <div className="flex justify-between items-center mb-1">
-        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">
-          일운 <span className="font-hanja">(日運)</span>
-        </h3>
-      </div>
+      <YunSectionHeading
+        title={<>일운 <span className="font-hanja">(日運)</span></>}
+        yunLabel="일운"
+        currentGanzi={currentDayGanzi}
+      />
       <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed space-y-1">
         <p>{YUN_METHOD_NOTES.daily}</p>
         {yongsin && natalPillars?.length ? (

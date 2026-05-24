@@ -6,6 +6,7 @@ import {
   formatSinsal, getStemAttr, getBranchAttr,
 } from '../../utils/format.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
+import YunSectionHeading from './YunSectionHeading.tsx'
 
 interface Props {
   soun: SounItem[]
@@ -21,10 +22,14 @@ const STEM_SIPSIN_MAP: Record<string, string> = {
 }
 
 export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: Props) {
+  const currentYear = new Date().getFullYear()
   const items = useMemo(() => soun.map((item) => {
     const ann = annotateTransit(item.ganzi, natalGanzis, yongsin)
     return { ...item, ...ann, sinsalFmt: formatSinsal(item.sinsal) }
   }), [soun, natalGanzis, yongsin])
+
+  const currentSounGanzi = items.find((item) => item.year === currentYear)?.ganzi ?? null
+  const displayItems = [...items].reverse()
 
   if (items.length === 0) {
     return (
@@ -44,9 +49,11 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
 
   return (
     <section>
-      <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
-        소운 <span className="font-hanja">(小運)</span>
-      </h3>
+      <YunSectionHeading
+        title={<>소운 <span className="font-hanja">(小運)</span></>}
+        yunLabel="소운"
+        currentGanzi={currentSounGanzi}
+      />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
         {YUN_METHOD_NOTES.soun}
         {unknownTime && ' · 출생 시각 미입력 — 月柱 기준.'}
@@ -58,26 +65,31 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-100">
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => {
+                const isCurrentYear = item.year === currentYear
+                return (
                 <th
                   key={idx}
-                  className="border border-black px-2 py-2 text-center min-w-[88px] text-xs font-semibold bg-gray-100"
+                  className={`border border-black px-2 py-2 text-center min-w-[88px] text-xs font-semibold ${
+                    isCurrentYear ? 'bg-[#FFFF00]' : 'bg-gray-100'
+                  }`}
                 >
                   {item.age}세<br />({item.year}년)
                 </th>
-              ))}
+                )
+              })}
             </tr>
           </thead>
           <tbody>
             <tr>
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => (
                 <td key={idx} className={`border border-black px-2 py-1 text-center text-xs font-medium ${stemColorClass(item.ganzi[0])}`}>
                   {STEM_SIPSIN_MAP[item.stemSipsin] || item.stemSipsin}
                 </td>
               ))}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => {
+              {displayItems.map((item, idx) => {
                 const stemAttr = getStemAttr(item.ganzi[0])
                 return (
                   <td key={idx} className="border border-black px-2 py-2 text-center">
@@ -92,7 +104,7 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
               })}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => {
+              {displayItems.map((item, idx) => {
                 const branchAttr = getBranchAttr(item.ganzi[1])
                 return (
                   <td key={idx} className="border border-black px-2 py-2 text-center">
@@ -107,42 +119,42 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
               })}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => (
                 <td key={idx} className={`border border-black px-2 py-1 text-center text-xs font-medium ${branchColorClass(item.ganzi[1])}`}>
                   {STEM_SIPSIN_MAP[item.branchSipsin] || item.branchSipsin}
                 </td>
               ))}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
                   {item.unseong}
                 </td>
               ))}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-xs whitespace-pre-line">
                   {item.sinsalFmt}
                 </td>
               ))}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
                   {item.isGongmang ? '空亡' : '-'}
                 </td>
               ))}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
                   {item.fuYinFanYin}
                 </td>
               ))}
             </tr>
             <tr>
-              {[...items].reverse().map((item, idx) => (
+              {displayItems.map((item, idx) => (
                 <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight">
                   {item.yongsinLabel}
                 </td>
