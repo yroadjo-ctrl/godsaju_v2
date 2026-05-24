@@ -1,4 +1,5 @@
 import type { DaewoonItem } from '@core/types'
+import { getEffectiveCalendarYearForLichun, getLiuNianGanziAtDate, getLiuYueGanziAtDate } from '@core/yun-transit'
 
 /** 첫 대운 시작 나이 (칸 헤더 age) */
 export function getFirstDaewoonAge(daewoon: DaewoonItem[]): number {
@@ -44,4 +45,31 @@ export function shouldHighlightSewoonYear(
   if (year !== currentYear) return false
   if (isBeforeFirstDaewoon(currentAge, daewoon)) return false
   return true
+}
+
+/** 현재 流年 간지 (입춘 기준) */
+export function getCurrentLiuNianGanzi(now: Date = new Date()): string {
+  return getLiuNianGanziAtDate(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+  )
+}
+
+/** 현재 流月 간지 (12節 기준) */
+export function getCurrentLiuYueGanzi(now: Date = new Date()): string {
+  return getLiuYueGanziAtDate(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+  )
+}
+
+/** 입춘 전이면 전년도 칸 기준 (소운·세운) */
+export function getEffectiveYunCalendarYear(now: Date = new Date()): number {
+  return getEffectiveCalendarYearForLichun(now)
 }

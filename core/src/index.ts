@@ -21,6 +21,13 @@ export { calculateDaewoonMeta, calcDaysForDaewoonSu, daewoonAgeFromBirth, MS_PER
 export type { DaewoonMeta } from './daewoon-meta.ts'
 export { calculateSoun } from './soun.ts'
 export type { SounItem } from './soun.ts'
+export {
+  getEffectiveCalendarYearForLichun,
+  getLiuNianGanziAtDate,
+  getLiuNianGanziForCalendarYear,
+  getLiuYueGanziAtDate,
+  getLiuYueGanziForCalendarMonth,
+} from './yun-transit.ts'
 export { calculateTaewonTaesik } from './taewon-taesik.ts'
 export type { TaewonTaesikStats, TaewonTaesikPillar } from './taewon-taesik.ts'
 export {
@@ -44,6 +51,8 @@ export {
   getLunarMonthIndex,
   getLunarYearGanIndex,
   formatMonthlyJieQiCell,
+  formatLichunBoundaryCell,
+  formatDaewoonStartCell,
   getMonthlyJieQiEntries,
   lookupJieForYear,
   JIEQI_KOR_24,

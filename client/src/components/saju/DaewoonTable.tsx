@@ -7,6 +7,8 @@ import { useLocale } from '../../i18n/index.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
 import { isBeforeFirstDaewoon, getFirstDaewoonStartYear } from '../../utils/yun-period.ts'
+import { formatDaewoonStartCell } from '@core/jieqi-lunar'
+import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -25,6 +27,7 @@ interface DaewoonTableItem {
   age: number
   startYear: number
   endYear: number
+  startDate: Date
   ganzi: string
   stemSipsin: string
   branchSipsin: string
@@ -79,6 +82,7 @@ function buildDaewoonTableItems(
       age: dw.age,
       startYear: dw.startDate.getFullYear(),
       endYear: new Date(dw.startDate.getFullYear() + 10, dw.startDate.getMonth(), dw.startDate.getDate()).getFullYear(),
+      startDate: dw.startDate,
       ganzi: dw.ganzi,
       stemSipsin: dw.stemSipsin,
       branchSipsin: dw.branchSipsin,
@@ -182,6 +186,11 @@ export default function DaewoonTable({
             </tr>
           </thead>
           <tbody>
+            <tr>
+              {[...daewoonTableItems].reverse().map((item, idx) => (
+                <JieQiBoundaryCell key={idx} text={formatDaewoonStartCell(item.startDate)} />
+              ))}
+            </tr>
             <tr>
               {[...daewoonTableItems].reverse().map((item, idx) => (
                 <td key={idx} className={`border border-black px-2 py-1 text-center text-xs font-medium ${stemColorClass(item.ganzi[0])}`}>

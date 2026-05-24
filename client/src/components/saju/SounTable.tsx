@@ -7,6 +7,9 @@ import {
 } from '../../utils/format.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
+import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
+import { getEffectiveYunCalendarYear } from '../../utils/yun-period.ts'
+import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
   soun: SounItem[]
@@ -22,13 +25,13 @@ const STEM_SIPSIN_MAP: Record<string, string> = {
 }
 
 export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: Props) {
-  const currentYear = new Date().getFullYear()
+  const effectiveYear = getEffectiveYunCalendarYear()
   const items = useMemo(() => soun.map((item) => {
     const ann = annotateTransit(item.ganzi, natalGanzis, yongsin)
     return { ...item, ...ann, sinsalFmt: formatSinsal(item.sinsal) }
   }), [soun, natalGanzis, yongsin])
 
-  const currentSounGanzi = items.find((item) => item.year === currentYear)?.ganzi ?? null
+  const currentSounGanzi = items.find((item) => item.year === effectiveYear)?.ganzi ?? null
   const displayItems = [...items].reverse()
 
   if (items.length === 0) {
@@ -66,7 +69,7 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
           <thead>
             <tr className="bg-gray-100">
               {displayItems.map((item, idx) => {
-                const isCurrentYear = item.year === currentYear
+                const isCurrentYear = item.year === effectiveYear
                 return (
                 <th
                   key={idx}
@@ -81,6 +84,11 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
             </tr>
           </thead>
           <tbody>
+            <tr>
+              {displayItems.map((item, idx) => (
+                <JieQiBoundaryCell key={idx} text={formatLichunBoundaryCell(item.year)} />
+              ))}
+            </tr>
             <tr>
               {displayItems.map((item, idx) => (
                 <td key={idx} className={`border border-black px-2 py-1 text-center text-xs font-medium ${stemColorClass(item.ganzi[0])}`}>

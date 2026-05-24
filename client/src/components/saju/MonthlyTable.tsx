@@ -2,11 +2,14 @@ import { useState } from 'react'
 import type { YongsinStats } from '@core/types'
 import { annotateTransit } from '@core/index'
 import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
-import { calculateMonthGanzi } from '@core/monthly-data'
-import { formatMonthlyJieQiCell } from '@core/jieqi-lunar'
+import { getLiuYueGanziForCalendarMonth } from '@core/yun-transit'
+import { getMonthlyJieQiEntries } from '@core/jieqi-lunar'
+import type { MonthlyJieQiEntry } from '@core/jieqi-lunar'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
+import { MonthlyJieQiCell } from './JieQiCell.tsx'
+import { getCurrentLiuYueGanzi } from '../../utils/yun-period.ts'
 interface Props {
   currentYear: number
   currentMonth: number
@@ -33,7 +36,7 @@ interface MonthlyItem {
   fuYinFanYin: string
   yongsinLabel: string
   isGongmang: boolean
-  solarTerm: string
+  jieQiEntries: MonthlyJieQiEntry[]
 }
 
 const STEM_SIPSIN_MAP: Record<string, string> = {
@@ -59,7 +62,7 @@ function buildMonthlyItems(
   const posLabels = ["시", "일", "월", "년"]
 
   for (let month = 1; month <= 12; month++) {
-    const ganzi = calculateMonthGanzi(displayYear, month)
+    const ganzi = getLiuYueGanziForCalendarMonth(displayYear, month)
     const stem = ganzi[0]
     const branch = ganzi[1]
 
@@ -109,7 +112,7 @@ function buildMonthlyItems(
       fuYinFanYin: ann.fuYinFanYin,
       yongsinLabel: ann.yongsinLabel,
       isGongmang: gmSet.has(branch),
-      solarTerm: formatMonthlyJieQiCell(displayYear, month),
+      jieQiEntries: getMonthlyJieQiEntries(displayYear, month),
     })
   }
   return items
@@ -125,7 +128,7 @@ export default function MonthlyTable({
   const gmSet = new Set(gongmangBranches)
   const natalGanzis = pillars.map((p) => (typeof p === 'string' ? p : `${p[0]}${p[1]}`))
   const monthlyItems = buildMonthlyItems(displayYear, pillars, dayStem, yearBranch, gmSet, natalGanzis, yongsin)
-  const currentMonthGanzi = calculateMonthGanzi(currentYear, currentMonth)
+  const currentMonthGanzi = getCurrentLiuYueGanzi()
 
   const changeYear = (newYear: number) => {
     if (!isControlled) setInternalYear(newYear)
@@ -188,9 +191,7 @@ export default function MonthlyTable({
           <tbody>
             <tr>
               {monthlyItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-xs whitespace-pre-line leading-tight">
-                  {item.solarTerm}
-                </td>
+                <MonthlyJieQiCell key={idx} entries={item.jieQiEntries} />
               ))}
             </tr>
             <tr>

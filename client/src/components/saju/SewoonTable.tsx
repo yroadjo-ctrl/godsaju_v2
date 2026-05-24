@@ -1,11 +1,14 @@
 import { useMemo } from 'react'
 import type { DaewoonItem, YongsinStats } from '@core/types'
 import { annotateTransit } from '@core/index'
-import { getYearGanzi, getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
+import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
+import { getLiuNianGanziForCalendarYear } from '@core/yun-transit'
+import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { isBeforeFirstDaewoon, shouldHighlightSewoonYear, getFirstDaewoonStartYear } from '../../utils/yun-period.ts'
+import { isBeforeFirstDaewoon, shouldHighlightSewoonYear, getFirstDaewoonStartYear, getCurrentLiuNianGanzi } from '../../utils/yun-period.ts'
+import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
   daewoon: DaewoonItem[]
@@ -49,7 +52,7 @@ function buildSewoonItems(
   const posLabels = ['시', '일', '월', '년']
 
   for (let y = startYear; y < endYear; y++) {
-    const ganzi = getYearGanzi(y)
+    const ganzi = getLiuNianGanziForCalendarYear(y)
     const stem = ganzi[0]
     const branch = ganzi[1]
     const rel = getRelation(dayStem, stem)
@@ -130,7 +133,7 @@ export default function SewoonTable({
   const currentAge = currentYear - birthYear
   const beforeFirstDaewoon = isBeforeFirstDaewoon(currentAge, daewoon)
   const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
-  const currentSewoonGanzi = beforeFirstDaewoon ? null : getYearGanzi(currentYear)
+  const currentSewoonGanzi = beforeFirstDaewoon ? null : getCurrentLiuNianGanzi()
   const periodLabel = `${targetDaewoon.age}세~ (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
 
   return (
@@ -170,6 +173,11 @@ export default function SewoonTable({
             </tr>
           </thead>
           <tbody>
+            <tr>
+              {[...sewoonItems].reverse().map((item, idx) => (
+                <JieQiBoundaryCell key={idx} text={formatLichunBoundaryCell(item.year)} />
+              ))}
+            </tr>
             <tr>
               {[...sewoonItems].reverse().map((item, idx) => (
                 <td key={idx} className={`border border-black px-2 py-1 text-center text-xs font-medium ${stemColorClass(item.ganzi[0])}`}>

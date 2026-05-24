@@ -415,6 +415,9 @@ export function buildJieQiDateKeyMap(
 }
 
 export interface MonthlyJieQiEntry {
+  jieIndex: number;
+  /** 12節(節入) — 월령 전환 */
+  isJieRu: boolean;
   kor: string;
   hanja: string;
   month: number;
@@ -431,6 +434,8 @@ export function getMonthlyJieQiEntries(year: number, month: number): MonthlyJieQ
     const dt = lookupJieForYear(year, idx);
     if (!dt || dt.getFullYear() !== year || dt.getMonth() + 1 !== month) return;
     entries.push({
+      jieIndex: idx,
+      isJieRu: idx % 2 === 0,
       kor: JIEQI_KOR_24[idx],
       hanja,
       month,
@@ -455,6 +460,23 @@ export function formatMonthlyJieQiCell(
 
   return entries.map((e) => {
     const time = `${String(e.hour).padStart(2, '0')}:${String(e.minute).padStart(2, '0')}`;
-    return `${e.kor}(${e.hanja})${lineBreak}${e.month}/${e.day} ${time}`;
+    const prefix = e.isJieRu ? '◆' : '·';
+    return `${prefix}${e.kor}(${e.hanja})${lineBreak}${e.month}/${e.day} ${time}`;
   }).join(lineBreak);
+}
+
+/** 입춘(立春) — 세운·소운 연도 칸 경계 */
+export function formatLichunBoundaryCell(calYear: number, lineBreak = '\n'): string {
+  const dt = lookupJieForYear(calYear, 2);
+  if (!dt) return '-';
+  const h = String(dt.getHours()).padStart(2, '0');
+  const min = String(dt.getMinutes()).padStart(2, '0');
+  return `◆입춘(立春)${lineBreak}${dt.getMonth() + 1}/${dt.getDate()} ${h}:${min}`;
+}
+
+/** 대운 칸 시작 시각 */
+export function formatDaewoonStartCell(startDate: Date, lineBreak = '\n'): string {
+  const h = String(startDate.getHours()).padStart(2, '0');
+  const min = String(startDate.getMinutes()).padStart(2, '0');
+  return `◆시작${lineBreak}${startDate.getMonth() + 1}/${startDate.getDate()} ${h}:${min}`;
 }
