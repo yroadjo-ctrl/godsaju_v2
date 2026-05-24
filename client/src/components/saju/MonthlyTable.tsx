@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import type { YongsinStats } from '@core/types'
 import { annotateTransit } from '@core/index'
-import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
+import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit } from '@core/pillars'
+import { collectNatalTransitInteractions } from '../../utils/yun-bigo.ts'
+import YunBigoCell from './YunBigoCell.tsx'
 import { getLiuYueGanziForCalendarMonth } from '@core/yun-transit'
 import { getMonthlyJieQiEntries } from '@core/jieqi-lunar'
 import type { MonthlyJieQiEntry } from '@core/jieqi-lunar'
@@ -59,7 +61,6 @@ function buildMonthlyItems(
   yongsin: YongsinStats,
 ): MonthlyItem[] {
   const items: MonthlyItem[] = []
-  const posLabels = ["시", "일", "월", "년"]
 
   for (let month = 1; month <= 12; month++) {
     const ganzi = getLiuYueGanziForCalendarMonth(displayYear, month)
@@ -72,32 +73,7 @@ function buildMonthlyItems(
     const jeonggiRel = getRelation(dayStem, jeonggi)
     const branchSipsin = jeonggiRel ? jeonggiRel.hanja : '?'
 
-    const interArr: string[] = []
-
-    pillars.forEach((p, idx) => {
-      const natalStem = p[0]
-      const natalBranch = p[1]
-      const pos = posLabels[idx]
-
-      const sRel = getStemRelation(natalStem, stem)
-      if (sRel) {
-        const sRels = Array.isArray(sRel) ? sRel : [sRel]
-        sRels.forEach(rel => {
-          const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel
-          if (label) interArr.push(`${natalStem}${stem}${label}(${pos}간)`)
-        })
-      }
-
-      const bRel = getBranchRelation(natalBranch, branch)
-      if (bRel) {
-        const bRels = Array.isArray(bRel) ? bRel : [bRel]
-        bRels.forEach(rel => {
-          const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel
-          if (label) interArr.push(`${natalBranch}${branch}${label}(${pos}지)`)
-        })
-      }
-    })
-
+    const interArr = collectNatalTransitInteractions(ganzi, natalGanzis)
     const ann = annotateTransit(ganzi, natalGanzis, yongsin)
 
     items.push({
@@ -270,23 +246,12 @@ export default function MonthlyTable({
             </tr>
             <tr>
               {monthlyItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
-                  {item.isGongmang ? '空亡' : '-'}
-                </td>
-              ))}
-            </tr>
-            <tr className="bg-blue-50/30">
-              {monthlyItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep">
-                  {item.interactions || '-'}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              {monthlyItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
-                  {item.fuYinFanYin}
-                </td>
+                <YunBigoCell
+                  key={idx}
+                  isGongmang={item.isGongmang}
+                  interactions={item.interactions}
+                  fuYinFanYin={item.fuYinFanYin}
+                />
               ))}
             </tr>
             <tr>

@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import type { SounItem, YongsinStats } from '@core/types'
 import { annotateTransit } from '@core/index'
+import { collectNatalTransitInteractions } from '../../utils/yun-bigo.ts'
+import YunBigoCell from './YunBigoCell.tsx'
 import {
   stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass,
   formatSinsal, getStemAttr, getBranchAttr,
@@ -29,7 +31,13 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
   const effectiveYear = getEffectiveYunCalendarYear()
   const items = useMemo(() => soun.map((item) => {
     const ann = annotateTransit(item.ganzi, natalGanzis, yongsin)
-    return { ...item, ...ann, sinsalFmt: formatSinsal(item.sinsal) }
+    const interactions = collectNatalTransitInteractions(item.ganzi, natalGanzis)
+    return {
+      ...item,
+      ...ann,
+      interactions: interactions.length > 0 ? interactions.join('\n') : '',
+      sinsalFmt: formatSinsal(item.sinsal),
+    }
   }), [soun, natalGanzis, yongsin])
 
   const currentSounGanzi = items.find((item) => item.year === effectiveYear)?.ganzi ?? null
@@ -153,16 +161,12 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
             </tr>
             <tr>
               {displayItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
-                  {item.isGongmang ? '空亡' : '-'}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              {displayItems.map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
-                  {item.fuYinFanYin}
-                </td>
+                <YunBigoCell
+                  key={idx}
+                  isGongmang={item.isGongmang}
+                  interactions={item.interactions}
+                  fuYinFanYin={item.fuYinFanYin}
+                />
               ))}
             </tr>
             <tr>

@@ -39,6 +39,7 @@ import {
 } from './yun-period.ts'
 import { getManAgeInCalendarYear } from '@core/age'
 import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
+import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -654,7 +655,14 @@ export function sajuToText(
     lines.push(`| ${['절기', ...revSoun.map((s) => formatLichunBoundaryCell(s.year, '<br>').replace(/\|/g, '\\|'))].join(' | ')} |`)
     lines.push(`| ${['간지', ...revSoun.map((s) => s.ganzi)].join(' | ')} |`)
     lines.push(`| ${['12운성', ...revSoun.map((s) => s.unseong)].join(' | ')} |`)
-    lines.push(`| ${['伏吟反吟', ...revSoun.map((s) => annotateTransit(s.ganzi, natalGanzis, yongsin).fuYinFanYin)].join(' | ')} |`)
+    lines.push(`| ${['비고', ...revSoun.map((s) => {
+      const interArr = collectNatalTransitInteractions(s.ganzi, natalGanzis)
+      return formatYunBigoPlainText({
+        isGongmang: s.isGongmang,
+        interactions: interArr.join(' / '),
+        fuYinFanYin: annotateTransit(s.ganzi, natalGanzis, yongsin).fuYinFanYin,
+      })
+    })].join(' | ')} |`)
     lines.push(`| ${['용신', ...revSoun.map((s) => annotateTransit(s.ganzi, natalGanzis, yongsin).yongsinLabel)].join(' | ')} |`)
     lines.push('')
   } else {
@@ -752,56 +760,16 @@ export function sajuToText(
     const sinsalRow = ['12신살', ...reversedDaewoon.map(dw => dw.sinsal)].join(' | ')
     lines.push(`| ${sinsalRow} |`)
     
-    // 비고 행 (공망 표시)
-    const remarkRow = ['비고', ...reversedDaewoon.map(dw => dw.isGongmang ? '空亡' : '')].join(' | ')
-    lines.push(`| ${remarkRow} |`)
-    
-    // 합충형파해 행 (에너지 작용) - 월운과 동일한 방식
-    // 대운 각 간지와 원국 간지의 천간/지지 관계를 분석
-    // 예: 대운 스지가 신(신)일 때, 원국 시간 스지가 정(정)이면 두 간지 간 관계를 분석
-    // 결과: 대운 간지 단위로 동동 관계 나열
-    const interactionRow = ['합충형파해', ...reversedDaewoon.map(dw => {
-      const stem = dw.ganzi.charAt(0); // 대운 천간
-      const branch = dw.ganzi.charAt(1); // 대운 지지
-      let interArr: string[] = []; // 분석 결과 저장
-      
-      // 원국의 네 간지(년/월/일/시) 각 간지와 대운 간지 비교
-      pillars.forEach((p, idx) => {
-        const natalStem = p.pillar.stem; // 원국 천간
-        const natalBranch = p.pillar.branch; // 원국 지지
-        // 역순 매칭: idx 0=시, 1=일, 2=월, 3=년 -> 역순으로 매칭
-        const pos = ["년", "월", "일", "시"][3 - idx];
-        
-        // 천간 분석: 원국 천간 vs 대운 천간 관계 (합/충/형/파/해 등)
-        const sRel = getStemRelation(natalStem, stem);
-        if (sRel) {
-          const sRels = Array.isArray(sRel) ? sRel : [sRel];
-          sRels.forEach(rel => {
-            const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel;
-            if (label) interArr.push(`${natalStem}${stem}${label}(${pos}간)`);
-          });
-        }
-        
-        // 지지 분석: 원국 지지 vs 대운 지지 관계 (합/충/형/파/해 등)
-        const bRel = getBranchRelation(natalBranch, branch);
-        if (bRel) {
-          const bRels = Array.isArray(bRel) ? bRel : [bRel];
-          bRels.forEach(rel => {
-            const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel;
-            if (label) interArr.push(`${natalBranch}${branch}${label}(${pos}지)`);
-          });
-        }
-      });
-      
-      // 분석 결과를 ' / '로 연결하여 반환 (동동 관계가 여러 개일 수 있음)
-      return interArr.length > 0 ? interArr.join(' / ') : '-';
+    // 비고 행 (공맹 · 합충형 · 伏吟反吟 통합)
+    const remarkRow = ['비고', ...reversedDaewoon.map((dw) => {
+      const interArr = collectNatalTransitInteractions(dw.ganzi, natalGanzis)
+      return formatYunBigoPlainText({
+        isGongmang: dw.isGongmang,
+        interactions: interArr.join(' / '),
+        fuYinFanYin: annotateTransit(dw.ganzi, natalGanzis, yongsin).fuYinFanYin,
+      })
     })].join(' | ')
-    lines.push(`| ${interactionRow} |`)
-
-    const fuYinRow = ['伏吟反吟', ...reversedDaewoon.map((dw) =>
-      annotateTransit(dw.ganzi, natalGanzis, yongsin).fuYinFanYin,
-    )].join(' | ')
-    lines.push(`| ${fuYinRow} |`)
+    lines.push(`| ${remarkRow} |`)
 
     const yongsinRow = ['용신', ...reversedDaewoon.map((dw) =>
       annotateTransit(dw.ganzi, natalGanzis, yongsin).yongsinLabel,
@@ -929,55 +897,15 @@ export function sajuToText(
     const sewunSpiritRow = ['12신살', ...sewunData.map(s => s.spirit)].join(' | ')
     lines.push(`| ${sewunSpiritRow} |`)
     
-    const sewunRemarkRow = ['비고', ...sewunData.map(s => s.isGongmang ? '空亡' : '')].join(' | ')
-    lines.push(`| ${sewunRemarkRow} |`)
-    
-    // 합충형파해 행 (에너지 작용) - 월운과 동일한 방식
-    // 세운 각 년도의 간지와 원국 간지의 천간/지지 관계를 분석
-    // 예: 세운 년도 간지가 신(신)일 때, 원국 시간 간지가 정(정)이면 두 간지 간 관계를 분석
-    // 결과: 세운 년도 단위로 동동 관계 나열
-    const sewunInteractionRow = ['합충형파해', ...sewunData.map(s => {
-      const stem = s.stem; // 세운 천간
-      const branch = s.branch; // 세운 지지
-      let interArr: string[] = []; // 분석 결과 저장
-      
-      // 원국의 네 간지(년/월/일/시) 각 간지와 세운 간지 비교
-      pillars.forEach((p, idx) => {
-        const natalStem = p.pillar.stem; // 원국 천간
-        const natalBranch = p.pillar.branch; // 원국 지지
-        // 역순 매칭: idx 0=시, 1=일, 2=월, 3=년 -> 역순으로 매칭
-        const pos = ["년", "월", "일", "시"][3 - idx];
-        
-        // 천간 분석: 원국 천간 vs 세운 천간 관계 (합/충/형/파/해 등)
-        const sRel = getStemRelation(natalStem, stem);
-        if (sRel) {
-          const sRels = Array.isArray(sRel) ? sRel : [sRel];
-          sRels.forEach(rel => {
-            const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel;
-            if (label) interArr.push(`${natalStem}${stem}${label}(${pos}간)`);
-          });
-        }
-        
-        // 지지 분석: 원국 지지 vs 세운 지지 관계 (합/충/형/파/해 등)
-        const bRel = getBranchRelation(natalBranch, branch);
-        if (bRel) {
-          const bRels = Array.isArray(bRel) ? bRel : [bRel];
-          bRels.forEach(rel => {
-            const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel;
-            if (label) interArr.push(`${natalBranch}${branch}${label}(${pos}지)`);
-          });
-        }
-      });
-      
-      // 분석 결과를 ' / '로 연결하여 반환 (동동 관계가 여러 개일 수 있음)
-      return interArr.length > 0 ? interArr.join(' / ') : '-';
+    const sewunRemarkRow = ['비고', ...sewunData.map((s) => {
+      const interArr = collectNatalTransitInteractions(s.ganzi, natalGanzis)
+      return formatYunBigoPlainText({
+        isGongmang: s.isGongmang,
+        interactions: interArr.join(' / '),
+        fuYinFanYin: annotateTransit(s.ganzi, natalGanzis, yongsin).fuYinFanYin,
+      })
     })].join(' | ')
-    lines.push(`| ${sewunInteractionRow} |`)
-
-    const sewunFuYinRow = ['伏吟反吟', ...sewunData.map((s) =>
-      annotateTransit(s.ganzi, natalGanzis, yongsin).fuYinFanYin,
-    )].join(' | ')
-    lines.push(`| ${sewunFuYinRow} |`)
+    lines.push(`| ${sewunRemarkRow} |`)
 
     const sewunYongsinRow = ['용신', ...sewunData.map((s) =>
       annotateTransit(s.ganzi, natalGanzis, yongsin).yongsinLabel,
@@ -1144,17 +1072,14 @@ export function sajuToText(
     const monthlySpiritRow = ['12신살', ...monthlyData.map(m => m.spirit)].join(' | ')
     lines.push(`| ${monthlySpiritRow} |`)
     
-    const monthlyRemarkRow = ['비고', ...monthlyData.map(m => m.isGongmang ? '空亡' : '')].join(' | ')
-    lines.push(`| ${monthlyRemarkRow} |`)
-    
-    // 합충형파해 행
-    const monthlyInteractionsRow = ['합충형파해', ...monthlyData.map(m => m.interactions || '-')].join(' | ')
-    lines.push(`| ${monthlyInteractionsRow} |`)
-
-    const monthlyFuYinRow = ['伏吟反吟', ...monthlyData.map((m) =>
-      annotateTransit(m.ganzi, natalGanzis, yongsin).fuYinFanYin,
+    const monthlyRemarkRow = ['비고', ...monthlyData.map((m) =>
+      formatYunBigoPlainText({
+        isGongmang: m.isGongmang,
+        interactions: m.interactions,
+        fuYinFanYin: annotateTransit(m.ganzi, natalGanzis, yongsin).fuYinFanYin,
+      }),
     )].join(' | ')
-    lines.push(`| ${monthlyFuYinRow} |`)
+    lines.push(`| ${monthlyRemarkRow} |`)
 
     const monthlyYongsinRow = ['용신', ...monthlyData.map((m) =>
       annotateTransit(m.ganzi, natalGanzis, yongsin).yongsinLabel,
@@ -1184,12 +1109,6 @@ export function sajuToText(
   lines.push(YUN_METHOD_NOTES.yongsinTransit)
   lines.push('')
 
-  // 합충형파해 한글 매핑
-  const DL_RELATION_KOR: Record<string, string> = {
-    '合': '합', '半合': '반합', '沖': '충', '刑': '형',
-    '破': '파', '害': '해', '怨嗔': '원진', '鬼門': '귀문관살',
-  }
-
   // 절기 데이터 맵 (일운 달력과 동일 — lunar-javascript + KST)
   const dlJieQiMap = buildJieQiDateKeyMap([dlToday.getFullYear(), dlEnd.getFullYear()])
 
@@ -1200,8 +1119,8 @@ export function sajuToText(
     ? new Set(GONGMANG_TABLE[Math.trunc(dlDayGanziIdx / 10)] ?? [])
     : new Set()
 
-  lines.push('| 날짜(음력) / 절기 | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 | 합충형파해 | 伏吟反吟 | 용신 | 비고 |')
-  lines.push('|---|---|---|---|---|---|---|---|---|---|---|')
+  lines.push('| 날짜(음력) / 절기 | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 | 비고 | 용신 |')
+  lines.push('|---|---|---|---|---|---|---|---|')
 
   const dlCurrent = new Date(dlToday)
   while (dlCurrent <= dlEnd) {
@@ -1231,32 +1150,6 @@ export function sajuToText(
       const meteorStr = getTwelveMeteor(dayStem, dBranch)
       const spiritStr = formatSinsal(getTwelveSpirit(yearBranch, dBranch))
 
-      // 합충형파해 한글(한자) 병기
-      const interArr: string[] = []
-      const dlPosLabels = ['시', '일', '월', '년']
-      pillars.forEach((p, idx) => {
-        const nStem   = p.pillar.stem
-        const nBranch = p.pillar.branch
-        const pos     = dlPosLabels[idx]
-
-        getStemRelation(nStem, dStem).forEach(rel => {
-          if (rel.type) {
-            const kor       = DL_RELATION_KOR[rel.type] ?? rel.type
-            const detailStr = rel.detail ? (ELEMENT_HANJA[rel.detail] ?? rel.detail) : ''
-            interArr.push(`${nStem}${dStem} ${kor}(${rel.type})${detailStr}(${pos}간)`)
-          }
-        })
-
-        getBranchRelation(nBranch, dBranch).forEach(rel => {
-          if (rel.type) {
-            const kor       = DL_RELATION_KOR[rel.type] ?? rel.type
-            const detailStr = rel.detail ? (ELEMENT_HANJA[rel.detail] ?? rel.detail) : ''
-            interArr.push(`${nBranch}${dBranch} ${kor}(${rel.type})${detailStr}(${pos}지)`)
-          }
-        })
-      })
-      const interStr = interArr.length > 0 ? interArr.join(' / ') : '-'
-
       // 날짜 + 절기
       const jieQiInfo = dlJieQiMap[`${y}-${m}-${d}`]
       const jieQiStr  = jieQiInfo ? ` / ${jieQiInfo.name} ${jieQiInfo.time}` : ''
@@ -1270,11 +1163,15 @@ export function sajuToText(
 
       const dayGanziFull = getDayPillarForDate(y, m, d)
       const ann = annotateTransit(dayGanziFull, natalGanzis, yongsin)
+      const isGongmang = dlGongmangBranches.has(dBranch)
+      const interArr = collectNatalTransitInteractions(dayGanziFull, natalGanzis)
+      const bigoStr = formatYunBigoPlainText({
+        isGongmang,
+        interactions: interArr.join(' / '),
+        fuYinFanYin: ann.fuYinFanYin,
+      })
 
-      // 공망 비고
-      const bigoStr = dlGongmangBranches.has(dBranch) ? '空亡' : ''
-
-      lines.push(`| ${dateStr} | ${stemSipsinStr} | ${stemColStr} | ${branchColStr} | ${branchSipsinStr} | ${meteorStr} | ${spiritStr} | ${interStr} | ${ann.fuYinFanYin} | ${ann.yongsinLabel} | ${bigoStr} |`)
+      lines.push(`| ${dateStr} | ${stemSipsinStr} | ${stemColStr} | ${branchColStr} | ${branchSipsinStr} | ${meteorStr} | ${spiritStr} | ${bigoStr} | ${ann.yongsinLabel} |`)
     } catch (_e) {
       // 날짜 처리 오류 무시
     }

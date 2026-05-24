@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import type { DaewoonItem, DaewoonMeta, YongsinStats } from '@core/types'
 import { annotateTransit } from '@core/index'
-import { getStemRelation, getBranchRelation } from '@core/pillars'
+import { collectNatalTransitInteractions } from '../../utils/yun-bigo.ts'
+import YunBigoCell from './YunBigoCell.tsx'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { useLocale } from '../../i18n/index.ts'
 import { YUN_DAewoon_UI_NOTES } from '../../utils/yun-method-notes.ts'
@@ -47,38 +48,9 @@ function buildDaewoonTableItems(
   natalGanzis: string[],
   yongsin: YongsinStats,
 ): DaewoonTableItem[] {
-  const posLabels = ['시', '일', '월', '년']
-
   return daewoon.map((dw) => {
-    const stem = dw.ganzi[0]
-    const branch = dw.ganzi[1]
     const ann = annotateTransit(dw.ganzi, natalGanzis, yongsin)
-
-    const interArr: string[] = []
-
-    natalGanzis.forEach((natal, idx) => {
-      const natalStem = natal[0]
-      const natalBranch = natal[1]
-      const pos = posLabels[idx]
-
-      const sRel = getStemRelation(natalStem, stem)
-      if (sRel) {
-        const sRels = Array.isArray(sRel) ? sRel : [sRel]
-        sRels.forEach(rel => {
-          const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel
-          if (label) interArr.push(`${natalStem}${stem}${label}(${pos}간)`)
-        })
-      }
-
-      const bRel = getBranchRelation(natalBranch, branch)
-      if (bRel) {
-        const bRels = Array.isArray(bRel) ? bRel : [bRel]
-        bRels.forEach(rel => {
-          const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel
-          if (label) interArr.push(`${natalBranch}${branch}${label}(${pos}지)`)
-        })
-      }
-    })
+    const interArr = collectNatalTransitInteractions(dw.ganzi, natalGanzis)
 
     return {
       index: dw.index,
@@ -286,23 +258,12 @@ export default function DaewoonTable({
             </tr>
             <tr>
               {[...daewoonTableItems].reverse().map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
-                  {item.isGongmang ? '空亡' : '-'}
-                </td>
-              ))}
-            </tr>
-            <tr className="bg-blue-50/30">
-              {[...daewoonTableItems].reverse().map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep min-h-[50px]">
-                  {item.interactions || '-'}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              {[...daewoonTableItems].reverse().map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
-                  {item.fuYinFanYin}
-                </td>
+                <YunBigoCell
+                  key={idx}
+                  isGongmang={item.isGongmang}
+                  interactions={item.interactions}
+                  fuYinFanYin={item.fuYinFanYin}
+                />
               ))}
             </tr>
             <tr>

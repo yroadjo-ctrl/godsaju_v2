@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import type { DaewoonItem, YongsinStats } from '@core/types'
 import { annotateTransit } from '@core/index'
-import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit, getStemRelation, getBranchRelation } from '@core/pillars'
+import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit } from '@core/pillars'
+import { collectNatalTransitInteractions } from '../../utils/yun-bigo.ts'
+import YunBigoCell from './YunBigoCell.tsx'
 import { getLiuNianGanziForCalendarYear } from '@core/yun-transit'
 import { getManAgeInCalendarYear } from '@core/age'
 import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
@@ -54,7 +56,6 @@ function buildSewoonItems(
   yongsin: YongsinStats,
 ): SewoonItem[] {
   const items: SewoonItem[] = []
-  const posLabels = ['시', '일', '월', '년']
 
   for (let y = startYear; y < endYear; y++) {
     const ganzi = getLiuNianGanziForCalendarYear(y)
@@ -67,30 +68,7 @@ function buildSewoonItems(
     const branchSipsin = bRel ? bRel.hanja : '?'
     const ann = annotateTransit(ganzi, natalGanzis, yongsin)
 
-    const interArr: string[] = []
-    natalGanzis.forEach((natal, idx) => {
-      const natalStem = natal[0]
-      const natalBranch = natal[1]
-      const pos = posLabels[idx]
-
-      const sRel = getStemRelation(natalStem, stem)
-      if (sRel) {
-        const sRels = Array.isArray(sRel) ? sRel : [sRel]
-        sRels.forEach(rel => {
-          const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel
-          if (label) interArr.push(`${natalStem}${stem}${label}(${pos}간)`)
-        })
-      }
-
-      const brRel = getBranchRelation(natalBranch, branch)
-      if (brRel) {
-        const bRels = Array.isArray(brRel) ? brRel : [brRel]
-        bRels.forEach(rel => {
-          const label = typeof rel === 'object' ? (rel.hanja || rel.name || rel.type || '') : rel
-          if (label) interArr.push(`${natalBranch}${branch}${label}(${pos}지)`)
-        })
-      }
-    })
+    const interArr = collectNatalTransitInteractions(ganzi, natalGanzis)
 
     items.push({
       year: y,
@@ -271,23 +249,12 @@ export default function SewoonTable({
             </tr>
             <tr>
               {[...sewoonItems].reverse().map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-xs">
-                  {item.isGongmang ? '空亡' : '-'}
-                </td>
-              ))}
-            </tr>
-            <tr className="bg-blue-50/30">
-              {[...sewoonItems].reverse().map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line break-keep min-h-[50px]">
-                  {item.interactions || '-'}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              {[...sewoonItems].reverse().map((item, idx) => (
-                <td key={idx} className="border border-black px-2 py-1 text-center text-[10px] leading-tight whitespace-pre-line">
-                  {item.fuYinFanYin}
-                </td>
+                <YunBigoCell
+                  key={idx}
+                  isGongmang={item.isGongmang}
+                  interactions={item.interactions}
+                  fuYinFanYin={item.fuYinFanYin}
+                />
               ))}
             </tr>
             <tr>
