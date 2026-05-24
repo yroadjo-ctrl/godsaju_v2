@@ -27,7 +27,7 @@ import {
 } from './birth-info-format.ts'
 import { isKongwang } from '@core/monthly-data'
 import { YUN_METHOD_NOTES } from './yun-method-notes.ts'
-import { formatCurrentYunLine } from './ganzi-display.ts'
+import { formatCurrentYunLine, type CurrentYunContext, SOUN_EMPTY_REASON } from './ganzi-display.ts'
 import {
   findActiveDaewoonIndexByAge,
   isBeforeFirstDaewoon,
@@ -189,8 +189,14 @@ export function sajuToText(
   const currentMonthGanzi = getCurrentLiuYueGanzi(now)
   const currentDayGanzi = getDayPillarForDate(currentYear, currentMonth, now.getDate())
 
-  const pushCurrentYun = (label: string, ganzi: string | null | undefined, pendingYear?: number | null) => {
-    const line = formatCurrentYunLine(label, ganzi, pendingYear)
+  const pushCurrentYun = (
+    label: string,
+    ganzi: string | null | undefined,
+    pendingYear?: number | null,
+    context?: CurrentYunContext | null,
+    emptyReason?: string | null,
+  ) => {
+    const line = formatCurrentYunLine(label, ganzi, pendingYear, context, emptyReason)
     if (line) lines.push(line)
   }
 
@@ -635,7 +641,7 @@ export function sajuToText(
   if (soun.length > 0) {
     lines.push('')
     lines.push(sectionTitle('소운(小運)'))
-    pushCurrentYun('소운', currentSounGanzi)
+    pushCurrentYun('소운', currentSounGanzi, null, currentSounGanzi ? { kind: 'year', year: effectiveYunYear } : null)
     lines.push(YUN_METHOD_NOTES.soun)
     if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
     lines.push(YUN_METHOD_NOTES.yongsinTransit)
@@ -650,12 +656,24 @@ export function sajuToText(
     lines.push(`| ${['伏吟反吟', ...revSoun.map((s) => annotateTransit(s.ganzi, natalGanzis, yongsin).fuYinFanYin)].join(' | ')} |`)
     lines.push(`| ${['용신', ...revSoun.map((s) => annotateTransit(s.ganzi, natalGanzis, yongsin).yongsinLabel)].join(' | ')} |`)
     lines.push('')
+  } else {
+    lines.push('')
+    lines.push(sectionTitle('소운(小運)'))
+    pushCurrentYun('소운', null, null, null, SOUN_EMPTY_REASON)
+    lines.push(YUN_METHOD_NOTES.soun)
+    if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
+    lines.push('')
   }
 
   // 대운 (마크단운 표 형식, 가로 배열)
   if (daewoon.length > 0) {
     lines.push(sectionTitle(input.unknownTime ? `대운 (大運) (${t('saju.unknownTimeWarning')})` : '대운 (大運)'))
-    pushCurrentYun('대운', currentDaewoonGanzi, pendingStartYear)
+    pushCurrentYun(
+      '대운',
+      currentDaewoonGanzi,
+      pendingStartYear,
+      currentDaewoonGanzi ? { kind: 'year', year: currentYear } : null,
+    )
     const dm = daewoonMeta
     if (dm) {
       lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanzi}) (정밀 ${dm.daewoonSu})`)
@@ -666,6 +684,7 @@ export function sajuToText(
       }
     }
     lines.push(YUN_METHOD_NOTES.daewoon)
+    lines.push(YUN_METHOD_NOTES.daewoonFirstYear)
     lines.push(YUN_METHOD_NOTES.yongsinTransit)
     lines.push('')
     
@@ -681,7 +700,7 @@ export function sajuToText(
     lines.push(`| ${separatorRow} |`)
     
     // 나이 행
-    const ageRow = ['나이', ...reversedDaewoon.map(dw => `${dw.age}${t('saju.ageSuffix')}`)].join(' | ')
+    const ageRow = ['나이', ...reversedDaewoon.map(dw => `${dw.age}${t('saju.ageSuffix')}[${dw.index}運]`)].join(' | ')
     lines.push(`| ${ageRow} |`)
     
     // 시작연도 행
@@ -796,7 +815,12 @@ export function sajuToText(
   if (dayStem && yearBranch) {
     lines.push('') // 빈 줄
     lines.push(sectionTitle('세운 (歲運)'))
-    pushCurrentYun('세운', currentSewoonGanzi, pendingStartYear)
+    pushCurrentYun(
+      '세운',
+      currentSewoonGanzi,
+      pendingStartYear,
+      currentSewoonGanzi ? { kind: 'year', year: effectiveYunYear } : null,
+    )
     lines.push('')
     
     // 공망 계산
@@ -962,7 +986,7 @@ export function sajuToText(
     // 월운 섹션
     lines.push('')
     lines.push(sectionTitle('월운 (月運)'))
-    pushCurrentYun('월운', currentMonthGanzi)
+    pushCurrentYun('월운', currentMonthGanzi, null, { kind: 'yearMonth', year: currentYear, month: currentMonth })
     lines.push('')
     lines.push(YUN_METHOD_NOTES.monthly)
     lines.push(YUN_METHOD_NOTES.yongsinTransit)
@@ -1140,7 +1164,7 @@ export function sajuToText(
   // 일운 (日運) - 오늘 ~ 다음달 오늘-1일
   lines.push('')
   lines.push(sectionTitle('일운 (日運)'))
-  pushCurrentYun('일운', currentDayGanzi)
+  pushCurrentYun('일운', currentDayGanzi, null, { kind: 'monthDay', month: currentMonth, day: now.getDate() })
   lines.push('')
 
   const dlToday = new Date()

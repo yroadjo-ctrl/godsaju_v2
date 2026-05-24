@@ -122,6 +122,7 @@ export default function DaewoonTable({
   const currentDaewoonGanzi = !beforeFirstDaewoon && autoIndex >= 0
     ? daewoon[autoIndex]?.ganzi ?? null
     : null
+  const currentYear = new Date().getFullYear()
 
   return (
     <section>
@@ -130,6 +131,7 @@ export default function DaewoonTable({
         yunLabel="대운"
         currentGanzi={currentDaewoonGanzi}
         pendingStartYear={pendingStartYear}
+        context={currentDaewoonGanzi ? { kind: 'year', year: currentYear } : null}
       />
       <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
         <span className="font-medium text-gray-700 dark:text-gray-200">
@@ -158,6 +160,9 @@ export default function DaewoonTable({
         {YUN_METHOD_NOTES.daewoon}
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+        {YUN_METHOD_NOTES.daewoonFirstYear}
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
         {YUN_METHOD_NOTES.yongsinTransit}
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -179,7 +184,7 @@ export default function DaewoonTable({
                     }`}
                     onClick={() => onSelectDaewoon(actualIdx)}
                   >
-                    {item.age}세<br />({item.startYear}년~)
+                    {item.age}세[{item.index}運]<br />({item.startYear}년~)
                   </th>
                 )
               })}

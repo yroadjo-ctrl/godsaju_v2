@@ -9,6 +9,7 @@ import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
 import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
 import { getEffectiveYunCalendarYear } from '../../utils/yun-period.ts'
+import { SOUN_EMPTY_REASON } from '../../utils/ganzi-display.ts'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
@@ -37,14 +38,14 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
   if (items.length === 0) {
     return (
       <section>
-        <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">
-          소운 <span className="font-hanja">(小運)</span>
-        </h3>
+        <YunSectionHeading
+          title={<>소운 <span className="font-hanja">(小運)</span></>}
+          yunLabel="소운"
+          emptyReason={SOUN_EMPTY_REASON}
+        />
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
           {YUN_METHOD_NOTES.soun}
-        </p>
-        <p className="text-sm text-gray-400 dark:text-gray-500">
-          대운 시작과 동일 시점 — 표시할 소운(小運)이 없습니다.
+          {unknownTime && ' · 출생 시각 미입력 — 月柱 기준.'}
         </p>
       </section>
     )
@@ -56,6 +57,7 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
         title={<>소운 <span className="font-hanja">(小運)</span></>}
         yunLabel="소운"
         currentGanzi={currentSounGanzi}
+        context={currentSounGanzi ? { kind: 'year', year: effectiveYear } : null}
       />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
         {YUN_METHOD_NOTES.soun}

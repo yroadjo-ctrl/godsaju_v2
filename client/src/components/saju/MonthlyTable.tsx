@@ -146,6 +146,7 @@ export default function MonthlyTable({
           title={<>월운 <span className="font-hanja">(月運)</span></>}
           yunLabel="월운"
           currentGanzi={currentMonthGanzi}
+          context={{ kind: 'yearMonth', year: currentYear, month: currentMonth }}
         />
         <div className="flex items-center gap-3 text-sm">
           <button

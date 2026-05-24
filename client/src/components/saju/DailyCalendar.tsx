@@ -266,6 +266,7 @@ const DailyCalendar: React.FC<Props> = ({ dayStem, yearBranch, natalPillars, yon
         title={<>일운 <span className="font-hanja">(日運)</span></>}
         yunLabel="일운"
         currentGanzi={currentDayGanzi}
+        context={{ kind: 'monthDay', month: today.getMonth() + 1, day: today.getDate() }}
       />
       <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed space-y-1">
         <p>{YUN_METHOD_NOTES.daily}</p>

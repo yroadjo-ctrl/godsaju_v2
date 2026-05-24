@@ -7,7 +7,7 @@ import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { isBeforeFirstDaewoon, shouldHighlightSewoonYear, getFirstDaewoonStartYear, getCurrentLiuNianGanzi } from '../../utils/yun-period.ts'
+import { isBeforeFirstDaewoon, shouldHighlightSewoonYear, getFirstDaewoonStartYear, getCurrentLiuNianGanzi, getEffectiveYunCalendarYear } from '../../utils/yun-period.ts'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
@@ -134,6 +134,7 @@ export default function SewoonTable({
   const beforeFirstDaewoon = isBeforeFirstDaewoon(currentAge, daewoon)
   const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
   const currentSewoonGanzi = beforeFirstDaewoon ? null : getCurrentLiuNianGanzi()
+  const effectiveYunYear = getEffectiveYunCalendarYear()
   const periodLabel = `${targetDaewoon.age}세~ (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
 
   return (
@@ -143,6 +144,7 @@ export default function SewoonTable({
         yunLabel="세운"
         currentGanzi={currentSewoonGanzi}
         pendingStartYear={pendingStartYear}
+        context={currentSewoonGanzi ? { kind: 'year', year: effectiveYunYear } : null}
       />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 대운: {periodLabel}

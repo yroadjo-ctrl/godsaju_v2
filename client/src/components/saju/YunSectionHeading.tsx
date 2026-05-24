@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { formatCurrentYunLine } from '../../utils/ganzi-display.ts'
+import { formatCurrentYunLine, type CurrentYunContext } from '../../utils/ganzi-display.ts'
 
 interface Props {
   title: ReactNode
@@ -8,10 +8,14 @@ interface Props {
   currentGanzi?: string | null
   /** 대운·세운 미시작 시 — 없음 (YYYY년에 시작) */
   pendingStartYear?: number | null
+  /** 간지 있을 때 (2026년) · (2026년 5월) · (5월 24일) */
+  context?: CurrentYunContext | null
+  /** 간지 없을 때 — 예: 대운시작과 동일 */
+  emptyReason?: string | null
 }
 
-export default function YunSectionHeading({ title, yunLabel, currentGanzi, pendingStartYear }: Props) {
-  const currentLine = formatCurrentYunLine(yunLabel, currentGanzi, pendingStartYear)
+export default function YunSectionHeading({ title, yunLabel, currentGanzi, pendingStartYear, context, emptyReason }: Props) {
+  const currentLine = formatCurrentYunLine(yunLabel, currentGanzi, pendingStartYear, context, emptyReason)
 
   return (
     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">
