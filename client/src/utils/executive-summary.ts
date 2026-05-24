@@ -23,15 +23,21 @@ const SOURCE_HANJA: Record<YongsinPrimarySource, string> = {
   '화격': '化格',
 }
 
-/** AI 해석용 한 줄 핵심 요약 (조후·격국·용신·신강약) */
-export function buildAiExecutiveSummaryLines(input: {
+export interface ExecutiveSummaryContent {
+  summaryLine: string
+  extras: Array<{ label: string; text: string }>
+  footnote: string
+}
+
+/** 조후·격국·용신·신강약 한 줄 요약 (UI · AI 복사 공통) */
+export function buildExecutiveSummaryContent(input: {
   sinGangYak?: SinGangYakStats
   gyeokguk?: GyeokgukStats
   johu?: JohuStats
   yongsin?: YongsinStats
-}): string[] {
+}): ExecutiveSummaryContent | null {
   const { sinGangYak, gyeokguk, johu, yongsin } = input
-  if (!sinGangYak || !gyeokguk || !johu || !yongsin) return []
+  if (!sinGangYak || !gyeokguk || !johu || !yongsin) return null
 
   const sgHanja = SINGANG_HANJA[sinGangYak.level] ?? sinGangYak.level
   const sourceHanja = SOURCE_HANJA[yongsin.primarySource]
@@ -47,23 +53,46 @@ export function buildAiExecutiveSummaryLines(input: {
     avoid ? `기신(忌神) ${avoid}` : null,
   ].filter(Boolean).join(' · ')
 
+  const extras: ExecutiveSummaryContent['extras'] = []
+  if (yongsin.hwaGeukSummary && yongsin.primarySource !== '화격') {
+    extras.push({ label: '화격(化格)', text: yongsin.hwaGeukSummary })
+  }
+  if (yongsin.eokbuPrimary && yongsin.primarySource !== '억부') {
+    extras.push({
+      label: '억부용신(抑扶用神)',
+      text: `${yongsin.eokbuPrimary.label}(${yongsin.eokbuPrimary.hanja})`,
+    })
+  }
+
+  return {
+    summaryLine,
+    extras,
+    footnote: '아래 상세 표·운세는 이 요약의 근거 데이터입니다.',
+  }
+}
+
+/** AI 복사용 마크다운 줄 */
+export function buildAiExecutiveSummaryLines(input: {
+  sinGangYak?: SinGangYakStats
+  gyeokguk?: GyeokgukStats
+  johu?: JohuStats
+  yongsin?: YongsinStats
+}): string[] {
+  const content = buildExecutiveSummaryContent(input)
+  if (!content) return []
+
   const lines: string[] = [
     '■ 핵심 요약 (Executive Summary)',
     '',
-    `- ${summaryLine}`,
+    `- ${content.summaryLine}`,
   ]
 
-  if (yongsin.hwaGeukSummary && yongsin.primarySource !== '화격') {
-    lines.push(`- **화격(化格)**: ${yongsin.hwaGeukSummary}`)
-  }
-  if (yongsin.eokbuPrimary && yongsin.primarySource !== '억부') {
-    lines.push(
-      `- **억부용신(抑扶用神)**: ${yongsin.eokbuPrimary.label}(${yongsin.eokbuPrimary.hanja})`,
-    )
+  for (const extra of content.extras) {
+    lines.push(`- **${extra.label}**: ${extra.text}`)
   }
 
   lines.push('')
-  lines.push('※ 아래 상세 표·운세는 이 요약의 근거 데이터입니다.')
+  lines.push(`※ ${content.footnote}`)
   lines.push('')
 
   return lines
