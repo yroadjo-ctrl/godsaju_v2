@@ -55,7 +55,7 @@ export const ZIWEI_KOR_MAP: Record<string, string> = {
   '火星': '화성',
   '鈴星': '릉성',
   '地空': '지공',
-  '地劫': '지劫',
+  '地劫': '지겁',
 
   // 사화
   '化祿': '화록',

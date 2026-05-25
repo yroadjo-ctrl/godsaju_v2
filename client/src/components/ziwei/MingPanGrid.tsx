@@ -14,8 +14,11 @@ interface Props {
 /** 명반 셀 — 한자 병기 이전 원래 크기 */
 const CELL = 'text-sm leading-tight'
 const HANJA_PAIR = `font-hanja ${CELL} text-gray-500 dark:text-gray-400`
-/** 12궁 명칭 한글만 한 단계 크게 */
+/** 12궁 명칭·신(身) 한글만 한 단계 크게 */
 const PALACE_KOR = 'text-base leading-tight font-medium text-gray-800 dark:text-gray-100'
+const SHEN_KOR = 'text-base leading-tight font-medium text-purple-600 dark:text-purple-400'
+const SHEN_HANJA = `font-hanja ${CELL} text-purple-600 dark:text-purple-400`
+const GANZI = `${CELL} text-gray-400 dark:text-gray-500`
 const THEME = 'text-xs text-gray-400 dark:text-gray-500 leading-snug whitespace-nowrap'
 
 function siHuaColor(siHua: string): string {
@@ -41,23 +44,35 @@ function PalaceCell({ palace, daxianRange }: { palace: ZiweiPalace; daxianRange?
   const theme = formatPalaceTheme(palace.name)
 
   return (
-    <div className={`flex flex-col justify-between h-full p-2 ${CELL}`}>
+    <div className={`flex flex-col justify-between h-full p-2 min-w-0 ${CELL}`}>
       <div>
         <div>
-          <div className="flex items-end justify-between gap-1">
-            <div className="shrink-0">
-              <ZiweiInline text={palace.name} korClassName={PALACE_KOR} hanjaClassName={HANJA_PAIR} />
-              {palace.isShenGong && (
-                <span className="text-purple-600 dark:text-purple-400 ml-0.5">
-                  ·<ZiweiInline text="身" className={CELL} hanjaClassName={`font-hanja ${CELL} text-purple-600 dark:text-purple-400`} />
+          {palace.isShenGong ? (
+            <>
+              <div className="flex items-end flex-wrap">
+                <ZiweiInline text={palace.name} korClassName={PALACE_KOR} hanjaClassName={HANJA_PAIR} />
+                <span className="ml-0.5">
+                  ·<ZiweiInline text="身" korClassName={SHEN_KOR} hanjaClassName={SHEN_HANJA} />
                 </span>
-              )}
-            </div>
-            <span className={`text-gray-400 dark:text-gray-500 shrink-0 ${CELL}`}>
-              {formatGanziKorHanja(palace.ganZhi)}
-            </span>
-          </div>
-          {theme && <div className={`${THEME} mt-0.5`}>{theme}</div>}
+              </div>
+              <div className="flex items-end justify-between gap-1 mt-0.5">
+                {theme ? <div className={THEME}>{theme}</div> : <span />}
+                <span className={`${GANZI} shrink-0`}>
+                  {formatGanziKorHanja(palace.ganZhi)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-end justify-between gap-1">
+                <ZiweiInline text={palace.name} korClassName={PALACE_KOR} hanjaClassName={HANJA_PAIR} />
+                <span className={`${GANZI} shrink-0`}>
+                  {formatGanziKorHanja(palace.ganZhi)}
+                </span>
+              </div>
+              {theme && <div className={`${THEME} mt-0.5`}>{theme}</div>}
+            </>
+          )}
         </div>
 
         <div className="mt-1.5 space-y-0.5">
@@ -133,9 +148,9 @@ export default function MingPanGrid({ chart }: Props) {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div>
       <div
-        className="grid grid-cols-4 grid-rows-4 border-t border-l border-gray-300 dark:border-gray-600 min-w-[600px]"
+        className="grid grid-cols-4 grid-rows-4 border-t border-l border-gray-300 dark:border-gray-600 w-full"
       >
         {DI_ZHI.split('').map(zhi => {
           const pos = ZHI_GRID[zhi]
@@ -146,7 +161,7 @@ export default function MingPanGrid({ chart }: Props) {
           return (
             <div
               key={zhi}
-              className="border-r border-b border-gray-300 dark:border-gray-600 min-h-[148px]"
+              className="border-r border-b border-gray-300 dark:border-gray-600 min-h-[148px] min-w-0"
               style={{ gridRow: pos[0], gridColumn: pos[1] }}
             >
               <PalaceCell palace={palace} daxianRange={daxianByZhi.get(zhi)} />
