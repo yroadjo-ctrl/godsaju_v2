@@ -40,6 +40,8 @@ import {
 import { getManAgeInCalendarYear } from '@core/age'
 import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
+import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
+import { formatGanziKorHanja } from './ganzi-display.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1187,91 +1189,87 @@ export function sajuToText(
 /** 자미두수 명반을 텍스트로 변환 */
 export function ziweiToText(chart: ZiweiChart, liunian?: LiuNianInfo): string {
   const lines: string[] = []
+  const fmt = formatZiweiInline
   const genderChar = chart.isMale ? '男' : '女'
 
-  lines.push(`紫微斗數 命盤 (${genderChar})`)
+  lines.push(`${fmt('紫微斗數')} ${fmt('命盤')} (${fmt(genderChar)})`)
   lines.push('═════')
   lines.push('')
-  lines.push(`年柱: ${chart.yearGan}${chart.yearZhi}`)
+  lines.push(`${fmt('年柱')}: ${formatGanziKorHanja(`${chart.yearGan}${chart.yearZhi}`)}`)
 
   const mingPalace = chart.palaces['命宮']
-  lines.push(`命宮: ${mingPalace?.gan ?? ''}${mingPalace?.zhi ?? ''}`)
+  lines.push(`${fmt('命宮')}: ${mingPalace?.ganZhi ? formatGanziKorHanja(mingPalace.ganZhi) : ''}`)
 
-  // 신궁 찾기
   let shenPalaceName = ''
   for (const p of Object.values(chart.palaces)) {
     if (p.isShenGong) { shenPalaceName = p.name; break }
   }
-  lines.push(`身宮: ${shenPalaceName} (${chart.shenGongZhi})`)
-  lines.push(`五行局: ${chart.wuXingJu.name}`)
-  lines.push(`大限起始: ${chart.daXianStartAge}歲`)
+  lines.push(`${fmt('身宮')}: ${fmt(shenPalaceName)} (${formatZhiKorHanja(chart.shenGongZhi)})`)
+  lines.push(`${fmt('五行局')}: ${fmt(chart.wuXingJu.name)}`)
+  lines.push(`${fmt('大限起始')}: ${chart.daXianStartAge}歲`)
   lines.push('')
 
-  // 12궁
-  lines.push('十二宮')
+  lines.push(fmt('十二宮'))
   lines.push('─────')
   for (const palaceName of PALACE_NAMES) {
     const palace = chart.palaces[palaceName]
     if (!palace) continue
 
-    const shenMark = palace.isShenGong ? '·身' : '  '
+    const shenMark = palace.isShenGong ? `·${fmt('身')}` : '  '
     const mainStars = palace.stars.filter(s => MAIN_STAR_NAMES.has(s.name))
     const auxStars = palace.stars.filter(s => !MAIN_STAR_NAMES.has(s.name))
 
     const mainStr = mainStars.length > 0
       ? mainStars.map(s => {
-          let name = s.name
-          if (s.brightness) name += ` ${s.brightness}`
-          if (s.siHua) name += ` ${s.siHua}`
+          let name = fmt(s.name)
+          if (s.brightness) name += ` ${fmt(s.brightness)}`
+          if (s.siHua) name += ` ${fmt(s.siHua)}`
           return name
         }).join(', ')
-      : '(空宮)'
+      : `(${fmt('空宮')})`
 
-    lines.push(`${palace.name}${shenMark} ${palace.ganZhi}  ${mainStr}`)
+    lines.push(`${fmt(palace.name)}${shenMark} ${formatGanziKorHanja(palace.ganZhi)}  ${mainStr}`)
 
     if (auxStars.length > 0) {
       const luckyNames = new Set(['左輔', '右弼', '文昌', '文曲', '天魁', '天鉞', '祿存', '天馬'])
-      const lucky = auxStars.filter(s => luckyNames.has(s.name)).map(s => s.name)
-      const sha = auxStars.filter(s => !luckyNames.has(s.name)).map(s => s.name)
+      const lucky = auxStars.filter(s => luckyNames.has(s.name)).map(s => fmt(s.name))
+      const sha = auxStars.filter(s => !luckyNames.has(s.name)).map(s => fmt(s.name))
       const parts: string[] = []
-      if (lucky.length > 0) parts.push(`吉: ${lucky.join(' ')}`)
-      if (sha.length > 0) parts.push(`煞: ${sha.join(' ')}`)
+      if (lucky.length > 0) parts.push(`${fmt('吉')}: ${lucky.join(' ')}`)
+      if (sha.length > 0) parts.push(`${fmt('煞')}: ${sha.join(' ')}`)
       if (parts.length > 0) lines.push(`          ${parts.join(' | ')}`)
     }
   }
 
-  // 사화 요약
   lines.push('')
-  lines.push('四化')
+  lines.push(fmt('四化'))
   lines.push('─────')
   const huaOrder = ['化祿', '化權', '化科', '化忌']
   for (const huaType of huaOrder) {
     for (const palace of Object.values(chart.palaces)) {
       for (const star of palace.stars) {
         if (star.siHua === huaType) {
-          lines.push(`${huaType}: ${star.name} 在 ${palace.name}`)
+          lines.push(`${fmt(huaType)}: ${fmt(star.name)} ${fmt('在')} ${fmt(palace.name)}`)
         }
       }
     }
   }
 
-  // 대운
   lines.push('')
-  lines.push('大限')
+  lines.push(fmt('大限'))
   lines.push('─────')
   const daxianList = getDaxianList(chart)
   for (const dx of daxianList) {
-    const stars = dx.mainStars.length > 0 ? dx.mainStars.join(' ') : '(空宮)'
-    lines.push(`${String(dx.ageStart).padStart(3)}-${String(dx.ageEnd).padStart(3)}歲  ${dx.palaceName}  ${dx.ganZhi}  ${stars}`)
+    const stars = dx.mainStars.length > 0 ? dx.mainStars.map(s => fmt(s)).join(' ') : `(${fmt('空宮')})`
+    lines.push(`${String(dx.ageStart).padStart(3)}-${String(dx.ageEnd).padStart(3)}歲  ${fmt(dx.palaceName)}  ${dx.ganZhi}  ${stars}`)
   }
 
-  // 유년
   if (liunian) {
     lines.push('')
-    lines.push(`流年 (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`)
+    lines.push(`${fmt('流年')} (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`)
     lines.push('═════')
-    lines.push(`大限: ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${liunian.daxianPalaceName}`)
-    lines.push(`流年命宮: ${liunian.mingGongZhi}宮 → 本命 ${liunian.natalPalaceAtMing}`)
+    lines.push(`${fmt('大限')}: ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
+    lines.push(`${fmt('流年命宮')}: ${liunian.mingGongZhi}${fmt('宮')} → ${fmt('本命')} ${fmt(liunian.natalPalaceAtMing)}`)
 
     for (const huaType of ['化祿', '化權', '化科', '化忌']) {
       let starName = ''
@@ -1279,14 +1277,14 @@ export function ziweiToText(chart: ZiweiChart, liunian?: LiuNianInfo): string {
         if (h === huaType) { starName = s; break }
       }
       const palaceName = liunian.siHuaPalaces[huaType] || '?'
-      if (starName) lines.push(`${huaType}: ${starName} → ${palaceName}`)
+      if (starName) lines.push(`${fmt(huaType)}: ${fmt(starName)} → ${fmt(palaceName)}`)
     }
 
     lines.push('')
     const lunarMonthNames = ['正月', '二月', '三月', '四月', '五月', '六月',
                               '七月', '八月', '九月', '十月', '冬月', '臘月']
     for (const ly of liunian.liuyue) {
-      lines.push(`${lunarMonthNames[ly.month - 1]} (${ly.mingGongZhi}): ${ly.natalPalaceName}`)
+      lines.push(`${fmt(lunarMonthNames[ly.month - 1])} (${ly.mingGongZhi}): ${fmt(ly.natalPalaceName)}`)
     }
   }
 

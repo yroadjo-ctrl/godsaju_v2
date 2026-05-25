@@ -2,12 +2,14 @@ import { useState, useMemo } from 'react'
 import { calculateLiunian } from '@core/ziwei'
 import type { ZiweiChart } from '@core/types'
 import { MAIN_STAR_NAMES } from '@core/constants'
+import { ZiweiInline } from './ZiweiLabel.tsx'
+import { formatZiweiInline } from '../../utils/ziwei-labels.ts'
 
 interface Props {
   chart: ZiweiChart
 }
 
-const LUNAR_MONTH_NAMES = [
+const LUNAR_MONTH_HANJA = [
   '正月', '二月', '三月', '四月', '五月', '六月',
   '七月', '八月', '九月', '十月', '冬月', '臘月',
 ]
@@ -39,7 +41,9 @@ export default function LiunianView({ chart }: Props) {
   return (
     <section>
       <div className="flex items-center gap-3 mb-3">
-        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200">流年</h3>
+        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200">
+          <ZiweiInline text="流年" />
+        </h3>
         <input
           type="number"
           value={year}
@@ -51,26 +55,34 @@ export default function LiunianView({ chart }: Props) {
         <span className="text-sm text-gray-400 dark:text-gray-500 font-hanja">{liunian.gan}{liunian.zhi}年</span>
       </div>
 
-      {/* 대한 정보 */}
       <div className="text-base text-gray-600 dark:text-gray-300 mb-2">
-        <span className="font-medium text-gray-700 dark:text-gray-200">大限</span>
+        <span className="font-medium text-gray-700 dark:text-gray-200">
+          <ZiweiInline text="大限" />
+        </span>
         <span className="text-gray-400 dark:text-gray-500 mx-1">:</span>
-        {liunian.daxianAgeStart}-{liunian.daxianAgeEnd}歲 {liunian.daxianPalaceName}
+        {liunian.daxianAgeStart}-{liunian.daxianAgeEnd}歲{' '}
+        <ZiweiInline text={liunian.daxianPalaceName} />
       </div>
 
-      {/* 유년 명궁 */}
       <div className="text-base text-gray-600 dark:text-gray-300 mb-3">
-        <span className="font-medium text-gray-700 dark:text-gray-200">流年命宮</span>
+        <span className="font-medium text-gray-700 dark:text-gray-200">
+          <ZiweiInline text="流年命宮" />
+        </span>
         <span className="text-gray-400 dark:text-gray-500 mx-1">:</span>
-        <span className="font-hanja">{liunian.mingGongZhi}</span>宮 → 本命 {liunian.natalPalaceAtMing}
+        <span className="font-hanja">{liunian.mingGongZhi}</span>
+        <ZiweiInline text="宮" hanjaClassName="font-hanja text-gray-500" />
+        {' → '}
+        <ZiweiInline text="本命" hanjaClassName="font-hanja text-gray-500" />{' '}
+        <ZiweiInline text={liunian.natalPalaceAtMing} />
         <span className="text-gray-400 dark:text-gray-500 ml-1">
-          ({getMainStarsAtZhi(chart, liunian.mingGongZhi).join(', ') || '空宮'})
+          ({getMainStarsAtZhi(chart, liunian.mingGongZhi).map(s => formatZiweiInline(s)).join(', ') || formatZiweiInline('空宮')})
         </span>
       </div>
 
-      {/* 유년 사화 */}
       <div className="mb-3">
-        <div className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">流年四化</div>
+        <div className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
+          <ZiweiInline text="流年四化" />
+        </div>
         <div className="space-y-0.5">
           {['化祿', '化權', '化科', '化忌'].map(huaType => {
             let starName = ''
@@ -81,34 +93,40 @@ export default function LiunianView({ chart }: Props) {
             if (!starName) return null
             return (
               <div key={huaType} className="text-base text-gray-600 dark:text-gray-300">
-                <span className={colorMap[huaType]}>{huaType}</span>
+                <span className={colorMap[huaType]}>
+                  <ZiweiInline text={huaType} hanjaClassName={`font-hanja ${colorMap[huaType]}`} />
+                </span>
                 <span className="text-gray-400 dark:text-gray-500 mx-1">:</span>
-                <span className="font-hanja">{starName}</span>
+                <ZiweiInline text={starName} />
                 <span className="text-gray-400 dark:text-gray-500 mx-1">→</span>
-                <span>{palaceName}</span>
+                <ZiweiInline text={palaceName} />
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* 유월 */}
       <div>
-        <div className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">流月運勢</div>
+        <div className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
+          <ZiweiInline text="流月運勢" />
+        </div>
         <div className="space-y-0.5">
           {liunian.liuyue.map(ly => {
             const stars = getMainStarsAtZhi(chart, ly.mingGongZhi)
             const hasMain = stars.length > 0
+            const monthHanja = LUNAR_MONTH_HANJA[ly.month - 1]
             return (
               <div
                 key={ly.month}
                 className={`text-base ${hasMain ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}
               >
-                <span className="w-10 inline-block">{LUNAR_MONTH_NAMES[ly.month - 1]}</span>
+                <span className="inline-block min-w-[88px]">
+                  <ZiweiInline text={monthHanja} />
+                </span>
                 <span className="font-hanja text-sm text-gray-400 dark:text-gray-500 mx-1">({ly.mingGongZhi})</span>
-                <span className="mr-1">{ly.natalPalaceName}</span>
+                <span className="mr-1"><ZiweiInline text={ly.natalPalaceName} /></span>
                 <span className="text-gray-400 dark:text-gray-500 text-sm">
-                  {hasMain ? `- ${stars.join(', ')}` : '- (空宮)'}
+                  {hasMain ? `- ${stars.map(s => formatZiweiInline(s)).join(', ')}` : `- (${formatZiweiInline('空宮')})`}
                 </span>
               </div>
             )

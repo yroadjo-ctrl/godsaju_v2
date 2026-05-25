@@ -1,4 +1,5 @@
 import type { ZiweiChart } from '@core/types'
+import { ZiweiInline } from './ZiweiLabel.tsx'
 
 interface Props {
   chart: ZiweiChart
@@ -26,17 +27,23 @@ export default function SihuaSummary({ chart }: Props) {
 
   return (
     <section>
-      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-2">四化</h3>
+      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-2">
+        <ZiweiInline text="四化" />
+      </h3>
       <div className="space-y-0.5">
         {Object.entries(siHuaInfo).map(([huaType, info]) => {
           if (!info) return null
           return (
             <div key={huaType} className="text-base text-gray-600 dark:text-gray-300">
-              <span className={colorMap[huaType] || ''}>{huaType}</span>
+              <span className={colorMap[huaType] || ''}>
+                <ZiweiInline text={huaType} hanjaClassName={`font-hanja ${colorMap[huaType] || ''}`} />
+              </span>
               <span className="text-gray-400 dark:text-gray-500 mx-1">:</span>
-              <span className="font-hanja">{info.star}</span>
-              <span className="text-gray-400 dark:text-gray-500 mx-1">在</span>
-              <span>{info.palace}</span>
+              <ZiweiInline text={info.star} />
+              <span className="text-gray-400 dark:text-gray-500 mx-1">
+                <ZiweiInline text="在" hanjaClassName="font-hanja text-gray-400 dark:text-gray-500" />
+              </span>
+              <ZiweiInline text={info.palace} />
             </div>
           )
         })}
