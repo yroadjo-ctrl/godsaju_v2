@@ -5,6 +5,7 @@ import SihuaSummary from './SihuaSummary.tsx'
 import DaxianTable from './DaxianTable.tsx'
 import LiunianView from './LiunianView.tsx'
 import CopyButton from '../CopyButton.tsx'
+import { ZiweiSectionTitle } from './ZiweiLabel.tsx'
 import { ziweiToText } from '../../utils/text-export.ts'
 import type { BirthInput } from '@core/types'
 import { useLocale } from '../../i18n/index.ts'
@@ -36,10 +37,7 @@ export default function ZiweiView({ input }: Props) {
       {/* 命盤 그리드 (기본 정보 + 12궁) */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <h2 className="text-base font-medium text-gray-700 dark:text-gray-200">
-            자미두수 명반{' '}
-            <span className="font-hanja font-normal text-gray-500 dark:text-gray-400">(紫微斗數 命盤)</span>
-          </h2>
+          <ZiweiSectionTitle kor="자미두수 명반" hanja="紫微斗數 命盤" as="h2" />
           <CopyButton getText={() => ziweiToText(chart)} label={t('copy.aiCopy')} />
         </div>
         <MingPanGrid chart={chart} />

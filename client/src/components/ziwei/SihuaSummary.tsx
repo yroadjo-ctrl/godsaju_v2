@@ -1,5 +1,5 @@
 import type { ZiweiChart } from '@core/types'
-import { ZiweiInline } from './ZiweiLabel.tsx'
+import { ZiweiInline, ZiweiSectionTitleKey } from './ZiweiLabel.tsx'
 
 interface Props {
   chart: ZiweiChart
@@ -27,9 +27,7 @@ export default function SihuaSummary({ chart }: Props) {
 
   return (
     <section>
-      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-2">
-        <ZiweiInline text="四化" />
-      </h3>
+      <ZiweiSectionTitleKey text="四化" className="mb-2" />
       <div className="space-y-0.5">
         {Object.entries(siHuaInfo).map(([huaType, info]) => {
           if (!info) return null

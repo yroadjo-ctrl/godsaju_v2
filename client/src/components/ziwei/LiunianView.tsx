@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { calculateLiunian } from '@core/ziwei'
 import type { ZiweiChart } from '@core/types'
 import { MAIN_STAR_NAMES } from '@core/constants'
-import { ZiweiInline } from './ZiweiLabel.tsx'
+import { ZiweiInline, ZiweiSectionTitleKey } from './ZiweiLabel.tsx'
 import { formatZiweiInline } from '../../utils/ziwei-labels.ts'
 
 interface Props {
@@ -41,9 +41,7 @@ export default function LiunianView({ chart }: Props) {
   return (
     <section>
       <div className="flex items-center gap-3 mb-3">
-        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200">
-          <ZiweiInline text="流年" />
-        </h3>
+        <ZiweiSectionTitleKey text="流年" />
         <input
           type="number"
           value={year}
@@ -80,9 +78,7 @@ export default function LiunianView({ chart }: Props) {
       </div>
 
       <div className="mb-3">
-        <div className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
-          <ZiweiInline text="流年四化" />
-        </div>
+        <ZiweiSectionTitleKey text="流年四化" className="mb-1" />
         <div className="space-y-0.5">
           {['化祿', '化權', '化科', '化忌'].map(huaType => {
             let starName = ''
@@ -107,9 +103,7 @@ export default function LiunianView({ chart }: Props) {
       </div>
 
       <div>
-        <div className="text-base font-medium text-gray-700 dark:text-gray-200 mb-1">
-          <ZiweiInline text="流月運勢" />
-        </div>
+        <ZiweiSectionTitleKey text="流月運勢" className="mb-1" />
         <div className="space-y-0.5">
           {liunian.liuyue.map(ly => {
             const stars = getMainStarsAtZhi(chart, ly.mingGongZhi)

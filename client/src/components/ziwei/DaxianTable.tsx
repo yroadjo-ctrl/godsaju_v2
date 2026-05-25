@@ -3,7 +3,7 @@ import type { ZiweiChart } from '@core/types'
 import { getManAge } from '@core/age'
 import { getDaxianList } from '@core/ziwei'
 import { stemSolidBgClass, branchSolidBgClass } from '../../utils/format.ts'
-import { ZiweiInline, ZiweiStacked } from './ZiweiLabel.tsx'
+import { ZiweiInline, ZiweiStacked, ZiweiSectionTitleKey } from './ZiweiLabel.tsx'
 
 interface Props {
   chart: ZiweiChart
@@ -38,9 +38,7 @@ export default function DaxianTable({ chart }: Props) {
 
   return (
     <section>
-      <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-2">
-        <ZiweiInline text="大限" />
-      </h3>
+      <ZiweiSectionTitleKey text="大限" className="mb-2" />
       <div ref={scrollRef} className="overflow-x-auto py-1">
         <div className="flex flex-row-reverse gap-1 w-fit">
           {daxianList.map((dx, i) => {

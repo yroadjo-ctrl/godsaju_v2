@@ -3,8 +3,9 @@ import { DI_ZHI } from '@core/constants'
 import { MAIN_STAR_NAMES, LUCKY_STAR_NAMES, SHA_STAR_NAMES } from '@core/constants'
 import { getDaxianList } from '@core/ziwei'
 import { ZiweiInline } from './ZiweiLabel.tsx'
-import { formatZiweiInline, formatZhiKorHanja } from '../../utils/ziwei-labels.ts'
+import { formatPalaceTheme, formatZiweiInline, formatZhiKorHanja } from '../../utils/ziwei-labels.ts'
 import { formatGanziKorHanja } from '../../utils/ganzi-display.ts'
+import { ZHI_GRID, getPalaceByZhi } from '../../utils/ziwei-palace-grid.ts'
 
 interface Props {
   chart: ZiweiChart
@@ -13,14 +14,9 @@ interface Props {
 /** 명반 셀 — 한자 병기 이전 원래 크기 */
 const CELL = 'text-sm leading-tight'
 const HANJA_PAIR = `font-hanja ${CELL} text-gray-500 dark:text-gray-400`
-
-/** 지지 → 그리드 위치 (row, col) 매핑 — 전통 命盤 배치 */
-const ZHI_GRID: Record<string, [number, number]> = {
-  '巳': [1, 1], '午': [1, 2], '未': [1, 3], '申': [1, 4],
-  '辰': [2, 1],                                '酉': [2, 4],
-  '卯': [3, 1],                                '戌': [3, 4],
-  '寅': [4, 1], '丑': [4, 2], '子': [4, 3], '亥': [4, 4],
-}
+/** 12궁 명칭 한글만 한 단계 크게 */
+const PALACE_KOR = 'text-base leading-tight font-medium text-gray-800 dark:text-gray-100'
+const THEME = 'text-xs text-gray-400 dark:text-gray-500 leading-snug whitespace-nowrap'
 
 function siHuaColor(siHua: string): string {
   switch (siHua) {
@@ -38,36 +34,33 @@ function brightnessColor(b: string): string {
   return 'text-gray-500 dark:text-gray-400'
 }
 
-function getPalaceByZhi(chart: ZiweiChart, zhi: string): ZiweiPalace | undefined {
-  for (const p of Object.values(chart.palaces)) {
-    if (p.zhi === zhi) return p
-  }
-  return undefined
-}
-
 function PalaceCell({ palace, daxianRange }: { palace: ZiweiPalace; daxianRange?: string }) {
   const mainStars = palace.stars.filter(s => MAIN_STAR_NAMES.has(s.name))
   const luckyStars = palace.stars.filter(s => LUCKY_STAR_NAMES.has(s.name))
   const shaStars = palace.stars.filter(s => SHA_STAR_NAMES.has(s.name))
+  const theme = formatPalaceTheme(palace.name)
 
   return (
-    <div className={`flex flex-col justify-between h-full p-1.5 ${CELL}`}>
+    <div className={`flex flex-col justify-between h-full p-2 ${CELL}`}>
       <div>
-        <div className="flex items-baseline justify-between gap-1">
-          <span className={`font-medium text-gray-800 dark:text-gray-100 ${CELL}`}>
-            <ZiweiInline text={palace.name} className={CELL} hanjaClassName={HANJA_PAIR} />
-            {palace.isShenGong && (
-              <span className="text-purple-600 dark:text-purple-400 ml-0.5">
-                ·<ZiweiInline text="身" className={CELL} hanjaClassName={`font-hanja ${CELL} text-purple-600 dark:text-purple-400`} />
-              </span>
-            )}
-          </span>
-          <span className={`text-gray-400 dark:text-gray-500 ${CELL}`}>
-            {formatGanziKorHanja(palace.ganZhi)}
-          </span>
+        <div>
+          <div className="flex items-end justify-between gap-1">
+            <div className="shrink-0">
+              <ZiweiInline text={palace.name} korClassName={PALACE_KOR} hanjaClassName={HANJA_PAIR} />
+              {palace.isShenGong && (
+                <span className="text-purple-600 dark:text-purple-400 ml-0.5">
+                  ·<ZiweiInline text="身" className={CELL} hanjaClassName={`font-hanja ${CELL} text-purple-600 dark:text-purple-400`} />
+                </span>
+              )}
+            </div>
+            <span className={`text-gray-400 dark:text-gray-500 shrink-0 ${CELL}`}>
+              {formatGanziKorHanja(palace.ganZhi)}
+            </span>
+          </div>
+          {theme && <div className={`${THEME} mt-0.5`}>{theme}</div>}
         </div>
 
-        <div className="mt-1 space-y-0.5">
+        <div className="mt-1.5 space-y-0.5">
           {mainStars.length > 0 ? (
             mainStars.map(s => (
               <div key={s.name} className={`flex flex-wrap items-baseline gap-x-0.5 gap-y-0 ${CELL}`}>
@@ -153,7 +146,7 @@ export default function MingPanGrid({ chart }: Props) {
           return (
             <div
               key={zhi}
-              className="border-r border-b border-gray-300 dark:border-gray-600 min-h-[120px]"
+              className="border-r border-b border-gray-300 dark:border-gray-600 min-h-[148px]"
               style={{ gridRow: pos[0], gridColumn: pos[1] }}
             >
               <PalaceCell palace={palace} daxianRange={daxianByZhi.get(zhi)} />

@@ -121,6 +121,28 @@ export const ZIWEI_KOR_MAP: Record<string, string> = {
   '煞': '살',
 }
 
+/** 12궁 — 궁별 해석 키워드 (명칭 아래 부제) */
+export const PALACE_THEME: Record<string, string> = {
+  '命宮': '나 자신/핵심',
+  '兄弟': '형제/동료',
+  '夫妻': '배우자/연애',
+  '子女': '자녀/부하',
+  '財帛': '재물/재테크',
+  '疾厄': '건강/질병',
+  '遷移': '사회성/이동',
+  '交友': '인간관계',
+  '官祿': '직장/커리어',
+  '田宅': '부동산/집',
+  '福德': '내면/정신',
+  '父母': '부모/윗사람',
+}
+
+/** 궁 해석 부제 — 예: (내면/정신) */
+export function formatPalaceTheme(hanjaPalaceName: string): string {
+  const theme = PALACE_THEME[hanjaPalaceName]
+  return theme ? `(${theme})` : ''
+}
+
 export function ziweiKor(hanja: string): string | undefined {
   return ZIWEI_KOR_MAP[hanja]
 }

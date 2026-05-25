@@ -42,6 +42,7 @@ import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { formatGanziKorHanja } from './ganzi-display.ts'
+import { buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1211,36 +1212,7 @@ export function ziweiToText(chart: ZiweiChart, liunian?: LiuNianInfo): string {
 
   lines.push(fmt('十二宮'))
   lines.push('─────')
-  for (const palaceName of PALACE_NAMES) {
-    const palace = chart.palaces[palaceName]
-    if (!palace) continue
-
-    const shenMark = palace.isShenGong ? `·${fmt('身')}` : '  '
-    const mainStars = palace.stars.filter(s => MAIN_STAR_NAMES.has(s.name))
-    const auxStars = palace.stars.filter(s => !MAIN_STAR_NAMES.has(s.name))
-
-    const mainStr = mainStars.length > 0
-      ? mainStars.map(s => {
-          let name = fmt(s.name)
-          if (s.brightness) name += ` ${fmt(s.brightness)}`
-          if (s.siHua) name += ` ${fmt(s.siHua)}`
-          return name
-        }).join(', ')
-      : `(${fmt('空宮')})`
-
-    lines.push(`${fmt(palace.name)}${shenMark} ${formatGanziKorHanja(palace.ganZhi)}  ${mainStr}`)
-
-    if (auxStars.length > 0) {
-      const luckyNames = new Set(['左輔', '右弼', '文昌', '文曲', '天魁', '天鉞', '祿存', '天馬'])
-      const lucky = auxStars.filter(s => luckyNames.has(s.name)).map(s => fmt(s.name))
-      const sha = auxStars.filter(s => !luckyNames.has(s.name)).map(s => fmt(s.name))
-      const parts: string[] = []
-      if (lucky.length > 0) parts.push(`${fmt('吉')}: ${lucky.join(' ')}`)
-      if (sha.length > 0) parts.push(`${fmt('煞')}: ${sha.join(' ')}`)
-      if (parts.length > 0) lines.push(`          ${parts.join(' | ')}`)
-    }
-  }
-
+  lines.push(...buildZiweiPalaceGridText(chart))
   lines.push('')
   lines.push(fmt('四化'))
   lines.push('─────')
