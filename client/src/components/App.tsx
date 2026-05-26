@@ -154,7 +154,7 @@ function AppContent() {
                     ]
                     if (!birthInput.unknownTime) {
                       const chart = createChart(birthInput)
-                      parts.push(ziweiToText(chart))
+                      parts.push(ziweiToText(chart, birthInput))
                     }
                     const natal = await calculateNatal(birthInput)
                     parts.push(natalToText(natal))

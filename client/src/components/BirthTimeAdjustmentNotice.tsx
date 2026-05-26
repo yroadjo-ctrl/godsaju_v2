@@ -1,6 +1,7 @@
 import type { BirthTimeAdjustmentInfo } from '@core/index'
-import { formatClockTime, formatSignedMinutes } from '@core/index'
+import { formatSignedMinutes } from '@core/index'
 import { useLocale } from '../i18n/index.ts'
+import { formatBirthDateTimeForDisplay, type BirthDateTimeParts } from '../utils/birth-datetime-display.ts'
 
 interface Props {
   info: BirthTimeAdjustmentInfo
@@ -23,16 +24,20 @@ function sameClock(
     && a.hour === b.hour && a.minute === b.minute
 }
 
+function formatDateTimeVars(
+  dt: BirthDateTimeParts,
+  locale: ReturnType<typeof useLocale>['locale'],
+): Record<string, string> {
+  return { datetime: formatBirthDateTimeForDisplay(dt, locale) }
+}
+
 export default function BirthTimeAdjustmentNotice({ info, unknownTime, className = '' }: Props) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
 
   if (unknownTime) return null
 
-  const wall = formatClockTime(info.wallClock.hour, info.wallClock.minute)
-  const adjusted = formatClockTime(info.adjusted.hour, info.adjusted.minute)
-  const dateChanged = info.wallClock.year !== info.adjusted.year
-    || info.wallClock.month !== info.adjusted.month
-    || info.wallClock.day !== info.adjusted.day
+  const wallVars = formatDateTimeVars(info.wallClock, locale)
+  const appliedVars = formatDateTimeVars(info.adjusted, locale)
 
   if (info.mode === 'kst') {
     const normalized = !sameClock(info.wallClock, info.adjusted)
@@ -44,7 +49,10 @@ export default function BirthTimeAdjustmentNotice({ info, unknownTime, className
         <p className="mt-0.5">{t('timeAdjust.kstNoCorrection')}</p>
         {normalized && (
           <p className="mt-1 text-gray-500 dark:text-gray-400">
-            {fill(t('timeAdjust.kstHistoricalNote'), { input: wall, adjusted })}
+            {fill(t('timeAdjust.kstHistoricalNote'), {
+              input: wallVars.datetime,
+              adjusted: appliedVars.datetime,
+            })}
           </p>
         )}
       </div>
@@ -61,7 +69,7 @@ export default function BirthTimeAdjustmentNotice({ info, unknownTime, className
         {t('timeAdjust.localSolarTitle')}
       </p>
       <p className="mt-0.5">
-        {fill(t('timeAdjust.localSolarInput'), { time: wall })}
+        {fill(t('timeAdjust.localSolarInput'), wallVars)}
       </p>
       <ul className="mt-1 space-y-0.5 text-gray-600 dark:text-gray-400">
         <li>{fill(t('timeAdjust.longitudeCorrection'), { value: formatSignedMinutes(lon) })}</li>
@@ -69,12 +77,7 @@ export default function BirthTimeAdjustmentNotice({ info, unknownTime, className
         <li>{fill(t('timeAdjust.totalCorrection'), { value: formatSignedMinutes(total) })}</li>
       </ul>
       <p className="mt-1.5 font-medium text-gray-800 dark:text-gray-200">
-        {dateChanged
-          ? fill(t('timeAdjust.appliedDateTime'), {
-              date: `${info.adjusted.year}.${info.adjusted.month}.${info.adjusted.day}`,
-              time: adjusted,
-            })
-          : fill(t('timeAdjust.appliedTime'), { time: adjusted })}
+        {fill(t('timeAdjust.appliedTime'), appliedVars)}
       </p>
       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
         {t('timeAdjust.localSolarFootnote')}

@@ -1,5 +1,5 @@
 ﻿import { Solar } from 'lunar-javascript'
-import type { SajuResult, ZiweiChart, LiuNianInfo, NatalChart } from '@core/types'
+import type { BirthInput, SajuResult, ZiweiChart, LiuNianInfo, NatalChart } from '@core/types'
 import { ELEMENT_HANJA, PILLAR_NAMES, PALACE_NAMES, MAIN_STAR_NAMES, JIJANGGAN, GONGMANG_TABLE, HGANJI } from '@core/constants'
 import { getDaxianList } from '@core/ziwei'
 import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from './format.ts'
@@ -42,7 +42,7 @@ import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { formatGanziKorHanja } from './ganzi-display.ts'
-import { buildZiweiBirthInfoLines, buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
+import { buildZiweiMingPanSummaryLines, buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1188,34 +1188,27 @@ export function sajuToText(
 }
 
 /** 자미두수 명반을 텍스트로 변환 */
-export function ziweiToText(chart: ZiweiChart, liunian?: LiuNianInfo): string {
+export function ziweiToText(chart: ZiweiChart, input: BirthInput, liunian?: LiuNianInfo): string {
   const lines: string[] = []
   const fmt = formatZiweiInline
-  const genderChar = chart.isMale ? '男' : '女'
 
-  lines.push(`${fmt('紫微斗數')} ${fmt('命盤')} (${fmt(genderChar)})`)
-  lines.push('═════')
+  lines.push(sectionTitle('출생정보(出生情報)'))
   lines.push('')
-  lines.push(...buildZiweiBirthInfoLines(chart, fmt))
-  lines.push(`${fmt('年柱')}: ${formatGanziKorHanja(`${chart.yearGan}${chart.yearZhi}`)}`)
-
-  const mingPalace = chart.palaces['命宮']
-  lines.push(`${fmt('命宮')}: ${mingPalace?.ganZhi ? formatGanziKorHanja(mingPalace.ganZhi) : ''}`)
-
-  let shenPalaceName = ''
-  for (const p of Object.values(chart.palaces)) {
-    if (p.isShenGong) { shenPalaceName = p.name; break }
-  }
-  lines.push(`${fmt('身宮')}: ${fmt(shenPalaceName)} (${formatZhiKorHanja(chart.shenGongZhi)})`)
-  lines.push(`${fmt('五行局')}: ${fmt(chart.wuXingJu.name)}`)
-  lines.push(`${fmt('大限起始')}: ${chart.daXianStartAge}歲`)
+  lines.push('| 이름 | 생년월일시 | 시간(12간지) / 통자시·야자시 / 성별 | 출생위치 |')
+  lines.push('| --- | --- | --- | --- |')
+  lines.push(formatBirthInfoRow(input))
   lines.push('')
 
-  lines.push(fmt('十二宮'))
+  lines.push(sectionTitle(fmt('命盤')))
+  lines.push('─────')
+  lines.push(...buildZiweiMingPanSummaryLines(chart, fmt))
+  lines.push('')
+
+  lines.push(sectionTitle(fmt('十二宮')))
   lines.push('─────')
   lines.push(...buildZiweiPalaceGridText(chart))
   lines.push('')
-  lines.push(fmt('四化'))
+  lines.push(sectionTitle(fmt('四化')))
   lines.push('─────')
   const huaOrder = ['化祿', '化權', '化科', '化忌']
   for (const huaType of huaOrder) {
@@ -1229,7 +1222,7 @@ export function ziweiToText(chart: ZiweiChart, liunian?: LiuNianInfo): string {
   }
 
   lines.push('')
-  lines.push(fmt('大限'))
+  lines.push(sectionTitle(fmt('大限')))
   lines.push('─────')
   const daxianList = getDaxianList(chart)
   for (const dx of daxianList) {
@@ -1239,8 +1232,8 @@ export function ziweiToText(chart: ZiweiChart, liunian?: LiuNianInfo): string {
 
   if (liunian) {
     lines.push('')
-    lines.push(`${fmt('流年')} (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`)
-    lines.push('═════')
+    lines.push(sectionTitle(`${fmt('流年')} (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`))
+    lines.push('─────')
     lines.push(`${fmt('大限')}: ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
     lines.push(`${fmt('流年命宮')}: ${liunian.mingGongZhi}${fmt('宮')} → ${fmt('本命')} ${fmt(liunian.natalPalaceAtMing)}`)
 

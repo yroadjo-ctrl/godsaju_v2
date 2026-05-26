@@ -90,13 +90,44 @@ function formatShichenLabel(hour: number, minute: number): string {
   return `${SHICHEN_KOR[getShiChenBranchIndex(hour, minute)]}시`
 }
 
+function sameDateTime(
+  a: { year: number; month: number; day: number; hour: number; minute: number },
+  b: { year: number; month: number; day: number; hour: number; minute: number },
+): boolean {
+  return a.year === b.year && a.month === b.month && a.day === b.day
+    && a.hour === b.hour && a.minute === b.minute
+}
+
+/** AI 복사용 — 시간 열 (입력 벽시계 + 보정 적용 시각) */
+function formatBirthInfoTimeColumn(input: BirthInput, info: BirthInfoDisplay): string {
+  if (info.unknownTime) {
+    return `모름 / - / ${info.gender}`
+  }
+
+  try {
+    const adjInfo = getBirthTimeAdjustmentInfo(input)
+    const { wallClock: wall, adjusted: adj } = adjInfo
+    const wallTime = formatClockTime(wall.hour, wall.minute)
+    const adjTime = formatClockTime(adj.hour, adj.minute)
+    const wallShichen = formatShichenLabel(wall.hour, wall.minute)
+    const adjShichen = formatShichenLabel(adj.hour, adj.minute)
+    const tail = `/ ${info.jasiMethod} / ${info.gender}`
+
+    if (sameDateTime(wall, adj)) {
+      return `${wallTime} (${wallShichen}) ${tail}`
+    }
+
+    return `${wallTime} (${wallShichen}, 입력) → ${adjTime} (${adjShichen}, 적용) ${tail}`
+  } catch {
+    return `${info.timeText} (${info.shichen}) ${`/ ${info.jasiMethod} / ${info.gender}`}`
+  }
+}
+
 /** AI 복사용 출생정보 표 행 */
 export function formatBirthInfoRow(input: BirthInput): string {
   const info = buildBirthInfoDisplay(input)
   const birthDate = `${info.calendarLabel} ${info.birthDate}`
-  const timeCol = info.unknownTime
-    ? `모름 / - / ${info.gender}`
-    : `${info.timeText} (${info.shichen}) / ${info.jasiMethod} / ${info.gender}`
+  const timeCol = formatBirthInfoTimeColumn(input, info)
   return `| ${info.name} | ${birthDate} | ${timeCol} | ${info.location} |`
 }
 

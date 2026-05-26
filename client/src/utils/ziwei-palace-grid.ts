@@ -90,12 +90,20 @@ function buildPalaceCellLines(
 }
 
 function buildCenterCellLines(chart: ZiweiChart, fmt: (h: string) => string): string[] {
+  return ['[ 중 궁 ]', ...buildZiweiMingPanSummaryLines(chart, fmt)]
+}
+
+/** AI 복사 ■ 명반 — UI 중궁과 동일 순서 (양력→음력→성별→년주→…→대한시작) */
+export function buildZiweiMingPanSummaryLines(
+  chart: ZiweiChart,
+  fmt: (h: string) => string = formatZiweiInline,
+): string[] {
   let shenPalaceName = ''
   for (const p of Object.values(chart.palaces)) {
     if (p.isShenGong) { shenPalaceName = p.name; break }
   }
 
-  const lines: string[] = ['[ 중 궁 ]']
+  const lines: string[] = []
   lines.push(...buildZiweiBirthInfoLines(chart, fmt))
   lines.push(`${fmt('年柱')}: ${formatGanziKorHanja(`${chart.yearGan}${chart.yearZhi}`)}`)
   const ming = chart.palaces['命宮']
