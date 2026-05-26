@@ -1,25 +1,22 @@
 import type { ZiweiChart } from '@core/types'
-import { getManAge, getManAgeInCalendarYear } from '@core/age'
-import { getDaxianList } from '@core/ziwei'
+import { getDaxianList, getZiweiXuSuiInCalendarYear } from '@core/ziwei'
 
 export type ZiweiDaxianItem = ReturnType<typeof getDaxianList>[number]
 
-/** 현재 만나이 기준 활성 大限 인덱스 */
+/** 현재 연도 虚岁 기준 활성 大限 인덱스 (혼천의 등 자미 표준) */
 export function findActiveZiweiDaxianIndex(
   daxianList: Array<{ ageStart: number; ageEnd: number }>,
   birthYear: number,
-  birthMonth: number,
-  birthDay: number,
-  refDate: Date = new Date(),
+  calendarYear: number = new Date().getFullYear(),
 ): number {
-  const currentAge = getManAge(birthYear, birthMonth, birthDay, refDate)
+  const currentAge = getZiweiXuSuiInCalendarYear(birthYear, calendarYear)
   for (let i = daxianList.length - 1; i >= 0; i--) {
     if (currentAge >= daxianList[i].ageStart) return i
   }
   return -1
 }
 
-/** 大限 구간에 해당하는 양력 연도 목록 (만나이 기준) */
+/** 大限 구간에 해당하는 양력 연도 목록 (虚岁 기준) */
 export function getCalendarYearsForDaxian(
   chart: ZiweiChart,
   daxian: { ageStart: number; ageEnd: number },
@@ -27,12 +24,7 @@ export function getCalendarYearsForDaxian(
   const years: number[] = []
   const endScan = chart.solarYear + 120
   for (let y = chart.solarYear; y <= endScan; y++) {
-    const age = getManAgeInCalendarYear(
-      chart.solarYear,
-      chart.solarMonth,
-      chart.solarDay,
-      y,
-    )
+    const age = getZiweiXuSuiInCalendarYear(chart.solarYear, y)
     if (age >= daxian.ageStart && age <= daxian.ageEnd) {
       years.push(y)
     }
@@ -61,14 +53,9 @@ export function getDaxianStartCalendarYear(
   return years[0] ?? null
 }
 
-/** 오늘 만나이 기준 활성 大限 */
+/** 올해 虚岁 기준 활성 大限 */
 export function getActiveDaxianToday(chart: ZiweiChart) {
   const list = getDaxianList(chart)
-  const idx = findActiveZiweiDaxianIndex(
-    list,
-    chart.solarYear,
-    chart.solarMonth,
-    chart.solarDay,
-  )
+  const idx = findActiveZiweiDaxianIndex(list, chart.solarYear)
   return list[idx >= 0 ? idx : 0]
 }

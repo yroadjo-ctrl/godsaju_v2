@@ -43,7 +43,7 @@ import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-b
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { formatGanziKorHanja } from './ganzi-display.ts'
 import { buildZiweiMingPanSummaryLines, buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
-import { resolveZiweiLiunian, appendLiunianExportSections } from './ziwei-liunian-export.ts'
+import { resolveZiweiLiunian, appendLiunianExportSections, ZIWEI_XUSUI_EXPORT_NOTE } from './ziwei-liunian-export.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1234,6 +1234,7 @@ export function ziweiToText(
     const stars = dx.mainStars.length > 0 ? dx.mainStars.map(s => fmt(s)).join(' ') : `(${fmt('空宮')})`
     lines.push(`${String(dx.ageStart).padStart(3)}-${String(dx.ageEnd).padStart(3)}歲  ${fmt(dx.palaceName)}  ${dx.ganZhi}  ${stars}`)
   }
+  lines.push(ZIWEI_XUSUI_EXPORT_NOTE)
 
   const liunian = resolveZiweiLiunian(chart, liunianOrYear)
   appendLiunianExportSections(lines, chart, liunian, fmt, sectionTitle)

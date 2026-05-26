@@ -38,13 +38,8 @@ export default function ZiweiView({ input }: Props) {
   const chart = useMemo(() => createChart(input), [input])
   const daxianList = useMemo(() => getDaxianList(chart), [chart])
   const autoDaxianIdx = useMemo(
-    () => findActiveZiweiDaxianIndex(
-      daxianList,
-      chart.solarYear,
-      chart.solarMonth,
-      chart.solarDay,
-    ),
-    [daxianList, chart.solarYear, chart.solarMonth, chart.solarDay],
+    () => findActiveZiweiDaxianIndex(daxianList, chart.solarYear),
+    [daxianList, chart.solarYear],
   )
   const [selectedDaxianIdx, setSelectedDaxianIdx] = useState(-1)
   const displayDaxianIdx = selectedDaxianIdx >= 0 ? selectedDaxianIdx : autoDaxianIdx

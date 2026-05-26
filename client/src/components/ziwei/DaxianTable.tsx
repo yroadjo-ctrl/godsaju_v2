@@ -35,6 +35,7 @@ export default function DaxianTable({
       <ZiweiSectionTitleKey text="大限" className="mb-2" />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
         열을 클릭하면 해당 大限 구간의 流年을 아래에서 볼 수 있습니다.
+        <span className="block mt-0.5">※ 大限 나이는 자미두수 虚岁(해당 양력년 − 출생년 + 1) 기준입니다. 사주 대운·세운의 만나이와 다를 수 있습니다.</span>
       </p>
       <div ref={scrollRef} className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">

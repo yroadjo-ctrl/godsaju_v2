@@ -64,6 +64,8 @@ export default function LiuyueTable({ chart, displayYear, onYearChange }: Props)
                   key={ly.month}
                   className="border border-black dark:border-gray-600 px-2 py-1 text-center min-w-[88px] text-xs bg-gray-100 dark:bg-gray-800"
                 >
+                  {displayYear}년
+                  <br />
                   <ZiweiInline text={LUNAR_MONTH_HANJA[ly.month - 1]} />
                 </th>
               ))}

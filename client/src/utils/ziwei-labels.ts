@@ -115,6 +115,7 @@ export const ZIWEI_KOR_MAP: Record<string, string> = {
   '主星': '주성',
   '地支': '지지',
   '月': '월',
+  '年': '년',
   '男': '남',
   '女': '여',
   '身': '신',

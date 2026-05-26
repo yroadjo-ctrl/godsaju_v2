@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { calculateLiunian } from '@core/ziwei'
 import type { LiuNianInfo, ZiweiChart } from '@core/types'
-import { getManAgeInCalendarYear } from '@core/age'
+import { getZiweiXuSuiInCalendarYear } from '@core/ziwei'
 import { branchSolidBgClass } from '../../utils/format.ts'
 import { ZiweiInline, ZiweiSectionTitleKey } from './ZiweiLabel.tsx'
 import { getMainStarsAtZhi } from '../../utils/ziwei-liunian-export.ts'
@@ -37,7 +37,7 @@ function buildLiunianColumns(chart: ZiweiChart, daxian: ZiweiDaxianItem): Liunia
     const liunian = calculateLiunian(chart, year)
     return {
       year,
-      age: getManAgeInCalendarYear(chart.solarYear, chart.solarMonth, chart.solarDay, year),
+      age: getZiweiXuSuiInCalendarYear(chart.solarYear, year),
       liunian,
       mainStars: getMainStarsAtZhi(chart, liunian.mingGongZhi),
     }

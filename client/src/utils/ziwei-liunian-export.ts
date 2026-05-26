@@ -1,6 +1,6 @@
 import type { LiuNianInfo, ZiweiChart } from '@core/types'
 import { MAIN_STAR_NAMES, PALACE_NAMES } from '@core/constants'
-import { calculateLiunian } from '@core/ziwei'
+import { calculateLiunian, getZiweiXuSuiInCalendarYear } from '@core/ziwei'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { getPalaceByZhi } from './ziwei-palace-grid.ts'
 import { getActiveDaxianToday } from './ziwei-yun-period.ts'
@@ -9,6 +9,10 @@ const LUNAR_MONTH_HANJA = [
   '正月', '二月', '三月', '四月', '五月', '六月',
   '七月', '八月', '九月', '十月', '冬月', '臘月',
 ] as const
+
+/** AI 복사 — 大限·流年 나이 기준 (사주 만나이와 별도) */
+export const ZIWEI_XUSUI_EXPORT_NOTE =
+  '※ 大限·流年 나이 = 虚岁(해당 양력년 − 출생년 + 1). 사주 대운·세운의 12/31 만나이와 다를 수 있음.'
 
 export function getMainStarsAtZhi(chart: ZiweiChart, zhi: string): string[] {
   const palace = getPalaceByZhi(chart, zhi)
@@ -75,7 +79,7 @@ export function buildLiuyueExportLines(
   fmt: (h: string) => string = formatZiweiInline,
 ): string[] {
   const lines: string[] = []
-  lines.push(`| ${fmt('月')} | ${fmt('流月')} ${fmt('命宮')} | ${fmt('本命')} ${fmt('宮')} | ${fmt('主星')} |`)
+  lines.push(`| ${fmt('年')}·${fmt('月')} | ${fmt('流月')} ${fmt('命宮')} | ${fmt('本命')} ${fmt('宮')} | ${fmt('主星')} |`)
   lines.push('| --- | --- | --- | --- |')
 
   for (const ly of liunian.liuyue) {
@@ -85,7 +89,7 @@ export function buildLiuyueExportLines(
       ? stars.map(s => fmt(s)).join(' ')
       : `(${fmt('空宮')})`
     lines.push(
-      `| ${fmt(monthHanja)} | ${formatZhiKorHanja(ly.mingGongZhi)} | ${fmt(ly.natalPalaceName)} | ${starText} |`,
+      `| ${liunian.year}년\n${fmt(monthHanja)} | ${formatZhiKorHanja(ly.mingGongZhi)} | ${fmt(ly.natalPalaceName)} | ${starText} |`,
     )
   }
   return lines
@@ -100,9 +104,11 @@ export function appendLiunianExportSections(
 ): void {
   lines.push('')
   lines.push(sectionTitle(`${fmt('流年')} (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`))
+  lines.push(ZIWEI_XUSUI_EXPORT_NOTE)
   lines.push(formatZiweiCurrentYunLine(liunian, getActiveDaxianToday(chart)))
   lines.push('─────')
-  lines.push(`${fmt('大限')}(${liunian.year}年): ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
+  const xuSui = getZiweiXuSuiInCalendarYear(chart.solarYear, liunian.year)
+  lines.push(`${fmt('大限')}(${liunian.year}年·虚岁 ${xuSui}세): ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
   lines.push(`${fmt('流年命宮')}: ${formatZhiKorHanja(liunian.mingGongZhi)} → ${fmt('本命')} ${fmt(liunian.natalPalaceAtMing)}`)
 
   const mingStars = getMainStarsAtZhi(chart, liunian.mingGongZhi)

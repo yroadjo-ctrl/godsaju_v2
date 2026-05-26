@@ -15,7 +15,11 @@ import type {
 } from './types.ts'
 import { getAdjustedBirthDateTime } from './birth-calendar.ts'
 import { solarToLunar } from './lunar-calendar.ts'
-import { getManAgeInCalendarYear } from './age.ts'
+
+/** 大限·流年 나이 — 虚岁(해당 양력년 − 출생년 + 1). 자미두수 표준(혼천의 등). 사주 만나이와 별도 */
+export function getZiweiXuSuiInCalendarYear(birthYear: number, calendarYear: number): number {
+  return calendarYear - birthYear + 1
+}
 
 // =============================================
 // 유틸리티
@@ -337,12 +341,7 @@ function getPalaceByZhi(chart: ZiweiChart, zhi: string): ZiweiPalace | null {
 }
 
 function getCurrentDaxian(chart: ZiweiChart, year: number): [string, number, number] {
-  const age = getManAgeInCalendarYear(
-    chart.solarYear,
-    chart.solarMonth,
-    chart.solarDay,
-    year,
-  )
+  const age = getZiweiXuSuiInCalendarYear(chart.solarYear, year)
   const startAge = chart.daXianStartAge
   const mingIdx = zhiIndex(chart.mingGongZhi)
 
