@@ -26,7 +26,7 @@ import {
 } from '../utils/coordinate-input.ts'
 import GodsajuLogo from './GodsajuLogo.tsx'
 import BirthTimeAdjustmentNotice from './BirthTimeAdjustmentNotice.tsx'
-import { formatShiChenHint, SHICHEN_LEGEND_ROWS } from '../utils/shichen-time.ts'
+import { getShiChenAutoFillTime, getShiChenEmoji, getShiChenHintParts, SHICHEN_LEGEND_ROWS } from '../utils/shichen-time.ts'
 import {
   Dialog,
   DialogContent,
@@ -118,6 +118,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   const [gender, setGender] = useState<Gender>(saved?.gender ?? 'M')
   const [calendarType, setCalendarType] = useState<CalendarType>(saved?.calendarType ?? 'solar')
   const [unknownTime, setUnknownTime] = useState(saved?.unknownTime ?? false)
+  const [shichenOpen, setShichenOpen] = useState(false)
   const [jasiMethod, setJasiMethod] = useState<JasiMethod>(saved?.jasiMethod ?? 'unified')
   const [selectedCity, setSelectedCity] = useState<City | null>(saved?.city ?? SEOUL)
   const [manualCoords, setManualCoords] = useState(saved?.manualCoords ?? false)
@@ -131,7 +132,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   const leapMonth = useMemo(() => getLunarLeapMonth(year), [year])
 
   const shichenHint = useMemo(
-    () => (unknownTime ? null : formatShiChenHint(hour, minute)),
+    () => (unknownTime ? null : getShiChenHintParts(hour, minute)),
     [unknownTime, hour, minute],
   )
 
@@ -555,7 +556,7 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
               <div className="flex items-center gap-2 min-w-0">
                 <legend className={`${sectionTitleClass} shrink-0`}>{t('form.time')}</legend>
                 {!unknownTime && (
-                  <Dialog>
+                  <Dialog open={shichenOpen} onOpenChange={setShichenOpen}>
                     <DialogTrigger asChild>
                       <button
                         type="button"
@@ -585,9 +586,25 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
                           </tr>
                         </thead>
                         <tbody>
-                          {SHICHEN_LEGEND_ROWS.map(row => (
+                          {SHICHEN_LEGEND_ROWS.map((row, index) => (
                             <tr key={row.labelKey} className="border-b border-gray-100">
-                              <td className="py-2 pr-4 font-medium text-gray-800">{t(row.labelKey)}</td>
+                              <td className="py-2 pr-4">
+                                <button
+                                  type="button"
+                                  className="font-medium text-blue-700 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors text-left w-full"
+                                  onClick={() => {
+                                    const start = getShiChenAutoFillTime(index)
+                                    setHour(start.hour)
+                                    setMinute(start.minute)
+                                    setShichenOpen(false)
+                                  }}
+                                >
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <span aria-hidden>{getShiChenEmoji(index)}</span>
+                                    <span>{t(row.labelKey)}</span>
+                                  </span>
+                                </button>
+                              </td>
                               <td className="py-2 text-gray-600">{t(row.rangeKey)}</td>
                             </tr>
                           ))}
@@ -650,8 +667,9 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
             </div>
 
             {!unknownTime && shichenHint && (
-              <p className={`mt-1.5 ${sectionMutedClass}`}>
-                {shichenHint}
+              <p className={`mt-1.5 flex items-center gap-1.5 ${sectionMutedClass}`}>
+                <span aria-hidden>{shichenHint.emoji}</span>
+                <span>{shichenHint.text}</span>
               </p>
             )}
 

@@ -1,6 +1,43 @@
+/** 시진별 구간 시작 시각 (간지 클릭 → 시·분 자동 입력용) */
+export const SHICHEN_START_TIMES: ReadonlyArray<{ hour: number; minute: number }> = [
+  { hour: 23, minute: 30 }, // 子
+  { hour: 1, minute: 30 },  // 丑
+  { hour: 3, minute: 30 },  // 寅
+  { hour: 5, minute: 30 },  // 卯
+  { hour: 7, minute: 30 },  // 辰
+  { hour: 9, minute: 30 },  // 巳
+  { hour: 11, minute: 30 }, // 午
+  { hour: 13, minute: 30 }, // 未
+  { hour: 15, minute: 30 }, // 申
+  { hour: 17, minute: 30 }, // 酉
+  { hour: 19, minute: 30 }, // 戌
+  { hour: 21, minute: 30 }, // 亥
+]
+
+export function getShiChenStartTime(branchIndex: number): { hour: number; minute: number } {
+  const i = ((branchIndex % 12) + 12) % 12
+  return SHICHEN_START_TIMES[i]
+}
+
+/** 간지 클릭 자동 입력 — 구간 시작 +1시간 (자시 23:30→00:30, 전날 넘김 방지) */
+export function getShiChenAutoFillTime(branchIndex: number): { hour: number; minute: number } {
+  const start = getShiChenStartTime(branchIndex)
+  const total = start.hour * 60 + start.minute + 60
+  const wrapped = ((total % (24 * 60)) + 24 * 60) % (24 * 60)
+  return { hour: Math.floor(wrapped / 60), minute: wrapped % 60 }
+}
+
 /** 12시진(時辰) — pillars.ts 시주 반시(30분) 경계와 동일 */
 
 export const SHICHEN_HANJA = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'] as const
+
+/** 12시진 동물 이모지 (子→鼠 … 亥→猪) */
+export const SHICHEN_EMOJI = ['🐭', '🐮', '🐯', '🐰', '🐲', '🐍', '🐴', '🐑', '🐵', '🐔', '🐶', '🐷'] as const
+
+export function getShiChenEmoji(branchIndex: number): string {
+  const i = ((branchIndex % 12) + 12) % 12
+  return SHICHEN_EMOJI[i]
+}
 
 /** 시·분 → 시진 인덱스 (0=子 … 11=亥) */
 export function getShiChenBranchIndex(hour: number, minute: number): number {
@@ -42,9 +79,17 @@ export function getShiChenRangeLabel(hour: number, minute: number): string {
   return ranges[i] ?? ''
 }
 
-export function formatShiChenHint(hour: number, minute: number): string {
+export function getShiChenHintParts(hour: number, minute: number): { emoji: string; text: string } {
   const i = getShiChenBranchIndex(hour, minute)
-  return `${SHICHEN_HANJA[i]}時(${getShiChenRangeLabel(hour, minute)})`
+  return {
+    emoji: getShiChenEmoji(i),
+    text: `${SHICHEN_HANJA[i]}時(${getShiChenRangeLabel(hour, minute)})`,
+  }
+}
+
+export function formatShiChenHint(hour: number, minute: number): string {
+  const { emoji, text } = getShiChenHintParts(hour, minute)
+  return `${emoji} ${text}`
 }
 
 /** 12간지 시간표 팝업용 (범례) */
