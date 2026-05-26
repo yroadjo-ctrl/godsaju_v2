@@ -42,7 +42,7 @@ import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { formatGanziKorHanja } from './ganzi-display.ts'
-import { buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
+import { buildZiweiBirthInfoLines, buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1196,6 +1196,7 @@ export function ziweiToText(chart: ZiweiChart, liunian?: LiuNianInfo): string {
   lines.push(`${fmt('紫微斗數')} ${fmt('命盤')} (${fmt(genderChar)})`)
   lines.push('═════')
   lines.push('')
+  lines.push(...buildZiweiBirthInfoLines(chart, fmt))
   lines.push(`${fmt('年柱')}: ${formatGanziKorHanja(`${chart.yearGan}${chart.yearZhi}`)}`)
 
   const mingPalace = chart.palaces['命宮']

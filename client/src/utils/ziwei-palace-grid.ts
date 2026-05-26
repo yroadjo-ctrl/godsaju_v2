@@ -90,16 +90,13 @@ function buildPalaceCellLines(
 }
 
 function buildCenterCellLines(chart: ZiweiChart, fmt: (h: string) => string): string[] {
-  const genderHanja = chart.isMale ? '男' : '女'
   let shenPalaceName = ''
   for (const p of Object.values(chart.palaces)) {
     if (p.isShenGong) { shenPalaceName = p.name; break }
   }
 
   const lines: string[] = ['[ 중 궁 ]']
-  lines.push(`${fmt('陽曆')}: ${chart.solarYear}年 ${chart.solarMonth}月 ${chart.solarDay}日 ${chart.hour}時 ${chart.minute}分`)
-  lines.push(`${fmt('陰曆')}: ${chart.lunarYear}年 ${chart.lunarMonth}月 ${chart.lunarDay}日${chart.isLeapMonth ? ` (${fmt('閏月')})` : ''}`)
-  lines.push(`${fmt('性別')}: ${fmt(genderHanja)}`)
+  lines.push(...buildZiweiBirthInfoLines(chart, fmt))
   lines.push(`${fmt('年柱')}: ${formatGanziKorHanja(`${chart.yearGan}${chart.yearZhi}`)}`)
   const ming = chart.palaces['命宮']
   lines.push(`${fmt('命宮')}: ${ming?.ganZhi ? formatGanziKorHanja(ming.ganZhi) : ''}`)
@@ -107,6 +104,19 @@ function buildCenterCellLines(chart: ZiweiChart, fmt: (h: string) => string): st
   lines.push(`${fmt('五行局')}: ${fmt(chart.wuXingJu.name)}`)
   lines.push(`${fmt('大限起始')}: ${chart.daXianStartAge}歲`)
   return lines
+}
+
+/** AI 복사·중궁 — 양력·음력·성별 */
+export function buildZiweiBirthInfoLines(
+  chart: ZiweiChart,
+  fmt: (h: string) => string = formatZiweiInline,
+): string[] {
+  const genderHanja = chart.isMale ? '男' : '女'
+  return [
+    `${fmt('陽曆')}: ${chart.solarYear}年 ${chart.solarMonth}月 ${chart.solarDay}日 ${chart.hour}時 ${chart.minute}分`,
+    `${fmt('陰曆')}: ${chart.lunarYear}年 ${chart.lunarMonth}月 ${chart.lunarDay}日${chart.isLeapMonth ? ` (${fmt('閏月')})` : ''}`,
+    `${fmt('性別')}: ${fmt(genderHanja)}`,
+  ]
 }
 
 function renderFourColRow(cells: string[][], widths: number[]): string[] {
