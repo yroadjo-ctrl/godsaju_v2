@@ -58,7 +58,7 @@ export default function ZiweiView({ input }: Props) {
 
   useEffect(() => {
     setLiunianYear(new Date().getFullYear())
-    setSelectedDaxianIdx(autoDaxianIdx)
+    setSelectedDaxianIdx(-1)
   }, [input, autoDaxianIdx])
 
   const handleSelectDaxian = useCallback((idx: number) => {

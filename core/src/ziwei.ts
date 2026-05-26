@@ -15,6 +15,7 @@ import type {
 } from './types.ts'
 import { getAdjustedBirthDateTime } from './birth-calendar.ts'
 import { solarToLunar } from './lunar-calendar.ts'
+import { getManAgeInCalendarYear } from './age.ts'
 
 // =============================================
 // 유틸리티
@@ -336,7 +337,12 @@ function getPalaceByZhi(chart: ZiweiChart, zhi: string): ZiweiPalace | null {
 }
 
 function getCurrentDaxian(chart: ZiweiChart, year: number): [string, number, number] {
-  const age = year - chart.solarYear + 1
+  const age = getManAgeInCalendarYear(
+    chart.solarYear,
+    chart.solarMonth,
+    chart.solarDay,
+    year,
+  )
   const startAge = chart.daXianStartAge
   const mingIdx = zhiIndex(chart.mingGongZhi)
 

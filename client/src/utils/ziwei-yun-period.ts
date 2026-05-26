@@ -60,3 +60,15 @@ export function getDaxianStartCalendarYear(
   const years = getCalendarYearsForDaxian(chart, daxian)
   return years[0] ?? null
 }
+
+/** 오늘 만나이 기준 활성 大限 */
+export function getActiveDaxianToday(chart: ZiweiChart) {
+  const list = getDaxianList(chart)
+  const idx = findActiveZiweiDaxianIndex(
+    list,
+    chart.solarYear,
+    chart.solarMonth,
+    chart.solarDay,
+  )
+  return list[idx >= 0 ? idx : 0]
+}

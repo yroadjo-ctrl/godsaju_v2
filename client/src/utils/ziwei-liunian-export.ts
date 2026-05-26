@@ -3,6 +3,7 @@ import { MAIN_STAR_NAMES, PALACE_NAMES } from '@core/constants'
 import { calculateLiunian } from '@core/ziwei'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { getPalaceByZhi } from './ziwei-palace-grid.ts'
+import { getActiveDaxianToday } from './ziwei-yun-period.ts'
 
 const LUNAR_MONTH_HANJA = [
   '正月', '二月', '三月', '四月', '五月', '六月',
@@ -31,9 +32,12 @@ export function resolveZiweiLiunian(
 }
 
 /** AI 복사 — 현재 大限 · 流年 (UI YunSectionHeading 스타일) */
-export function formatZiweiCurrentYunLine(chart: ZiweiChart, liunian: LiuNianInfo): string {
+export function formatZiweiCurrentYunLine(
+  liunian: LiuNianInfo,
+  activeDaxian: { ageStart: number; ageEnd: number; palaceName: string },
+): string {
   const fmt = formatZiweiInline
-  const daxian = `${fmt('大限')} ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`
+  const daxian = `${fmt('大限')} ${activeDaxian.ageStart}-${activeDaxian.ageEnd}歲 ${fmt(activeDaxian.palaceName)}`
   const liunianPart = `${fmt('流年')} ${liunian.year} ${liunian.gan}${liunian.zhi}年`
   return `(현재 ${daxian} · ${liunianPart})`
 }
@@ -96,9 +100,9 @@ export function appendLiunianExportSections(
 ): void {
   lines.push('')
   lines.push(sectionTitle(`${fmt('流年')} (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`))
-  lines.push(formatZiweiCurrentYunLine(chart, liunian))
+  lines.push(formatZiweiCurrentYunLine(liunian, getActiveDaxianToday(chart)))
   lines.push('─────')
-  lines.push(`${fmt('大限')}: ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
+  lines.push(`${fmt('大限')}(${liunian.year}年): ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
   lines.push(`${fmt('流年命宮')}: ${formatZhiKorHanja(liunian.mingGongZhi)} → ${fmt('本命')} ${fmt(liunian.natalPalaceAtMing)}`)
 
   const mingStars = getMainStarsAtZhi(chart, liunian.mingGongZhi)
