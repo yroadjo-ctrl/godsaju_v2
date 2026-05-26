@@ -51,6 +51,8 @@ const ko: Record<string, string> = {
   'form.shichen.colBranch': '간지',
   'form.shichen.colTime': '시간',
   'form.shichen.legend.zi': '23:30(전날) ~ 01:30',
+  'form.shichen.hint.ziRange': '23:30(전날)~01:30',
+  'form.shichen.hint.ziBirthdayNote': '(생일 변동 없는 시간으로 입력됨)',
   'form.shichen.legend.chou': '01:30 ~ 03:30',
   'form.shichen.legend.yin': '03:30 ~ 05:30',
   'form.shichen.legend.mao': '05:30 ~ 07:30',

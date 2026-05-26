@@ -50,6 +50,8 @@ const ja: Record<string, string> = {
   'form.shichen.colBranch': '干支',
   'form.shichen.colTime': '時間',
   'form.shichen.legend.zi': '23:30(前日) ~ 01:30',
+  'form.shichen.hint.ziRange': '23:30(前日)~01:30',
+  'form.shichen.hint.ziBirthdayNote': '(誕生日が変わらない時刻で入力)',
   'form.shichen.legend.chou': '01:30 ~ 03:30',
   'form.shichen.legend.yin': '03:30 ~ 05:30',
   'form.shichen.legend.mao': '05:30 ~ 07:30',

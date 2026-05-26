@@ -79,8 +79,29 @@ export function getShiChenRangeLabel(hour: number, minute: number): string {
   return ranges[i] ?? ''
 }
 
-export function getShiChenHintParts(hour: number, minute: number): { emoji: string; text: string } {
+/** 子時 조(00:00~01:29) — 23:30 전날 구간과 구분 */
+export function isZiMorningSegment(hour: number, minute: number): boolean {
+  return hour === 0 || (hour === 1 && minute < 30)
+}
+
+export interface ShiChenHintLabels {
+  ziRange: string
+  ziBirthdayNote: string
+}
+
+export function getShiChenHintParts(
+  hour: number,
+  minute: number,
+  labels?: ShiChenHintLabels,
+): { emoji: string; text: string; note?: string } {
   const i = getShiChenBranchIndex(hour, minute)
+  if (i === 0 && labels?.ziRange) {
+    return {
+      emoji: getShiChenEmoji(i),
+      text: `${SHICHEN_HANJA[i]}時 (${labels.ziRange})`,
+      note: isZiMorningSegment(hour, minute) ? labels.ziBirthdayNote : undefined,
+    }
+  }
   return {
     emoji: getShiChenEmoji(i),
     text: `${SHICHEN_HANJA[i]}時(${getShiChenRangeLabel(hour, minute)})`,

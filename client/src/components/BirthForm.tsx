@@ -132,8 +132,11 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
   const leapMonth = useMemo(() => getLunarLeapMonth(year), [year])
 
   const shichenHint = useMemo(
-    () => (unknownTime ? null : getShiChenHintParts(hour, minute)),
-    [unknownTime, hour, minute],
+    () => (unknownTime ? null : getShiChenHintParts(hour, minute, {
+      ziRange: t('form.shichen.hint.ziRange'),
+      ziBirthdayNote: t('form.shichen.hint.ziBirthdayNote'),
+    })),
+    [unknownTime, hour, minute, t],
   )
 
   const solarForTz = useMemo(() => {
@@ -667,9 +670,12 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
             </div>
 
             {!unknownTime && shichenHint && (
-              <p className={`mt-1.5 flex items-center gap-1.5 ${sectionMutedClass}`}>
+              <p className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 ${sectionMutedClass}`}>
                 <span aria-hidden>{shichenHint.emoji}</span>
                 <span>{shichenHint.text}</span>
+                {shichenHint.note && (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{shichenHint.note}</span>
+                )}
               </p>
             )}
 
