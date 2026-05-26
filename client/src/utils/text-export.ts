@@ -43,6 +43,7 @@ import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-b
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { formatGanziKorHanja } from './ganzi-display.ts'
 import { buildZiweiMingPanSummaryLines, buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
+import { resolveZiweiLiunian, appendLiunianExportSections } from './ziwei-liunian-export.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1188,7 +1189,11 @@ export function sajuToText(
 }
 
 /** 자미두수 명반을 텍스트로 변환 */
-export function ziweiToText(chart: ZiweiChart, input: BirthInput, liunian?: LiuNianInfo): string {
+export function ziweiToText(
+  chart: ZiweiChart,
+  input: BirthInput,
+  liunianOrYear?: LiuNianInfo | number,
+): string {
   const lines: string[] = []
   const fmt = formatZiweiInline
 
@@ -1230,29 +1235,8 @@ export function ziweiToText(chart: ZiweiChart, input: BirthInput, liunian?: LiuN
     lines.push(`${String(dx.ageStart).padStart(3)}-${String(dx.ageEnd).padStart(3)}歲  ${fmt(dx.palaceName)}  ${dx.ganZhi}  ${stars}`)
   }
 
-  if (liunian) {
-    lines.push('')
-    lines.push(sectionTitle(`${fmt('流年')} (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`))
-    lines.push('─────')
-    lines.push(`${fmt('大限')}: ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
-    lines.push(`${fmt('流年命宮')}: ${liunian.mingGongZhi}${fmt('宮')} → ${fmt('本命')} ${fmt(liunian.natalPalaceAtMing)}`)
-
-    for (const huaType of ['化祿', '化權', '化科', '化忌']) {
-      let starName = ''
-      for (const [s, h] of Object.entries(liunian.siHua)) {
-        if (h === huaType) { starName = s; break }
-      }
-      const palaceName = liunian.siHuaPalaces[huaType] || '?'
-      if (starName) lines.push(`${fmt(huaType)}: ${fmt(starName)} → ${fmt(palaceName)}`)
-    }
-
-    lines.push('')
-    const lunarMonthNames = ['正月', '二月', '三月', '四月', '五月', '六月',
-                              '七月', '八月', '九月', '十月', '冬月', '臘月']
-    for (const ly of liunian.liuyue) {
-      lines.push(`${fmt(lunarMonthNames[ly.month - 1])} (${ly.mingGongZhi}): ${fmt(ly.natalPalaceName)}`)
-    }
-  }
+  const liunian = resolveZiweiLiunian(chart, liunianOrYear)
+  appendLiunianExportSections(lines, chart, liunian, fmt, sectionTitle)
 
   return lines.join('\n')
 }

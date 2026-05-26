@@ -1,0 +1,128 @@
+import type { LiuNianInfo, ZiweiChart } from '@core/types'
+import { MAIN_STAR_NAMES, PALACE_NAMES } from '@core/constants'
+import { calculateLiunian } from '@core/ziwei'
+import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
+import { getPalaceByZhi } from './ziwei-palace-grid.ts'
+
+const LUNAR_MONTH_HANJA = [
+  '正月', '二月', '三月', '四月', '五月', '六月',
+  '七月', '八月', '九月', '十月', '冬月', '臘月',
+] as const
+
+export function getMainStarsAtZhi(chart: ZiweiChart, zhi: string): string[] {
+  const palace = getPalaceByZhi(chart, zhi)
+  if (!palace) return []
+  return palace.stars
+    .filter(s => MAIN_STAR_NAMES.has(s.name))
+    .map(s => s.name)
+}
+
+export function resolveZiweiLiunian(
+  chart: ZiweiChart,
+  liunianOrYear?: LiuNianInfo | number,
+): LiuNianInfo {
+  if (liunianOrYear != null && typeof liunianOrYear === 'object') {
+    return liunianOrYear
+  }
+  const year = typeof liunianOrYear === 'number'
+    ? liunianOrYear
+    : new Date().getFullYear()
+  return calculateLiunian(chart, year)
+}
+
+/** AI 복사 — 현재 大限 · 流年 (UI YunSectionHeading 스타일) */
+export function formatZiweiCurrentYunLine(chart: ZiweiChart, liunian: LiuNianInfo): string {
+  const fmt = formatZiweiInline
+  const daxian = `${fmt('大限')} ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`
+  const liunianPart = `${fmt('流年')} ${liunian.year} ${liunian.gan}${liunian.zhi}年`
+  return `(현재 ${daxian} · ${liunianPart})`
+}
+
+/** AI 복사 — 流年十二宮 표 */
+export function buildLiunianPalacesExportLines(
+  chart: ZiweiChart,
+  liunian: LiuNianInfo,
+  fmt: (h: string) => string = formatZiweiInline,
+): string[] {
+  const lines: string[] = []
+  lines.push(`| ${fmt('宮')} | ${fmt('流年')} ${fmt('地支')} | ${fmt('本命')} ${fmt('宮')} | ${fmt('主星')} |`)
+  lines.push('| --- | --- | --- | --- |')
+
+  for (const palaceName of PALACE_NAMES) {
+    const lnZhi = liunian.palaces[palaceName] ?? ''
+    const natalPalace = lnZhi ? getPalaceByZhi(chart, lnZhi) : undefined
+    const natalName = natalPalace?.name ?? '-'
+    const stars = lnZhi ? getMainStarsAtZhi(chart, lnZhi) : []
+    const starText = stars.length > 0
+      ? stars.map(s => fmt(s)).join(' ')
+      : `(${fmt('空宮')})`
+    lines.push(`| ${fmt(palaceName)} | ${formatZhiKorHanja(lnZhi)} | ${fmt(natalName)} | ${starText} |`)
+  }
+
+  lines.push('')
+  lines.push(`※ ${fmt('流年')} ${fmt('命宮')} ${formatZhiKorHanja(liunian.mingGongZhi)} → ${fmt('本命')} ${fmt(liunian.natalPalaceAtMing)}`)
+  return lines
+}
+
+/** AI 복사 — 流月 (主星 포함) */
+export function buildLiuyueExportLines(
+  chart: ZiweiChart,
+  liunian: LiuNianInfo,
+  fmt: (h: string) => string = formatZiweiInline,
+): string[] {
+  const lines: string[] = []
+  lines.push(`| ${fmt('月')} | ${fmt('流月')} ${fmt('命宮')} | ${fmt('本命')} ${fmt('宮')} | ${fmt('主星')} |`)
+  lines.push('| --- | --- | --- | --- |')
+
+  for (const ly of liunian.liuyue) {
+    const monthHanja = LUNAR_MONTH_HANJA[ly.month - 1] ?? `${ly.month}月`
+    const stars = getMainStarsAtZhi(chart, ly.mingGongZhi)
+    const starText = stars.length > 0
+      ? stars.map(s => fmt(s)).join(' ')
+      : `(${fmt('空宮')})`
+    lines.push(
+      `| ${fmt(monthHanja)} | ${formatZhiKorHanja(ly.mingGongZhi)} | ${fmt(ly.natalPalaceName)} | ${starText} |`,
+    )
+  }
+  return lines
+}
+
+export function appendLiunianExportSections(
+  lines: string[],
+  chart: ZiweiChart,
+  liunian: LiuNianInfo,
+  fmt: (h: string) => string,
+  sectionTitle: (title: string) => string,
+): void {
+  lines.push('')
+  lines.push(sectionTitle(`${fmt('流年')} (${liunian.year}年 ${liunian.gan}${liunian.zhi}年)`))
+  lines.push(formatZiweiCurrentYunLine(chart, liunian))
+  lines.push('─────')
+  lines.push(`${fmt('大限')}: ${liunian.daxianAgeStart}-${liunian.daxianAgeEnd}歲 ${fmt(liunian.daxianPalaceName)}`)
+  lines.push(`${fmt('流年命宮')}: ${formatZhiKorHanja(liunian.mingGongZhi)} → ${fmt('本命')} ${fmt(liunian.natalPalaceAtMing)}`)
+
+  const mingStars = getMainStarsAtZhi(chart, liunian.mingGongZhi)
+  lines.push(`${fmt('主星')}: ${mingStars.length > 0 ? mingStars.map(s => fmt(s)).join(' ') : `(${fmt('空宮')})`}`)
+
+  lines.push('')
+  lines.push(sectionTitle(fmt('流年四化')))
+  lines.push('─────')
+  for (const huaType of ['化祿', '化權', '化科', '化忌'] as const) {
+    let starName = ''
+    for (const [s, h] of Object.entries(liunian.siHua)) {
+      if (h === huaType) { starName = s; break }
+    }
+    const palaceName = liunian.siHuaPalaces[huaType] || '?'
+    if (starName) lines.push(`${fmt(huaType)}: ${fmt(starName)} → ${fmt(palaceName)}`)
+  }
+
+  lines.push('')
+  lines.push(sectionTitle(`${fmt('流年')}${fmt('十二宮')}`))
+  lines.push('─────')
+  lines.push(...buildLiunianPalacesExportLines(chart, liunian, fmt))
+
+  lines.push('')
+  lines.push(sectionTitle(fmt('流月')))
+  lines.push('─────')
+  lines.push(...buildLiuyueExportLines(chart, liunian, fmt))
+}
