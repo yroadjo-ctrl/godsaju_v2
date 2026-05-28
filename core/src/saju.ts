@@ -17,7 +17,7 @@ import { calculateJohu } from './johu-analysis.ts';
 import { calculateHapHwa } from './hap-hwa-analysis.ts';
 import { calculateGyeokguk } from './gyeokguk-analysis.ts';
 import { calculateDaewoonMeta } from './daewoon-meta.ts';
-import { getManAgeInCalendarYear } from './age.ts';
+import { getManAge } from './age.ts';
 import { formatNayeon } from './nayeon.ts';
 import { getAdjustedBirthDateTime } from './birth-calendar.ts';
 import type {
@@ -485,8 +485,8 @@ export function calculateSaju(input: BirthInput): SajuResult {
     }
   });
   const daewoon: DaewoonItem[] = rawDaewoon.map((dw, i) => {
-    // 칸 헤더 나이: startDate 연도 12/31 만나이 (세운·대운수 표기와 동일 기준)
-    const age = getManAgeInCalendarYear(year, month, day, dw.startDate.getFullYear());
+    // 칸 헤더 나이: ◆시작 시점 만나이
+    const age = getManAge(year, month, day, dw.startDate);
     const dwStem = dw.ganzi[0];
     const dwBranch = dw.ganzi[1];
     const dwStemSipsin = getSipsin(dayStem, dwStem);

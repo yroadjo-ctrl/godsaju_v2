@@ -13,7 +13,6 @@ import {
   calculateMonthPillarBasisFromInput,
   buildJieQiDateKeyMap,
   formatMonthlyJieQiCell,
-  formatLichunBoundaryCell,
   formatDaewoonStartCell,
   annotateTransit,
   getLiuNianGanziForCalendarYear,
@@ -31,13 +30,12 @@ import { formatCurrentYunLine, type CurrentYunContext, SOUN_EMPTY_REASON } from 
 import { formatDaewoonAgeBridgeNote } from './yun-age-notes.ts'
 import {
   findActiveDaewoonIndex,
+  getActiveSounIndex,
   isBeforeFirstDaewoon,
   getFirstDaewoonStartYear,
-  getCurrentLiuNianGanzi,
   getCurrentLiuYueGanzi,
-  getEffectiveYunCalendarYear,
 } from './yun-period.ts'
-import { getManAgeInCalendarYear } from '@core/age'
+import { getManAge } from '@core/age'
 import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
@@ -183,15 +181,25 @@ export function sajuToText(
   const now = new Date()
   const currentYear = now.getFullYear()
   const currentMonth = now.getMonth() + 1
-  const effectiveYunYear = getEffectiveYunCalendarYear(now)
-  const currentSounGanzi = soun.find((s) => s.year === effectiveYunYear)?.ganzi ?? null
   const beforeFirstDaewoon = isBeforeFirstDaewoon(daewoon, now)
+  const activeSounIdx = getActiveSounIndex(soun, daewoon, now)
+  const currentSounGanzi = activeSounIdx >= 0 ? soun[activeSounIdx]?.ganzi ?? null : null
+  const currentSounYear = activeSounIdx >= 0 ? soun[activeSounIdx]?.year : null
   const activeDwIdx = daewoon.length > 0 ? findActiveDaewoonIndex(daewoon, now) : -1
   const currentDaewoonGanzi = !beforeFirstDaewoon && activeDwIdx >= 0
     ? daewoon[activeDwIdx]?.ganzi ?? null
     : null
   const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
-  const currentSewoonGanzi = beforeFirstDaewoon ? null : getCurrentLiuNianGanzi(now)
+  const sewoonNowYear = now.getFullYear()
+  const sewoonStartDateThisYear = new Date(
+    sewoonNowYear,
+    input.month - 1,
+    input.day,
+    input.unknownTime ? 12 : input.hour,
+    input.unknownTime ? 0 : input.minute,
+  )
+  const sewoonYear = now.getTime() >= sewoonStartDateThisYear.getTime() ? sewoonNowYear : sewoonNowYear - 1
+  const currentSewoonGanzi = beforeFirstDaewoon ? null : getLiuNianGanziForCalendarYear(sewoonYear)
   const currentMonthGanzi = getCurrentLiuYueGanzi(now)
   const currentDayGanzi = getDayPillarForDate(currentYear, currentMonth, now.getDate())
 
@@ -644,19 +652,41 @@ export function sajuToText(
   }
 
   // 小運 (대운 전)
+  const sounCurrentReason = soun.length === 0
+    ? SOUN_EMPTY_REASON
+    : !beforeFirstDaewoon
+      ? '대운 시작 후 소운 구간 종료'
+      : null
+
   if (soun.length > 0) {
     lines.push('')
     lines.push(sectionTitle('소운(小運)'))
-    pushCurrentYun('소운', currentSounGanzi, null, currentSounGanzi ? { kind: 'year', year: effectiveYunYear } : null)
+    pushCurrentYun(
+      '소운',
+      currentSounGanzi,
+      null,
+      currentSounGanzi && currentSounYear != null ? { kind: 'year', year: currentSounYear } : null,
+      sounCurrentReason,
+    )
+    const dm = daewoonMeta
+    if (dm) {
+      lines.push(`- **順逆行**: ${dm.directionKor}(${dm.direction}) [${dm.yinYangGenderLabel}]`)
+      if (dm.firstGanzi && dm.firstStartDate) {
+        lines.push(`- **1運 전환**: ${dm.firstGanzi} · ${formatDaewoonStartCell(dm.firstStartDate).replace(/\n/g, ' ')}`)
+      }
+    }
+    if (!beforeFirstDaewoon) {
+      lines.push('※ 표는 대운 전 과거 소운 구간 참고용 (현재 시각 기준 활성 소운 없음)')
+    }
     for (const line of YUN_SOUN_EXPORT_NOTES) lines.push(line)
     if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
     lines.push(YUN_METHOD_NOTES.yongsinTransit)
     lines.push('')
 
     const revSoun = [...soun].reverse()
-    lines.push(`| ${['나이', ...revSoun.map((s) => `${s.age}세`)].join(' | ')} |`)
+    lines.push(`| ${['나이', ...revSoun.map((s) => `만 ${s.age}세`)].join(' | ')} |`)
     lines.push(`| ${['연도', ...revSoun.map((s) => `${s.year}年`)].join(' | ')} |`)
-    lines.push(`| ${['절기', ...revSoun.map((s) => formatLichunBoundaryCell(s.year, '<br>').replace(/\|/g, '\\|'))].join(' | ')} |`)
+    lines.push(`| ${['◆시작', ...revSoun.map((s) => formatDaewoonStartCell(s.startDate, '<br>').replace(/\|/g, '\\|'))].join(' | ')} |`)
     lines.push(`| ${['간지', ...revSoun.map((s) => s.ganzi)].join(' | ')} |`)
     lines.push(`| ${['12운성', ...revSoun.map((s) => s.unseong)].join(' | ')} |`)
     lines.push(`| ${['비고', ...revSoun.map((s) => {
@@ -672,7 +702,11 @@ export function sajuToText(
   } else {
     lines.push('')
     lines.push(sectionTitle('소운(小運)'))
-    pushCurrentYun('소운', null, null, null, SOUN_EMPTY_REASON)
+    pushCurrentYun('소운', null, null, null, sounCurrentReason)
+    const dm = daewoonMeta
+    if (dm) {
+      lines.push(`- **順逆行**: ${dm.directionKor}(${dm.direction}) [${dm.yinYangGenderLabel}]`)
+    }
     for (const line of YUN_SOUN_EXPORT_NOTES) lines.push(line)
     if (input.unknownTime) lines.push('※ 출생 시각 미입력 — 月柱 기준.')
     lines.push('')
@@ -690,10 +724,10 @@ export function sajuToText(
     const dm = daewoonMeta
     if (dm) {
       lines.push(`- **대운수**: ${dm.daewoonSuDisplay}(${dm.monthGanzi}) (정밀 ${dm.daewoonSu})`)
-      lines.push(`- **順逆行**: ${dm.directionKor}(${dm.direction})`)
+      lines.push(`- **順逆行**: ${dm.directionKor}(${dm.direction}) [${dm.yinYangGenderLabel}]`)
       lines.push(`- **절기 기준**: ${dm.termLabel} (출생→절기 ${dm.daysToTerm}일, 3일=1년)`)
       if (dm.firstGanzi) {
-        lines.push(`- **1運**: ${dm.firstGanzi} · ${dm.firstStartDate.getFullYear()}년부터`)
+        lines.push(`- **1運**: ${dm.firstGanzi} · ${formatDaewoonStartCell(dm.firstStartDate).replace(/\n/g, ' ')}`)
       }
     }
     const bridgeNote = formatDaewoonAgeBridgeNote(
@@ -713,14 +747,14 @@ export function sajuToText(
     lines.push(`| ${separatorRow} |`)
     
     // 나이 행
-    const ageRow = ['나이', ...reversedDaewoon.map(dw => `${dw.age}${t('saju.ageSuffix')}[${dw.index}運]`)].join(' | ')
+    const ageRow = ['나이', ...reversedDaewoon.map(dw => `만 ${dw.age}${t('saju.ageSuffix')}[${dw.index}運]`)].join(' | ')
     lines.push(`| ${ageRow} |`)
     
     // 시작연도 행
     const yearRow = ['시작연도', ...reversedDaewoon.map(dw => `${dw.startDate.getFullYear()}年`)].join(' | ')
     lines.push(`| ${yearRow} |`)
 
-    const startJieRow = ['시작', ...reversedDaewoon.map((dw) =>
+    const startJieRow = ['◆시작', ...reversedDaewoon.map((dw) =>
       formatDaewoonStartCell(dw.startDate, '<br>').replace(/\|/g, '\\|'),
     )].join(' | ')
     lines.push(`| ${startJieRow} |`)
@@ -788,11 +822,16 @@ export function sajuToText(
   if (dayStem && yearBranch) {
     lines.push('') // 빈 줄
     lines.push(sectionTitle('세운 (歲運)'))
+    const sewoonNowYear = now.getFullYear()
+    const sewoonStartDateThisYear = new Date(sewoonNowYear, input.month - 1, input.day, input.unknownTime ? 12 : input.hour, input.unknownTime ? 0 : input.minute)
+    const sewoonYear = now.getTime() >= sewoonStartDateThisYear.getTime() ? sewoonNowYear : sewoonNowYear - 1
+    const currentSewoonGanziByAge = beforeFirstDaewoon ? null : getLiuNianGanziForCalendarYear(sewoonYear)
+
     pushCurrentYun(
       '세운',
-      currentSewoonGanzi,
+      currentSewoonGanziByAge,
       pendingStartYear,
-      currentSewoonGanzi ? { kind: 'year', year: effectiveYunYear } : null,
+      currentSewoonGanziByAge ? { kind: 'year', year: sewoonYear } : null,
     )
     lines.push('')
     
@@ -812,7 +851,7 @@ export function sajuToText(
     const nextDw = daewoon[dwIdx + 1]
     const endYear = nextDw ? nextDw.startDate.getFullYear() : startYear + 10
 
-    lines.push(`- **선택 대운**: ${targetDw.age}세~ (${startYear}년~${endYear - 1}년)`)
+    lines.push(`- **선택 대운**: 만 ${targetDw.age}세[${targetDw.index}運] · ${formatDaewoonStartCell(targetDw.startDate).replace(/\n/g, ' ')} (${startYear}년~${endYear - 1}년)`)
     const sewoonBridge = formatDaewoonAgeBridgeNote(
       input.year, input.month, input.day, targetDw,
     )
@@ -821,9 +860,11 @@ export function sajuToText(
     lines.push('')
 
     const sewunData: any[] = []
+    const sewoonHour = input.unknownTime ? 12 : input.hour
+    const sewoonMinute = input.unknownTime ? 0 : input.minute
     for (let year = startYear; year < endYear; year++) {
-      const age = getManAgeInCalendarYear(input.year, input.month, input.day, year)
-      
+      const startDate = new Date(year, input.month - 1, input.day, sewoonHour, sewoonMinute)
+      const age = getManAge(input.year, input.month, input.day, startDate)
       const ganzi = getLiuNianGanziForCalendarYear(year)
       const stem = ganzi.charAt(0)
       const branch = ganzi.charAt(1)
@@ -848,6 +889,7 @@ export function sajuToText(
       sewunData.push({
         year,
         age,
+        startDate,
         ganzi,
         stem,
         branch,
@@ -863,7 +905,7 @@ export function sajuToText(
     sewunData.reverse()
     
     // 테이블 생성
-    const sewunHeaderRow = ['나이', ...sewunData.map(s => `${s.age}세`)].join(' | ')
+    const sewunHeaderRow = ['나이', ...sewunData.map(s => `만 ${s.age}세`)].join(' | ')
     lines.push(`| ${sewunHeaderRow} |`)
     
     const sewunSeparatorRow = Array(sewunData.length + 1).fill('---').join(' | ')
@@ -872,8 +914,8 @@ export function sajuToText(
     const sewunYearRow = ['연도', ...sewunData.map(s => `${s.year}年`)].join(' | ')
     lines.push(`| ${sewunYearRow} |`)
 
-    const sewunJieRow = ['절기', ...sewunData.map((s) =>
-      formatLichunBoundaryCell(s.year, '<br>').replace(/\|/g, '\\|'),
+    const sewunJieRow = ['◆시작', ...sewunData.map((s) =>
+      formatDaewoonStartCell(s.startDate, '<br>').replace(/\|/g, '\\|'),
     )].join(' | ')
     lines.push(`| ${sewunJieRow} |`)
     

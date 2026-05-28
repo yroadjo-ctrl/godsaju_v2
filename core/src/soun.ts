@@ -6,7 +6,7 @@
  */
 import type { JasiMethod } from './types.ts';
 import { HGANJI, YANGGAN } from './constants.ts';
-import { getManAgeInCalendarYear } from './age.ts';
+import { getManAge } from './age.ts';
 import {
   calcPillarIndices,
   getRelation,
@@ -18,6 +18,8 @@ import {
 export interface SounItem {
   age: number;
   year: number;
+  /** 해당 칸 小運 시작 — 출생 월·일·시 (매년 생일) */
+  startDate: Date;
   ganzi: string;
   stemSipsin: string;
   branchSipsin: string;
@@ -71,6 +73,7 @@ export function calculateSoun(
 
   for (let i = 0; i < count; i++) {
     const calendarYear = birthYear + i;
+    const startDate = new Date(calendarYear, month - 1, day, hour, minute);
     const idx = pymod(startIdx + flow * i, HGANJI.length);
     const ganzi = HGANJI[idx];
     const stem = ganzi[0];
@@ -78,8 +81,9 @@ export function calculateSoun(
     const jeonggi = getJeonggi(branch);
 
     items.push({
-      age: getManAgeInCalendarYear(birthYear, month, day, calendarYear),
+      age: getManAge(birthYear, month, day, startDate),
       year: calendarYear,
+      startDate,
       ganzi,
       stemSipsin: getSipsinHanja(dayStem, stem),
       branchSipsin: getSipsinHanja(dayStem, jeonggi),

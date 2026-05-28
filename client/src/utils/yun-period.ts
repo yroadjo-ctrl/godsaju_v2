@@ -1,4 +1,4 @@
-import type { DaewoonItem } from '@core/types'
+import type { DaewoonItem, SounItem } from '@core/types'
 import { getEffectiveCalendarYearForLichun, getLiuNianGanziAtDate, getLiuYueGanziAtDate } from '@core/yun-transit'
 
 /** 첫 대운 시작 나이 (칸 헤더 — startDate 시점 만나이) */
@@ -72,7 +72,27 @@ export function getCurrentLiuYueGanzi(now: Date = new Date()): string {
   )
 }
 
-/** 입춘 전이면 전년도 칸 기준 (소운·세운) */
+/** 입춘 전이면 전년도 칸 기준 (세운) */
 export function getEffectiveYunCalendarYear(now: Date = new Date()): number {
   return getEffectiveCalendarYearForLichun(now)
+}
+
+/** 현재 시각 기준 활성 소운 칸 — startDate(생일) 기준 */
+export function findActiveSounIndex(soun: SounItem[], now: Date = new Date()): number {
+  if (soun.length === 0) return -1
+  const t = now.getTime()
+  for (let i = soun.length - 1; i >= 0; i--) {
+    if (t >= soun[i].startDate.getTime()) return i
+  }
+  return -1
+}
+
+/** 1운 ◆시작 전에만 소운 활성 (대운 시작 후에는 하이라이트·현재 소운 없음) */
+export function getActiveSounIndex(
+  soun: SounItem[],
+  daewoon: DaewoonItem[],
+  now: Date = new Date(),
+): number {
+  if (!isBeforeFirstDaewoon(daewoon, now)) return -1
+  return findActiveSounIndex(soun, now)
 }

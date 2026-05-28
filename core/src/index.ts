@@ -21,7 +21,19 @@ export {
   getManAge,
   getManAgeInCalendarYear,
 } from './age.ts'
-export { calculateDaewoonMeta, calcDaysForDaewoonSu, daewoonAgeFromBirth, MS_PER_SAJU_YEAR } from './daewoon-meta.ts'
+export {
+  calculateDaewoonMeta,
+  daewoonAgeFromBirth,
+  formatDaewoonYinYangGenderLabel,
+  MS_PER_SAJU_YEAR,
+} from './daewoon-meta.ts'
+export type { DaewoonYinYangGenderLabel } from './daewoon-meta.ts'
+export {
+  calcDaysForDaewoonSu,
+  computeFirstDaewoonStartDate,
+  addDaewoonRemainderOffset,
+  roundDaewoonSuDisplay,
+} from './daewoon-start.ts'
 export type { DaewoonMeta } from './daewoon-meta.ts'
 export { calculateSoun, getSounYearCount } from './soun.ts'
 export type { SounItem } from './soun.ts'

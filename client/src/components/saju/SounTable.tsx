@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { SounItem, YongsinStats } from '@core/types'
+import type { DaewoonItem, DaewoonMeta, SounItem, YongsinStats } from '@core/types'
 import { annotateTransit } from '@core/index'
 import { collectNatalTransitInteractions } from '../../utils/yun-bigo.ts'
 import YunBigoCell from './YunBigoCell.tsx'
@@ -9,13 +9,15 @@ import {
 } from '../../utils/format.ts'
 import { YUN_SOUN_UI_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
-import { getEffectiveYunCalendarYear } from '../../utils/yun-period.ts'
+import { formatDaewoonStartCell } from '@core/jieqi-lunar'
+import { getActiveSounIndex } from '../../utils/yun-period.ts'
 import { SOUN_EMPTY_REASON } from '../../utils/ganzi-display.ts'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
   soun: SounItem[]
+  daewoon: DaewoonItem[]
+  daewoonMeta: DaewoonMeta
   natalGanzis: string[]
   yongsin: YongsinStats
   unknownTime?: boolean
@@ -27,8 +29,8 @@ const STEM_SIPSIN_MAP: Record<string, string> = {
   '比肩': '비견(比肩)', '劫財': '겁재(劫財)',
 }
 
-export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: Props) {
-  const effectiveYear = getEffectiveYunCalendarYear()
+export default function SounTable({ soun, daewoon, daewoonMeta, natalGanzis, yongsin, unknownTime }: Props) {
+  const activeSounIdx = getActiveSounIndex(soun, daewoon)
   const items = useMemo(() => soun.map((item) => {
     const ann = annotateTransit(item.ganzi, natalGanzis, yongsin)
     const interactions = collectNatalTransitInteractions(item.ganzi, natalGanzis)
@@ -40,7 +42,8 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
     }
   }), [soun, natalGanzis, yongsin])
 
-  const currentSounGanzi = items.find((item) => item.year === effectiveYear)?.ganzi ?? null
+  const currentSounGanzi = activeSounIdx >= 0 ? items[activeSounIdx]?.ganzi ?? null : null
+  const currentSounYear = activeSounIdx >= 0 ? items[activeSounIdx]?.year : null
   const displayItems = [...items].reverse()
 
   if (items.length === 0) {
@@ -66,8 +69,16 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
         title={<>소운 <span className="font-hanja">(小運)</span></>}
         yunLabel="소운"
         currentGanzi={currentSounGanzi}
-        context={currentSounGanzi ? { kind: 'year', year: effectiveYear } : null}
+        context={currentSounGanzi && currentSounYear != null ? { kind: 'year', year: currentSounYear } : null}
       />
+      <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
+        <span className="text-gray-600 dark:text-gray-300">
+          {daewoonMeta.directionKor}({daewoonMeta.direction})
+        </span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+          [{daewoonMeta.yinYangGenderLabel}]
+        </span>
+      </div>
       {YUN_SOUN_UI_NOTES.map((line, i) => (
         <p
           key={line}
@@ -81,15 +92,16 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
           <thead>
             <tr className="bg-gray-100">
               {displayItems.map((item, idx) => {
-                const isCurrentYear = item.year === effectiveYear
+                const actualIdx = items.length - 1 - idx
+                const isActive = activeSounIdx >= 0 && actualIdx === activeSounIdx
                 return (
                 <th
                   key={idx}
                   className={`border border-black px-2 py-2 text-center min-w-[88px] text-xs font-semibold ${
-                    isCurrentYear ? 'bg-[#FFFF00]' : 'bg-gray-100'
+                    isActive ? 'bg-[#FFFF00]' : 'bg-gray-100'
                   }`}
                 >
-                  {item.age}세<br />({item.year}년)
+                  만 {item.age}세<br />({item.year}년)
                 </th>
                 )
               })}
@@ -98,7 +110,7 @@ export default function SounTable({ soun, natalGanzis, yongsin, unknownTime }: P
           <tbody>
             <tr>
               {displayItems.map((item, idx) => (
-                <JieQiBoundaryCell key={idx} text={formatLichunBoundaryCell(item.year)} />
+                <JieQiBoundaryCell key={idx} text={formatDaewoonStartCell(item.startDate)} />
               ))}
             </tr>
             <tr>

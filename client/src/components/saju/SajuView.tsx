@@ -135,6 +135,8 @@ export default function SajuView({
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <SounTable
           soun={result.soun}
+          daewoon={result.daewoon}
+          daewoonMeta={result.daewoonMeta}
           natalGanzis={ganzis}
           yongsin={result.yongsin}
           unknownTime={input.unknownTime}
@@ -166,11 +168,14 @@ export default function SajuView({
           birthYear={input.year}
           birthMonth={input.month}
           birthDay={input.day}
+          birthHour={input.hour}
+          birthMinute={input.minute}
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           gongmangBranches={result.gongmang.branches}
           natalGanzis={ganzis}
           yongsin={result.yongsin}
+          unknownTime={input.unknownTime}
         />
       </div>
 

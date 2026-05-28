@@ -116,12 +116,15 @@ export default function DaewoonTable({
         <span className="font-medium text-gray-700 dark:text-gray-200">
           대운수 : {daewoonMeta.daewoonSuDisplay}({daewoonMeta.monthGanzi})
         </span>
-        <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
+        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
           (정밀 {daewoonMeta.daewoonSu})
         </span>
         <span className="text-gray-500 dark:text-gray-400 mx-2">·</span>
         <span className="text-gray-600 dark:text-gray-300">
           {daewoonMeta.directionKor}({daewoonMeta.direction})
+        </span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+          [{daewoonMeta.yinYangGenderLabel}]
         </span>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           {daewoonMeta.termLabel} · 절기까지 {daewoonMeta.daysToTerm}일 (3일=1년)
@@ -164,7 +167,7 @@ export default function DaewoonTable({
                     }`}
                     onClick={() => onSelectDaewoon(actualIdx)}
                   >
-                    {item.age}세[{item.index}運]<br />({item.startYear}년~)
+                    만 {item.age}세[{item.index}運]<br />({item.startYear}년~)
                   </th>
                 )
               })}

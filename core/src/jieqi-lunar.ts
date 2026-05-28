@@ -466,7 +466,7 @@ export function formatMonthlyJieQiCell(
   }).join(lineBreak);
 }
 
-/** 입춘(立春) — 세운·소운 연도 칸 경계 */
+/** 입춘(立春) — 세운 연도 칸 경계 */
 export function formatLichunBoundaryCell(calYear: number, lineBreak = '\n'): string {
   const dt = lookupJieForYear(calYear, 2);
   if (!dt) return '-';

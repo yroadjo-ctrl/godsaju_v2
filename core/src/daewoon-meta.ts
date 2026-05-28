@@ -1,10 +1,23 @@
 import type { JasiMethod } from './types.ts';
 import { HGANJI, YANGGAN } from './constants.ts';
 import { calcSolarTerms, calcPillarIndices } from './pillars.ts';
-import { formatDaewoonTermLabel } from './jieqi-lunar.ts';
+import { calcDaysForDaewoonSu } from './daewoon-start.ts';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export const MS_PER_SAJU_YEAR = 365.242196 * MS_PER_DAY;
+
+/** 년간 음양 + 성별 → 順逆行 구분 (陽男·陰女·陰男·陽女) */
+export type DaewoonYinYangGenderLabel = '陽男' | '陰女' | '陰男' | '陽女';
+
+export function formatDaewoonYinYangGenderLabel(
+  isMale: boolean,
+  isYangYearStem: boolean,
+): DaewoonYinYangGenderLabel {
+  if (isYangYearStem && isMale) return '陽男';
+  if (!isYangYearStem && !isMale) return '陰女';
+  if (!isYangYearStem && isMale) return '陰男';
+  return '陽女';
+}
 
 export interface DaewoonMeta {
   /** 대운수 (첫 대운 시작 만나이, 소수) — 3일=1년 */
@@ -14,6 +27,8 @@ export interface DaewoonMeta {
   isForward: boolean;
   direction: '順行' | '逆行';
   directionKor: string;
+  /** 陽男·陰女·陰男·陽女 */
+  yinYangGenderLabel: DaewoonYinYangGenderLabel;
   /** 출생일부터 절기까지 일수 */
   daysToTerm: number;
   termDate: Date;
@@ -29,35 +44,7 @@ export function daewoonAgeFromBirth(birth: Date, start: Date): number {
   return Math.max(0, Math.round(years));
 }
 
-/**
- * 대운수용 절기까지 일수 — getDaewoon과 동일 기준.
- * 順行: 출생 → 다음 節(절출) · 逆行: 출생 → 이전 節(절입)
- */
-export function calcDaysForDaewoonSu(
-  isForward: boolean,
-  birth: Date,
-  ingi: Date,
-  outgi: Date,
-  ingiName: number,
-  outgiName: number,
-): { daysForSu: number; termDate: Date; termLabel: string } {
-  if (isForward) {
-    const daysForSu = Math.max(0, (outgi.getTime() - birth.getTime()) / MS_PER_DAY);
-    return {
-      daysForSu,
-      termDate: outgi,
-      termLabel: formatDaewoonTermLabel(outgiName, 'outgi', outgi),
-    };
-  }
-  const daysForSu = Math.max(0, Math.abs(birth.getTime() - ingi.getTime()) / MS_PER_DAY);
-  return {
-    daysForSu,
-    termDate: ingi,
-    termLabel: formatDaewoonTermLabel(ingiName, 'ingi', ingi),
-  };
-}
-
-/** 대운수·順逆行 — 3日=1年 (calcDaysForDaewoonSu와 getDaewoon 공통) */
+/** 대운수·順逆行 — 3日=1年 */
 export function calculateDaewoonMeta(
   isMale: boolean,
   year: number,
@@ -73,6 +60,7 @@ export function calculateDaewoonMeta(
 
   const yearStem = HGANJI[sy][0];
   const isYangGan = YANGGAN.includes(yearStem);
+  const yinYangGenderLabel = formatDaewoonYinYangGenderLabel(isMale, isYangGan);
   const isForward = (isMale && isYangGan) || (!isMale && !isYangGan);
 
   const terms = calcSolarTerms(year, month, day, hour, minute);
@@ -100,6 +88,7 @@ export function calculateDaewoonMeta(
     isForward,
     direction: isForward ? '順行' : '逆行',
     directionKor: isForward ? '순행' : '역행',
+    yinYangGenderLabel,
     daysToTerm,
     termDate,
     termLabel,

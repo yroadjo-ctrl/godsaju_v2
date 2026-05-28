@@ -5,12 +5,12 @@ import { getRelation, getJeonggi, getTwelveMeteor, getTwelveSpirit } from '@core
 import { collectNatalTransitInteractions } from '../../utils/yun-bigo.ts'
 import YunBigoCell from './YunBigoCell.tsx'
 import { getLiuNianGanziForCalendarYear } from '@core/yun-transit'
-import { getManAgeInCalendarYear } from '@core/age'
-import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
+import { getManAge } from '@core/age'
+import { formatDaewoonStartCell } from '@core/jieqi-lunar'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { YUN_SEWOON_UI_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { isBeforeFirstDaewoon, shouldHighlightSewoonYear, getFirstDaewoonStartYear, getCurrentLiuNianGanzi, getEffectiveYunCalendarYear } from '../../utils/yun-period.ts'
+import { isBeforeFirstDaewoon, getFirstDaewoonStartYear } from '../../utils/yun-period.ts'
 import { formatDaewoonAgeBridgeNote } from '../../utils/yun-age-notes.ts'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
@@ -20,16 +20,20 @@ interface Props {
   birthYear: number
   birthMonth: number
   birthDay: number
+  birthHour: number
+  birthMinute: number
   dayStem: string
   yearBranch: string
   gongmangBranches: [string, string]
   natalGanzis: string[]
   yongsin: YongsinStats
+  unknownTime?: boolean
 }
 
 interface SewoonItem {
   year: number
   age: number
+  startDate: Date
   ganzi: string
   stemSipsin: string
   branchSipsin: string
@@ -49,7 +53,7 @@ const STEM_SIPSIN_MAP: Record<string, string> = {
 
 function buildSewoonItems(
   startYear: number, endYear: number,
-  birthYear: number, birthMonth: number, birthDay: number,
+  birthYear: number, birthMonth: number, birthDay: number, birthHour: number, birthMinute: number,
   dayStem: string, yearBranch: string,
   gmSet: Set<string>,
   natalGanzis: string[],
@@ -58,6 +62,7 @@ function buildSewoonItems(
   const items: SewoonItem[] = []
 
   for (let y = startYear; y < endYear; y++) {
+    const startDate = new Date(y, birthMonth - 1, birthDay, birthHour, birthMinute)
     const ganzi = getLiuNianGanziForCalendarYear(y)
     const stem = ganzi[0]
     const branch = ganzi[1]
@@ -72,7 +77,8 @@ function buildSewoonItems(
 
     items.push({
       year: y,
-      age: getManAgeInCalendarYear(birthYear, birthMonth, birthDay, y),
+      age: getManAge(birthYear, birthMonth, birthDay, startDate),
+      startDate,
       ganzi,
       stemSipsin,
       branchSipsin,
@@ -88,7 +94,7 @@ function buildSewoonItems(
 }
 
 export default function SewoonTable({
-  daewoon, displayIndex, birthYear, birthMonth, birthDay, dayStem, yearBranch, gongmangBranches, natalGanzis, yongsin,
+  daewoon, displayIndex, birthYear, birthMonth, birthDay, birthHour, birthMinute, dayStem, yearBranch, gongmangBranches, natalGanzis, yongsin, unknownTime,
 }: Props) {
   const gmSet = useMemo(() => new Set(gongmangBranches), [gongmangBranches])
 
@@ -107,22 +113,31 @@ export default function SewoonTable({
       birthYear,
       birthMonth,
       birthDay,
+      birthHour,
+      birthMinute,
       dayStem,
       yearBranch,
       gmSet,
       natalGanzis,
       yongsin,
     )
-  }, [targetDaewoon, startYearForSewoon, endYearForSewoon, birthYear, birthMonth, birthDay, dayStem, yearBranch, gmSet, natalGanzis, yongsin])
+  }, [targetDaewoon, startYearForSewoon, endYearForSewoon, birthYear, birthMonth, birthDay, birthHour, birthMinute, dayStem, yearBranch, gmSet, natalGanzis, yongsin])
 
   if (sewoonItems.length === 0) return null
 
-  const currentYear = new Date().getFullYear()
+  const now = new Date()
   const beforeFirstDaewoon = isBeforeFirstDaewoon(daewoon)
   const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
-  const currentSewoonGanzi = beforeFirstDaewoon ? null : getCurrentLiuNianGanzi()
-  const effectiveYunYear = getEffectiveYunCalendarYear()
-  const periodLabel = `${targetDaewoon.age}세~ (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
+  const activeIdx = (() => {
+    const t = now.getTime()
+    for (let i = sewoonItems.length - 1; i >= 0; i--) {
+      if (t >= sewoonItems[i].startDate.getTime()) return i
+    }
+    return -1
+  })()
+  const currentSewoonGanzi = beforeFirstDaewoon ? null : (activeIdx >= 0 ? sewoonItems[activeIdx]?.ganzi ?? null : null)
+  const currentSewoonYear = beforeFirstDaewoon ? null : (activeIdx >= 0 ? sewoonItems[activeIdx]?.year : null)
+  const periodLabel = `만 ${targetDaewoon.age}세 (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
   const ageBridgeNote = formatDaewoonAgeBridgeNote(
     birthYear, birthMonth, birthDay, targetDaewoon,
   )
@@ -134,7 +149,7 @@ export default function SewoonTable({
         yunLabel="세운"
         currentGanzi={currentSewoonGanzi}
         pendingStartYear={pendingStartYear}
-        context={currentSewoonGanzi ? { kind: 'year', year: effectiveYunYear } : null}
+        context={currentSewoonGanzi && currentSewoonYear != null ? { kind: 'year', year: currentSewoonYear } : null}
       />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 대운: {periodLabel}
@@ -154,15 +169,16 @@ export default function SewoonTable({
           <thead>
             <tr className="bg-gray-100">
               {[...sewoonItems].reverse().map((item, idx) => {
-                const isCurrentYear = shouldHighlightSewoonYear(item.year, currentYear, daewoon)
+                const actualIdx = sewoonItems.length - 1 - idx
+                const isActive = !beforeFirstDaewoon && activeIdx >= 0 && actualIdx === activeIdx
                 return (
                   <th
                     key={idx}
                     className={`border border-black px-2 py-2 text-center min-w-[100px] text-xs font-semibold ${
-                      isCurrentYear ? 'bg-[#FFFF00]' : 'bg-gray-100'
+                      isActive ? 'bg-[#FFFF00]' : 'bg-gray-100'
                     }`}
                   >
-                    {item.age}세<br />({item.year}년)
+                    만 {item.age}세<br />({item.year}년)
                   </th>
                 )
               })}
@@ -171,7 +187,7 @@ export default function SewoonTable({
           <tbody>
             <tr>
               {[...sewoonItems].reverse().map((item, idx) => (
-                <JieQiBoundaryCell key={idx} text={formatLichunBoundaryCell(item.year)} />
+                <JieQiBoundaryCell key={idx} text={formatDaewoonStartCell(item.startDate)} />
               ))}
             </tr>
             <tr>

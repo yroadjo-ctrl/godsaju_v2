@@ -23,6 +23,11 @@ import {
   calcLunarSolarTerms,
   calcLunarMonthBoundaryTerms,
 } from './jieqi-lunar.ts';
+import {
+  calcDaysForDaewoonSu,
+  computeFirstDaewoonStartDate,
+  roundDaewoonSuDisplay,
+} from './daewoon-start.ts';
 
 // =============================================
 // 유틸리티
@@ -375,19 +380,23 @@ export function getDaewoon(
   const isYangGan = YANGGAN.includes(yearStem);
   const order = (isMale && isYangGan) || (!isMale && !isYangGan);
 
-  // 절기 시간 계산
   const terms = calcSolarTerms(year, month, day, hour, minute);
-
-  const d0 = order
-    ? new Date(terms.outgiYear, terms.outgiMonth - 1, terms.outgiDay, terms.outgiHour, terms.outgiMin)
-    : new Date(terms.ingiYear, terms.ingiMonth - 1, terms.ingiDay, terms.ingiHour, terms.ingiMin);
-
   const birth = new Date(year, month - 1, day, hour, minute);
-  const diff = birth.getTime() - d0.getTime();
-  const secondsToFirst = Math.abs(diff / 1000 * 365.242196 / 3.0);
+  const ingi = new Date(
+    terms.ingiYear, terms.ingiMonth - 1, terms.ingiDay, terms.ingiHour, terms.ingiMin,
+  );
+  const outgi = new Date(
+    terms.outgiYear, terms.outgiMonth - 1, terms.outgiDay, terms.outgiHour, terms.outgiMin,
+  );
 
-  let nextDate = new Date(birth.getTime() + secondsToFirst * 1000);
-  nextDate.setMilliseconds(0);
+  const { daysForSu } = calcDaysForDaewoonSu(
+    order, birth, ingi, outgi, terms.ingiName, terms.outgiName,
+  );
+  const daewoonSuRounded = roundDaewoonSuDisplay(daysForSu);
+
+  let nextDate = computeFirstDaewoonStartDate(
+    year, month, day, hour, minute, daysForSu, daewoonSuRounded,
+  );
 
   const flow = order ? 1 : -1;
   let mIdx = sm;

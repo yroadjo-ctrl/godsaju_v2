@@ -18,7 +18,7 @@ export function getManAge(
   return Math.max(0, age);
 }
 
-/** 대운·세운·소운 칸 — 해당 양력년 12/31 기준 만나이 */
+/** 세운 칸 — 해당 양력년 12/31 기준 만나이 (소운·대운은 생일 startDate 기준) */
 export function getManAgeInCalendarYear(
   birthYear: number,
   birthMonth: number,

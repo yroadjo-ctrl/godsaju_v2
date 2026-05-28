@@ -7,7 +7,7 @@ function formatStartDateShort(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${h}:${min}`
 }
 
-/** ◆시작 시점 vs 칸(12/31) 나이 — 1차이 날 때만 */
+/** ◆시작 직후 만나이 vs 칸 헤더 불일치 시 (드묾) */
 export function formatDaewoonAgeBridgeNote(
   birthYear: number,
   birthMonth: number,
@@ -15,9 +15,8 @@ export function formatDaewoonAgeBridgeNote(
   dw: DaewoonItem,
   meta?: DaewoonMeta,
 ): string | null {
-  const atMoment = getManAge(birthYear, birthMonth, birthDay, dw.startDate)
-  const atYearEnd = dw.age
-  if (atMoment === atYearEnd) return null
+  const atStart = getManAge(birthYear, birthMonth, birthDay, dw.startDate)
+  if (atStart === dw.age) return null
 
   const label = dw.index === 1
     ? `1運 ◆시작(${formatStartDateShort(dw.startDate)})`
@@ -27,7 +26,7 @@ export function formatDaewoonAgeBridgeNote(
     ? ` · 대운수 ${meta.daewoonSuDisplay}(${meta.daewoonSu})`
     : ''
 
-  return `※ ${label}: 당시 ${atMoment}세 → 칸 ${atYearEnd}세(12/31)${su}`
+  return `※ ${label}: 만 ${atStart}세 → 칸 만 ${dw.age}세${su}`
 }
 
 /** @deprecated formatDaewoonAgeBridgeNote 사용 */
