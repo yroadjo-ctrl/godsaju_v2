@@ -255,7 +255,8 @@ export function calcLunarSolarTerms(
   const monthIdx = getLunarMonthIndex(year, month, day, hour, min);
   const ingiName = monthIdx * 2;
   const midName = monthIdx * 2 + 1;
-  const outgiName = monthIdx * 2 + 2;
+  /** 子月(11) 다음 절출은 小寒(0) — 24절기 순환 */
+  const outgiName = (monthIdx * 2 + 2) % 24;
 
   const birth = birthDate(year, month, day, hour, min);
   const ingi = findJieAtOrBefore(birth, ingiName);
@@ -300,7 +301,7 @@ export function calcLunarMonthBoundaryTerms(
 
   const birth = new Date(year, month - 1, day, hour, min);
   const ingiName = ii * 2;
-  const outgiName = ii * 2 + 2;
+  const outgiName = (ii * 2 + 2) % 24;
 
   let ingi: Date | null = null;
   for (const y of [year - 1, year, year + 1]) {

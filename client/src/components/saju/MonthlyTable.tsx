@@ -62,7 +62,7 @@ function buildMonthlyItems(
 ): MonthlyItem[] {
   const items: MonthlyItem[] = []
 
-  for (let month = 1; month <= 12; month++) {
+  for (let month = 12; month >= 1; month--) {
     const ganzi = getLiuYueGanziForCalendarMonth(displayYear, month)
     const stem = ganzi[0]
     const branch = ganzi[1]

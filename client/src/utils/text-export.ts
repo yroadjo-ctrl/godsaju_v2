@@ -925,11 +925,11 @@ export function sajuToText(
     lines.push(YUN_METHOD_NOTES.yongsinTransit)
     lines.push('')
 
-    // 월운 데이터: 지정 연도(monthlyYear) 1월~12월 동적 생성
+    // 월운 데이터: 지정 연도(monthlyYear) 12월~1월 (좌→우, 대운·세운 표와 동일)
     const targetMonthlyYear = monthlyYear ?? new Date().getFullYear()
     const monthlyData: any[] = []
 
-    for (let monthIdx = 1; monthIdx <= 12; monthIdx++) {
+    for (let monthIdx = 12; monthIdx >= 1; monthIdx--) {
       const ganziStr = getLiuYueGanziForCalendarMonth(targetMonthlyYear, monthIdx)
       const year = targetMonthlyYear
       const actualMonth = monthIdx
