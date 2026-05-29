@@ -1,7 +1,13 @@
+/** AI·UI 공통 — 「지금」·📍 현재 O운 시각 기준 */
+export const YUN_AI_NOW_KST_NOTE =
+  '※ **「지금」·📍 현재 O운** = 보는(복사) 그 순간을 **한국 표준시(KST) 벽시계** 로 해석해 입춘·◆節入·◆시작과 비교. 접속 국가·PC 시간대와 무관.';
+
 /** 대운·세운·월운·일운 계산 방식 안내 (UI · AI 복사 공통) */
 export const YUN_METHOD_NOTES = {
   hybrid:
     '※ 연·월 숫자는 양력 기준. 간지·合冲·용신 등 풀이 데이터는 사주원국과 동일(입춘·12節). 전환 시점은 ◆절기 행 참고.',
+
+  nowKst: YUN_AI_NOW_KST_NOTE,
 
   /** @deprecated YUN_DAewoon_UI_NOTES 사용 */
   manAge:
@@ -64,6 +70,7 @@ export const YUN_SOUN_UI_NOTES = [
 
 /** AI 복사 — 대운 */
 export const YUN_DAewoon_EXPORT_NOTES = [
+  YUN_AI_NOW_KST_NOTE,
   ...YUN_DAewoon_UI_NOTES,
   '※ **노란 칸 = 📍 현재 대운 = AI 풀이**: 복사 시점 기준. 다음 ◆대운 시작 전까지 **직전 運** 칸 간지·(◆시작 연도).',
   '※ 1運 ◆대운 시작 전: 소운+流年 · 대운 풀이·하이라이트 없음.',
@@ -71,6 +78,7 @@ export const YUN_DAewoon_EXPORT_NOTES = [
 
 /** AI 복사 — 세운 */
 export const YUN_SEWOON_EXPORT_NOTES = [
+  YUN_AI_NOW_KST_NOTE,
   '※ 표: 양력 「연도」 칸. 칸 流年·십신 등 = 해당년 ◆입춘 직후(레퍼런스). ◆입춘 행 시각 참고.',
   '※ **노란 칸 = 📍 현재 세운 = AI 풀이(지금 적용 流年)**: 복사 시점 기준. ◆입춘 전이면 **전년도 칸** 간지·(전년). 입춘 후부터 해당 연도 칸.',
   '※ 예: 2026년 1월 → 노란 칸·📍·풀이 모두 2025년 칸(乙巳·을사). 2026년 칸(丙午)은 입춘 전 적용·하이라이트 없음.',
@@ -80,6 +88,7 @@ export const YUN_SEWOON_EXPORT_NOTES = [
 
 /** AI 복사 — 월운 */
 export const YUN_MONTHLY_EXPORT_NOTES = [
+  YUN_AI_NOW_KST_NOTE,
   '※ 표: 양력 「월」 칸. 칸 流月·십신 등 = 그 달 첫 ◆節入 직후(레퍼런스). ·=中气.',
   '※ **노란 칸 = 📍 현재 월운 = AI 풀이(지금 적용 流月)**: 복사 시점 기준. 해당 월 첫 ◆節入 전이면 **전월 칸** 간지·(전년·전월). ◆節入 후 해당 월 칸.',
   '※ 예: 2026년 5월 1일(◆입하 전) → 노란 칸·📍·풀이 모두 4월 칸(壬辰·임진). 5월 칸(癸巳)은 입하 전 적용·하이라이트 없음.',
@@ -89,6 +98,7 @@ export const YUN_MONTHLY_EXPORT_NOTES = [
 
 /** AI 복사 — 소운 */
 export const YUN_SOUN_EXPORT_NOTES = [
+  YUN_AI_NOW_KST_NOTE,
   YUN_METHOD_NOTES.sounCount,
   YUN_METHOD_NOTES.soun,
   '※ **노란 칸 = 📍 현재 소운 = AI 풀이(1운 ◆전)**: 복사 시점 기준. 올해 ◆소운 시작 전이면 **직전 연도** 칸.',

@@ -9,6 +9,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:kst": "vitest run --config vitest.config.ts core/src/kst-clock.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

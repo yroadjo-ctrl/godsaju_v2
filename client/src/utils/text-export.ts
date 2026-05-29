@@ -49,6 +49,11 @@ import {
 } from './yun-period.ts'
 import { getManAge } from '@core/age'
 import { getYunBirthDateTime } from '@core/birth-calendar'
+import {
+  instantToKstParts,
+  kstAddOneMonthMinusOneDay,
+  kstWallClockToInstant,
+} from '@core/kst-clock'
 import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
@@ -193,8 +198,10 @@ export function sajuToText(
   }
 
   const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth() + 1
+  const nowKst = instantToKstParts(now)
+  const currentYear = nowKst.year
+  const currentMonth = nowKst.month
+  const currentDay = nowKst.day
   const effectiveSewoonYear = getEffectiveYunCalendarYear(now)
   const effectiveYunYm = getEffectiveYunCalendarYearMonth(now)
   const beforeFirstDaewoon = isBeforeFirstDaewoon(daewoon, now)
@@ -209,7 +216,7 @@ export function sajuToText(
   const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
   const currentSewoonGanzi = beforeFirstDaewoon ? null : getCurrentLiuNianGanzi(now)
   const currentMonthGanzi = getCurrentLiuYueGanzi(now)
-  const currentDayGanzi = getDayPillarForDate(currentYear, currentMonth, now.getDate())
+  const currentDayGanzi = getDayPillarForDate(currentYear, currentMonth, currentDay)
 
   const pushCurrentYun = (
     label: string,
@@ -244,6 +251,8 @@ export function sajuToText(
     lines.push(`- ${line}`)
   }
   lines.push('- ※ 절기 시·분: lunar-javascript + KST(+1h). 년·월주는 입춘·12節 기준.')
+  lines.push(`- ※ 복사 시각(KST): ${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')} ${String(nowKst.hour).padStart(2, '0')}:${String(nowKst.minute).padStart(2, '0')}`)
+  lines.push(`- ${YUN_METHOD_NOTES.nowKst}`)
   lines.push('- ※ **소운·대운·세운·월운**: 노란 칸 = 📍 현재 O운 = AI 풀이(◆소운·◆대운·입춘·◆節入 시각 기준). 세운·월 칸 간지는 절기 직후 레퍼런스.')
   lines.push('')
 
@@ -991,7 +1000,7 @@ export function sajuToText(
     lines.push('')
 
     // 월운 데이터: 지정 연도(monthlyYear) 12월~1월 (좌→우, 대운·세운 표와 동일)
-    const targetMonthlyYear = monthlyYear ?? new Date().getFullYear()
+    const targetMonthlyYear = monthlyYear ?? currentYear
     const monthlyData: any[] = []
 
     for (let monthIdx = 12; monthIdx >= 1; monthIdx--) {
@@ -1161,27 +1170,24 @@ export function sajuToText(
   // 일운 (日運) - 오늘 ~ 다음달 오늘-1일
   lines.push('')
   lines.push(sectionTitle('일운 (日運)'))
-  pushCurrentYun('일운', currentDayGanzi, null, { kind: 'monthDay', month: currentMonth, day: now.getDate() })
+  pushCurrentYun('일운', currentDayGanzi, null, { kind: 'monthDay', month: currentMonth, day: currentDay })
   lines.push('')
 
-  const dlToday = new Date()
-  const dlEnd = new Date(dlToday)
-  dlEnd.setMonth(dlEnd.getMonth() + 1)
-  dlEnd.setDate(dlEnd.getDate() - 1)
-
-  const startY = dlToday.getFullYear()
-  const startM = dlToday.getMonth() + 1
-  const startD = dlToday.getDate()
-  const endY = dlEnd.getFullYear()
-  const endM = dlEnd.getMonth() + 1
-  const endD = dlEnd.getDate()
+  const dlEndKst = kstAddOneMonthMinusOneDay(nowKst)
+  const startY = nowKst.year
+  const startM = nowKst.month
+  const startD = nowKst.day
+  const endY = dlEndKst.year
+  const endM = dlEndKst.month
+  const endD = dlEndKst.day
   lines.push(`(${startY}.${startM}.${startD} ~ ${endY}.${endM}.${endD})`)
   lines.push(YUN_METHOD_NOTES.daily)
+  lines.push(YUN_METHOD_NOTES.nowKst)
   lines.push(YUN_METHOD_NOTES.yongsinTransit)
   lines.push('')
 
   // 절기 데이터 맵 (일운 달력과 동일 — lunar-javascript + KST)
-  const dlJieQiMap = buildJieQiDateKeyMap([dlToday.getFullYear(), dlEnd.getFullYear()])
+  const dlJieQiMap = buildJieQiDateKeyMap([startY, endY])
 
   // 일운 공망 지지 집합 (원국 일주 기준)
   const dlDayGanzi = pillars[1]?.pillar.ganzi || ''
@@ -1193,11 +1199,14 @@ export function sajuToText(
   lines.push('| 날짜(음력) / 절기 | 천간십성 | 천간 | 지지 | 지지십성 | 12운성 | 12신살 | 비고 | 용신 |')
   lines.push('|---|---|---|---|---|---|---|---|')
 
-  const dlCurrent = new Date(dlToday)
-  while (dlCurrent <= dlEnd) {
-    const y = dlCurrent.getFullYear()
-    const m = dlCurrent.getMonth() + 1
-    const d = dlCurrent.getDate()
+  const MS_PER_DAY = 24 * 60 * 60 * 1000
+  let dlInstant = kstWallClockToInstant({ year: startY, month: startM, day: startD, hour: 0, minute: 0 })
+  const dlEndInstant = kstWallClockToInstant({ year: endY, month: endM, day: endD, hour: 23, minute: 59 })
+  while (dlInstant <= dlEndInstant) {
+    const dlKst = instantToKstParts(dlInstant)
+    const y = dlKst.year
+    const m = dlKst.month
+    const d = dlKst.day
 
     try {
       const solar = Solar.fromYmd(y, m, d)
@@ -1247,7 +1256,7 @@ export function sajuToText(
       // 날짜 처리 오류 무시
     }
 
-    dlCurrent.setDate(dlCurrent.getDate() + 1)
+    dlInstant += MS_PER_DAY
   }
 
   lines.push('')

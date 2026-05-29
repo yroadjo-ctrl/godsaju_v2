@@ -104,6 +104,15 @@ export {
 export type { LunarConversionErrorCode } from './lunar-calendar.ts'
 export { getAdjustedBirthDateTime, getYunBirthDateTime } from './birth-calendar.ts'
 export {
+  instantToKstParts,
+  kstWallClockToDate,
+  kstWallClockToInstant,
+  kstAddOneMonthMinusOneDay,
+  getYunNow,
+  KST_OFFSET_MS,
+} from './kst-clock.ts'
+export type { KstWallClock } from './kst-clock.ts'
+export {
   getBirthTimeAdjustmentInfo,
   formatClockTime,
   formatSignedMinutes,

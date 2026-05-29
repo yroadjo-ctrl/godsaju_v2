@@ -2,6 +2,7 @@
  * 24절기 — lunar-javascript + KST(+1h), 일운 달력·포스텔러 계열과 동일
  */
 import { Solar } from 'lunar-javascript';
+import { instantToKstParts, kstWallClockToDate, kstWallClockToInstant } from './kst-clock.ts';
 
 /** 24절기 순서 (lunar-javascript 키와 일치) */
 export const JIEQI_LIST = [
@@ -70,18 +71,25 @@ type SolarTermData = {
 
 function solarTermToKstDate(data: SolarTermData): Date {
   const [y, m, d, h, min, s] = data.toYmdHms().split(/[-: ]/).map(Number);
-  const date = new Date(y, m - 1, d, h, min, s ?? 0);
-  date.setHours(date.getHours() + 1);
-  return date;
+  const baseMs = kstWallClockToInstant({
+    year: y,
+    month: m,
+    day: d,
+    hour: h,
+    minute: min,
+    second: s ?? 0,
+  });
+  return new Date(baseMs + 60 * 60 * 1000);
 }
 
 function dateToParts(d: Date): JieQiDateTime {
+  const p = instantToKstParts(d);
   return {
-    year: d.getFullYear(),
-    month: d.getMonth() + 1,
-    day: d.getDate(),
-    hour: d.getHours(),
-    minute: d.getMinutes(),
+    year: p.year,
+    month: p.month,
+    day: p.day,
+    hour: p.hour,
+    minute: p.minute,
   };
 }
 
@@ -135,11 +143,11 @@ function pymod(a: number, b: number): number {
 }
 
 function birthDate(year: number, month: number, day: number, hour: number, min: number): Date {
-  return new Date(year, month - 1, day, hour, min);
+  return kstWallClockToDate({ year, month, day, hour, minute: min });
 }
 
-function findJieAtOrBefore(birth: Date, jieIndex: number): Date | null {
-  const y = birth.getFullYear();
+function findJieAtOrBefore(birth: Date, jieIndex: number, anchorYear: number): Date | null {
+  const y = anchorYear;
   let best: Date | null = null;
   for (const yr of [y - 1, y, y + 1]) {
     const dt = lookupJieForYear(yr, jieIndex);
@@ -148,8 +156,8 @@ function findJieAtOrBefore(birth: Date, jieIndex: number): Date | null {
   return best;
 }
 
-function findJieAfter(after: Date, jieIndex: number): Date | null {
-  const y = after.getFullYear();
+function findJieAfter(after: Date, jieIndex: number, anchorYear: number): Date | null {
+  const y = anchorYear;
   let best: Date | null = null;
   for (const yr of [y - 1, y, y + 1, y + 2]) {
     const dt = lookupJieForYear(yr, jieIndex);
@@ -158,9 +166,9 @@ function findJieAfter(after: Date, jieIndex: number): Date | null {
   return best;
 }
 
-function findJieBetween(after: Date, jieIndex: number, before: Date): Date | null {
+function findJieBetween(after: Date, jieIndex: number, before: Date, anchorYear: number): Date | null {
   let best: Date | null = null;
-  const y0 = after.getFullYear();
+  const y0 = anchorYear;
   for (const yr of [y0 - 1, y0, y0 + 1, y0 + 2]) {
     const dt = lookupJieForYear(yr, jieIndex);
     if (dt && dt > after && dt <= before && (!best || dt < best)) best = dt;
@@ -236,9 +244,9 @@ export function getLunarYearGanIndex(
   year: number, month: number, day: number, hour: number, min: number,
 ): number {
   const birth = birthDate(year, month, day, hour, min);
-  const calYear = birth.getFullYear();
+  const calYear = year;
   const ichun = lookupJieForYear(calYear, 2);
-  const sajuYear = ichun && birth < ichun ? calYear - 1 : calYear;
+  const sajuYear = ichun && birth.getTime() < ichun.getTime() ? calYear - 1 : calYear;
   return pymod(ANCHOR_YEAR_GANJI_INDEX + (sajuYear - ANCHOR_SAJU_YEAR), 60);
 }
 
@@ -259,13 +267,13 @@ export function calcLunarSolarTerms(
   const outgiName = (monthIdx * 2 + 2) % 24;
 
   const birth = birthDate(year, month, day, hour, min);
-  const ingi = findJieAtOrBefore(birth, ingiName);
+  const ingi = findJieAtOrBefore(birth, ingiName, year);
   if (!ingi) throw new Error(`Cannot find ingi jie ${jieIndexLabel(ingiName)}`);
 
-  const outgi = findJieAfter(ingi, outgiName);
+  const outgi = findJieAfter(ingi, outgiName, year);
   if (!outgi) throw new Error(`Cannot find outgi jie ${jieIndexLabel(outgiName)}`);
 
-  const mid = findJieBetween(ingi, midName, outgi);
+  const mid = findJieBetween(ingi, midName, outgi, year);
   if (!mid) throw new Error(`Cannot find mid jie ${jieIndexLabel(midName)}`);
 
   const ingiP = dateToParts(ingi);
@@ -299,7 +307,7 @@ export function calcLunarMonthBoundaryTerms(
     throw new Error(`Unknown month branch: ${monthBranch}`);
   }
 
-  const birth = new Date(year, month - 1, day, hour, min);
+  const birth = kstWallClockToDate({ year, month, day, hour, minute: min });
   const ingiName = ii * 2;
   const outgiName = (ii * 2 + 2) % 24;
 
@@ -363,11 +371,12 @@ export function formatDaewoonTermLabel(
 ): string {
   const { kor, hanja } = jieqiKorHanja(jieIndex);
   const suffix = kind === 'ingi' ? '절입' : '절출';
-  const y = termDate.getFullYear();
-  const m = String(termDate.getMonth() + 1).padStart(2, '0');
-  const day = String(termDate.getDate()).padStart(2, '0');
-  const h = String(termDate.getHours()).padStart(2, '0');
-  const min = String(termDate.getMinutes()).padStart(2, '0');
+  const p = instantToKstParts(termDate);
+  const y = p.year;
+  const m = String(p.month).padStart(2, '0');
+  const day = String(p.day).padStart(2, '0');
+  const h = String(p.hour).padStart(2, '0');
+  const min = String(p.minute).padStart(2, '0');
   return `${kor}(${hanja}) ${suffix} ${y}-${m}-${day} ${h}:${min}`;
 }
 
@@ -381,10 +390,11 @@ export function buildJieQiCalendarMap(
     const dt = lookupJieForYear(year, index);
     if (!dt) return;
 
-    const korMonth = dt.getMonth() + 1;
-    const korDay = dt.getDate();
-    const korHour = String(dt.getHours()).padStart(2, '0');
-    const korMin = String(dt.getMinutes()).padStart(2, '0');
+    const kp = instantToKstParts(dt);
+    const korMonth = kp.month;
+    const korDay = kp.day;
+    const korHour = String(kp.hour).padStart(2, '0');
+    const korMin = String(kp.minute).padStart(2, '0');
 
     if (!result[korMonth]) result[korMonth] = {};
     result[korMonth][korDay] = { name, time: `${korHour}:${korMin}` };
@@ -404,10 +414,11 @@ export function buildJieQiDateKeyMap(
     JIEQI_LIST.forEach((_, idx) => {
       const dt = lookupJieForYear(yr, idx);
       if (!dt) return;
-      const key = `${dt.getFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`;
+      const kp = instantToKstParts(dt);
+      const key = `${kp.year}-${kp.month}-${kp.day}`;
       map[key] = {
         name: JIEQI_KOR_24[idx],
-        time: `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`,
+        time: `${String(kp.hour).padStart(2, '0')}:${String(kp.minute).padStart(2, '0')}`,
       };
     });
   }
@@ -433,16 +444,17 @@ export function getMonthlyJieQiEntries(year: number, month: number): MonthlyJieQ
 
   JIEQI_LIST.forEach((hanja, idx) => {
     const dt = lookupJieForYear(year, idx);
-    if (!dt || dt.getFullYear() !== year || dt.getMonth() + 1 !== month) return;
+    const kp = dt ? instantToKstParts(dt) : null;
+    if (!kp || kp.year !== year || kp.month !== month) return;
     entries.push({
       jieIndex: idx,
       isJieRu: idx % 2 === 0,
       kor: JIEQI_KOR_24[idx],
       hanja,
       month,
-      day: dt.getDate(),
-      hour: dt.getHours(),
-      minute: dt.getMinutes(),
+      day: kp.day,
+      hour: kp.hour,
+      minute: kp.minute,
     });
   });
 
@@ -470,15 +482,17 @@ export function formatMonthlyJieQiCell(
 export function formatLichunBoundaryCell(calYear: number, lineBreak = '\n'): string {
   const dt = lookupJieForYear(calYear, 2);
   if (!dt) return '-';
-  const h = String(dt.getHours()).padStart(2, '0');
-  const min = String(dt.getMinutes()).padStart(2, '0');
-  return `◆입춘(立春)${lineBreak}${dt.getMonth() + 1}/${dt.getDate()} ${h}:${min}`;
+  const p = instantToKstParts(dt);
+  const h = String(p.hour).padStart(2, '0');
+  const min = String(p.minute).padStart(2, '0');
+  return `◆입춘(立春)${lineBreak}${p.month}/${p.day} ${h}:${min}`;
 }
 
 function formatYunStartCell(label: string, startDate: Date, lineBreak = '\n'): string {
-  const h = String(startDate.getHours()).padStart(2, '0');
-  const min = String(startDate.getMinutes()).padStart(2, '0');
-  return `${label}${lineBreak}${startDate.getMonth() + 1}/${startDate.getDate()} ${h}:${min}`;
+  const p = instantToKstParts(startDate);
+  const h = String(p.hour).padStart(2, '0');
+  const min = String(p.minute).padStart(2, '0');
+  return `${label}${lineBreak}${p.month}/${p.day} ${h}:${min}`;
 }
 
 /** 대운 칸 시작 시각 */

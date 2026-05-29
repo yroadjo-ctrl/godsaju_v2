@@ -1,17 +1,19 @@
 /**
  * 만나이(생일 기준) — 표·현재 O운·대운/세운/소운 판정 공통
  */
+import { instantToKstParts, kstWallClockToDate } from './kst-clock.ts';
 
-/** 기준일 시점 만나이 (생일 전이면 -1) */
+/** 기준일 시점 만나이 (생일 전이면 -1) — refDate는 UTC 순간, 기준일은 KST 벽시계 */
 export function getManAge(
   birthYear: number,
   birthMonth: number,
   birthDay: number,
   refDate: Date,
 ): number {
-  let age = refDate.getFullYear() - birthYear;
-  const refMonth = refDate.getMonth() + 1;
-  const refDay = refDate.getDate();
+  const ref = instantToKstParts(refDate);
+  let age = ref.year - birthYear;
+  const refMonth = ref.month;
+  const refDay = ref.day;
   if (refMonth < birthMonth || (refMonth === birthMonth && refDay < birthDay)) {
     age--;
   }
@@ -25,5 +27,10 @@ export function getManAgeInCalendarYear(
   birthDay: number,
   calendarYear: number,
 ): number {
-  return getManAge(birthYear, birthMonth, birthDay, new Date(calendarYear, 11, 31));
+  return getManAge(
+    birthYear,
+    birthMonth,
+    birthDay,
+    kstWallClockToDate({ year: calendarYear, month: 12, day: 31, hour: 0, minute: 0 }),
+  );
 }

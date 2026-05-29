@@ -1,5 +1,6 @@
 import type { DaewoonItem, SounItem } from '@core/types'
 import { getMonthlyJieQiEntries, lookupJieForYear } from '@core/jieqi-lunar'
+import { instantToKstParts } from '@core/kst-clock'
 import { getEffectiveCalendarYearForLichun, getLiuNianGanziAtDate, getLiuYueGanziAtDate } from '@core/yun-transit'
 
 /** 첫 대운 시작 나이 (칸 헤더 — startDate 시점 만나이) */
@@ -51,24 +52,14 @@ export function shouldHighlightSewoonYear(
 
 /** 현재 流年 간지 (입춘 기준) */
 export function getCurrentLiuNianGanzi(now: Date = new Date()): string {
-  return getLiuNianGanziAtDate(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    now.getDate(),
-    now.getHours(),
-    now.getMinutes(),
-  )
+  const p = instantToKstParts(now)
+  return getLiuNianGanziAtDate(p.year, p.month, p.day, p.hour, p.minute)
 }
 
 /** 현재 流月 간지 (12節 기준) */
 export function getCurrentLiuYueGanzi(now: Date = new Date()): string {
-  return getLiuYueGanziAtDate(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    now.getDate(),
-    now.getHours(),
-    now.getMinutes(),
-  )
+  const p = instantToKstParts(now)
+  return getLiuYueGanziAtDate(p.year, p.month, p.day, p.hour, p.minute)
 }
 
 /** 입춘 전이면 전년도 칸 기준 (세운) */
@@ -81,8 +72,9 @@ export function getEffectiveYunCalendarYearMonth(now: Date = new Date()): {
   year: number
   month: number
 } {
-  const calYear = now.getFullYear()
-  const calMonth = now.getMonth() + 1
+  const nowKst = instantToKstParts(now)
+  const calYear = nowKst.year
+  const calMonth = nowKst.month
   const firstJieRu = getMonthlyJieQiEntries(calYear, calMonth).find((e) => e.isJieRu)
 
   if (!firstJieRu) {

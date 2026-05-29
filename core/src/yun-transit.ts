@@ -9,18 +9,19 @@ import {
   getMonthlyJieQiEntries,
   lookupJieForYear,
 } from './jieqi-lunar.ts';
+import { instantToKstParts } from './kst-clock.ts';
 
 const LICHUN_JIE_INDEX = 2;
 
 /** 절입 직후 1분 — 해당 節·입춘 이후 월령·년주 간지 */
 function sampleAfterJieRu(dt: Date): { year: number; month: number; day: number; hour: number; min: number } {
-  const t = new Date(dt.getTime() + 60_000);
+  const p = instantToKstParts(dt.getTime() + 60_000);
   return {
-    year: t.getFullYear(),
-    month: t.getMonth() + 1,
-    day: t.getDate(),
-    hour: t.getHours(),
-    min: t.getMinutes(),
+    year: p.year,
+    month: p.month,
+    day: p.day,
+    hour: p.hour,
+    min: p.minute,
   };
 }
 
@@ -75,8 +76,9 @@ export function getLiuYueGanziAtDate(
 
 /** 입춘 전이면 전년도 칸 기준 (소운·현재 세운) */
 export function getEffectiveCalendarYearForLichun(now: Date = new Date()): number {
-  const calYear = now.getFullYear();
+  const instant = now.getTime();
+  const calYear = instantToKstParts(instant).year;
   const lichun = lookupJieForYear(calYear, 2);
-  if (lichun && now < lichun) return calYear - 1;
+  if (lichun && instant < lichun.getTime()) return calYear - 1;
   return calYear;
 }
