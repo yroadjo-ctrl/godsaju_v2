@@ -62,10 +62,9 @@ import {
   resolveZiweiLiunian,
   appendLiunianExportSections,
   buildDaxianHorizontalTableLines,
-  formatZiweiCurrentYunLine,
   ZIWEI_YUN_TABLE_EXPORT_NOTES,
 } from './ziwei-liunian-export.ts'
-import { getActiveDaxianToday } from './ziwei-yun-period.ts'
+import { formatZiweiCurrentDaxianExportLine } from './ziwei-yun-period.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1302,8 +1301,9 @@ export function ziweiToText(
 
   const liunian = resolveZiweiLiunian(chart, liunianOrYear)
 
+  const daxianCurrentLine = formatZiweiCurrentDaxianExportLine(chart)
   lines.push('')
-  lines.push(formatZiweiCurrentYunLine(liunian, getActiveDaxianToday(chart)))
+  if (daxianCurrentLine) lines.push(daxianCurrentLine)
   lines.push(sectionTitle(fmt('大限')))
   for (const note of ZIWEI_YUN_TABLE_EXPORT_NOTES) lines.push(note)
   lines.push('')

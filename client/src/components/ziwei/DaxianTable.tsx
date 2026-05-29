@@ -2,8 +2,9 @@ import { useMemo, useRef, useEffect } from 'react'
 import type { ZiweiChart } from '@core/types'
 import { getDaxianList } from '@core/ziwei'
 import { stemSolidBgClass, branchSolidBgClass } from '../../utils/format.ts'
-import { ZiweiInline, ZiweiStacked, ZiweiSectionTitleKey } from './ZiweiLabel.tsx'
+import { ZiweiInline, ZiweiStacked } from './ZiweiLabel.tsx'
 import { getDaxianStartCalendarYear } from '../../utils/ziwei-yun-period.ts'
+import YunSectionHeading from '../saju/YunSectionHeading.tsx'
 interface Props {
   chart: ZiweiChart
   selectedIdx: number
@@ -19,6 +20,10 @@ export default function DaxianTable({
 }: Props) {
   const daxianList = useMemo(() => getDaxianList(chart), [chart])
   const activeIdx = autoIndex
+  const activeDaxian = activeIdx >= 0 ? daxianList[activeIdx] : null
+  const activeStartYear = activeDaxian
+    ? getDaxianStartCalendarYear(chart, activeDaxian)
+    : null
   const scrollRef = useRef<HTMLDivElement>(null)
   const activeHeaderRef = useRef<HTMLTableCellElement>(null)
 
@@ -32,7 +37,12 @@ export default function DaxianTable({
 
   return (
     <section>
-      <ZiweiSectionTitleKey text="大限" className="mb-2" />
+      <YunSectionHeading
+        title={<>대한 <span className="font-hanja">(大限)</span></>}
+        yunLabel="대한"
+        currentGanzi={activeDaxian?.ganZhi ?? null}
+        context={activeStartYear != null ? { kind: 'year', year: activeStartYear } : null}
+      />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
         열을 클릭하면 해당 大限 구간의 流年을 아래에서 볼 수 있습니다.
         <span className="block mt-0.5">※ 大限 나이는 자미두수 虚岁(해당 양력년 − 출생년 + 1) 기준입니다. 사주 대운·세운의 만나이와 다를 수 있습니다.</span>

@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { calculateLiunian } from '@core/ziwei'
 import type { LiuNianInfo, ZiweiChart } from '@core/types'
 import { getZiweiXuSuiInCalendarYear } from '@core/ziwei'
 import { branchSolidBgClass } from '../../utils/format.ts'
-import { ZiweiInline, ZiweiSectionTitleKey } from './ZiweiLabel.tsx'
+import { ZiweiInline } from './ZiweiLabel.tsx'
+import YunSectionHeading from '../saju/YunSectionHeading.tsx'
 import { getMainStarsAtZhi } from '../../utils/ziwei-liunian-export.ts'
 import {
   getCalendarYearsForDaxian,
@@ -81,7 +82,14 @@ export default function LiunianTable({
   autoDaxianIdx,
 }: Props) {
   const columns = useMemo(() => buildLiunianColumns(chart, daxian), [chart, daxian])
-  const currentYear = new Date().getFullYear()
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear())
+  }, [])
+  const currentLiunian = useMemo(
+    () => calculateLiunian(chart, currentYear),
+    [chart, currentYear],
+  )
 
   if (columns.length === 0) return null
 
@@ -90,12 +98,17 @@ export default function LiunianTable({
 
   return (
     <section>
-      <ZiweiSectionTitleKey text="流年" className="mb-2" />
+      <YunSectionHeading
+        title={<>유년 <span className="font-hanja">(流年)</span></>}
+        yunLabel="유년"
+        currentGanzi={`${currentLiunian.gan}${currentLiunian.zhi}`}
+        context={{ kind: 'year', year: currentYear }}
+      />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 大限: {periodLabel}
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-        열을 클릭하면 해당 연도의 流月을 아래에서 볼 수 있습니다. 노란 칸은 현재 大限일 때 올해만 표시됩니다(사주 세운과 동일).
+        열을 클릭하면 해당 연도의 流月을 아래에서 볼 수 있습니다. 노란 칸은 현재 大限일 때 올해만 표시됩니다(사주 세운과 동일). 📍는 제목의 현재 유년과 동일합니다.
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">

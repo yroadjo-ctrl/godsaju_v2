@@ -5,7 +5,6 @@ import SihuaSummary from './SihuaSummary.tsx'
 import DaxianTable from './DaxianTable.tsx'
 import LiunianTable from './LiunianTable.tsx'
 import LiuyueTable from './LiuyueTable.tsx'
-import ZiweiYunSectionHeading from './ZiweiYunSectionHeading.tsx'
 import CopyButton from '../CopyButton.tsx'
 import { ZiweiSectionTitle } from './ZiweiLabel.tsx'
 import { ziweiToText } from '../../utils/text-export.ts'
@@ -84,7 +83,6 @@ export default function ZiweiView({ input }: Props) {
 
       {/* 대한 · 유년 */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-6">
-        <ZiweiYunSectionHeading chart={chart} liunian={liunian} />
         <DaxianTable
           chart={chart}
           selectedIdx={selectedDaxianIdx}

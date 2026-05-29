@@ -5,6 +5,8 @@ import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { getPalaceByZhi } from './ziwei-palace-grid.ts'
 import {
   findActiveZiweiDaxianIndex,
+  formatZiweiCurrentLiunianExportLine,
+  formatZiweiCurrentLiuyueLine,
   getCalendarYearsForDaxian,
   getDaxianStartCalendarYear,
   shouldHighlightZiweiLiunianYear,
@@ -255,17 +257,6 @@ export function buildLiuyueHorizontalTableLines(
   return lines
 }
 
-/** UI YunSectionHeading — 화면 상단 한 줄 (AI 복사 본문에는 미포함) */
-export function formatZiweiCurrentYunLine(
-  liunian: LiuNianInfo,
-  activeDaxian: { ageStart: number; ageEnd: number; palaceName: string },
-): string {
-  const fmt = formatZiweiInline
-  const daxian = `${fmt('大限')} ${activeDaxian.ageStart}-${activeDaxian.ageEnd}歲 ${fmt(activeDaxian.palaceName)}`
-  const liunianPart = `${fmt('流年')} ${liunian.year} ${liunian.gan}${liunian.zhi}年`
-  return `(현재 ${daxian} · ${liunianPart})`
-}
-
 export interface ZiweiYunExportOptions {
   selectedDaxianIdx?: number
 }
@@ -294,7 +285,11 @@ export function appendLiunianExportSections(
     focusYear: liunian.year,
   }
 
+  const liunianCurrentLine = formatZiweiCurrentLiunianExportLine(chart)
+  const liuyueCurrentLine = formatZiweiCurrentLiuyueLine(chart)
+
   lines.push('')
+  if (liunianCurrentLine) lines.push(liunianCurrentLine)
   lines.push(sectionTitle(fmt('流年')))
   lines.push(`- **선택 ${fmt('大限')}**: ${periodLabel}`)
   lines.push(`- **선택 ${fmt('流年')}** (${fmt('流月')} 연동): ${liunian.year}年 ${liunian.gan}${liunian.zhi}年`)
@@ -319,6 +314,7 @@ export function appendLiunianExportSections(
   }
 
   lines.push('')
+  if (liuyueCurrentLine) lines.push(liuyueCurrentLine)
   lines.push(sectionTitle(fmt('流月')))
   lines.push(`- **${liunian.year}年** ${liunian.gan}${liunian.zhi}年 · 열 순서: 臘月(좌)←正月(우)`)
   lines.push('')
