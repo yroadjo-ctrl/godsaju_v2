@@ -7,11 +7,15 @@ import YunBigoCell from './YunBigoCell.tsx'
 import { getLiuYueGanziForCalendarMonth } from '@core/yun-transit'
 import { getMonthlyJieQiEntries } from '@core/jieqi-lunar'
 import type { MonthlyJieQiEntry } from '@core/jieqi-lunar'
-import { YUN_METHOD_NOTES } from '../../utils/yun-method-notes.ts'
+import { YUN_MONTHLY_UI_NOTES } from '../../utils/yun-method-notes.ts'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
 import { MonthlyJieQiCell } from './JieQiCell.tsx'
-import { getCurrentLiuYueGanzi } from '../../utils/yun-period.ts'
+import {
+  getCurrentLiuYueGanzi,
+  getEffectiveYunCalendarYearMonth,
+  shouldHighlightMonthlyColumn,
+} from '../../utils/yun-period.ts'
 interface Props {
   currentYear: number
   currentMonth: number
@@ -104,7 +108,9 @@ export default function MonthlyTable({
   const gmSet = new Set(gongmangBranches)
   const natalGanzis = pillars.map((p) => (typeof p === 'string' ? p : `${p[0]}${p[1]}`))
   const monthlyItems = buildMonthlyItems(displayYear, pillars, dayStem, yearBranch, gmSet, natalGanzis, yongsin)
-  const currentMonthGanzi = getCurrentLiuYueGanzi()
+  const now = new Date()
+  const currentMonthGanzi = getCurrentLiuYueGanzi(now)
+  const effectiveYm = getEffectiveYunCalendarYearMonth(now)
 
   const changeYear = (newYear: number) => {
     if (!isControlled) setInternalYear(newYear)
@@ -122,7 +128,7 @@ export default function MonthlyTable({
           title={<>월운 <span className="font-hanja">(月運)</span></>}
           yunLabel="월운"
           currentGanzi={currentMonthGanzi}
-          context={{ kind: 'yearMonth', year: currentYear, month: currentMonth }}
+          context={{ kind: 'yearMonth', year: effectiveYm.year, month: effectiveYm.month }}
         />
         <div className="flex items-center gap-3 text-sm">
           <button
@@ -140,18 +146,19 @@ export default function MonthlyTable({
           </button>
         </div>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
-        {YUN_METHOD_NOTES.monthly}
-      </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-        {YUN_METHOD_NOTES.yongsinTransit}
-      </p>
+      {YUN_MONTHLY_UI_NOTES.map((line) => (
+        <p key={line} className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
+          {line}
+        </p>
+      ))}
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr>
               {monthlyItems.map((item, idx) => {
-                const isCurrentMonth = item.year === currentYear && item.month === currentMonth
+                const isCurrentMonth = shouldHighlightMonthlyColumn(
+                  item.year, item.month, displayYear, now,
+                )
                 return (
                   <th
                     key={idx}

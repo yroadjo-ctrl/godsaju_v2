@@ -475,9 +475,18 @@ export function formatLichunBoundaryCell(calYear: number, lineBreak = '\n'): str
   return `◆입춘(立春)${lineBreak}${dt.getMonth() + 1}/${dt.getDate()} ${h}:${min}`;
 }
 
-/** 대운 칸 시작 시각 */
-export function formatDaewoonStartCell(startDate: Date, lineBreak = '\n'): string {
+function formatYunStartCell(label: string, startDate: Date, lineBreak = '\n'): string {
   const h = String(startDate.getHours()).padStart(2, '0');
   const min = String(startDate.getMinutes()).padStart(2, '0');
-  return `◆시작${lineBreak}${startDate.getMonth() + 1}/${startDate.getDate()} ${h}:${min}`;
+  return `${label}${lineBreak}${startDate.getMonth() + 1}/${startDate.getDate()} ${h}:${min}`;
+}
+
+/** 대운 칸 시작 시각 */
+export function formatDaewoonStartCell(startDate: Date, lineBreak = '\n'): string {
+  return formatYunStartCell('◆대운 시작', startDate, lineBreak);
+}
+
+/** 소운 칸 시작 시각 */
+export function formatSounStartCell(startDate: Date, lineBreak = '\n'): string {
+  return formatYunStartCell('◆소운 시작', startDate, lineBreak);
 }

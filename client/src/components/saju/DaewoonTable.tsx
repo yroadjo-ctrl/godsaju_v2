@@ -8,7 +8,13 @@ import { useLocale } from '../../i18n/index.ts'
 import { YUN_DAewoon_UI_NOTES } from '../../utils/yun-method-notes.ts'
 import { formatDaewoonAgeBridgeNote } from '../../utils/yun-age-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { isBeforeFirstDaewoon, getFirstDaewoonStartYear, findActiveDaewoonIndex } from '../../utils/yun-period.ts'
+import {
+  isBeforeFirstDaewoon,
+  getFirstDaewoonStartYear,
+  findActiveDaewoonIndex,
+  getActiveDaewoonContextYear,
+  shouldHighlightDaewoonColumn,
+} from '../../utils/yun-period.ts'
 import { formatDaewoonStartCell } from '@core/jieqi-lunar'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
@@ -97,11 +103,12 @@ export default function DaewoonTable({
   const ageBridgeNote = formatDaewoonAgeBridgeNote(
     birthYear, birthMonth, birthDay, daewoon[0], daewoonMeta,
   )
-  const activeIdx = autoIndex >= 0 ? autoIndex : findActiveDaewoonIndex(daewoon)
+  const now = new Date()
+  const activeIdx = findActiveDaewoonIndex(daewoon, now)
   const currentDaewoonGanzi = !beforeFirstDaewoon && activeIdx >= 0
     ? daewoon[activeIdx]?.ganzi ?? null
     : null
-  const currentYear = new Date().getFullYear()
+  const activeDaewoonYear = getActiveDaewoonContextYear(daewoon, now)
 
   return (
     <section>
@@ -110,7 +117,9 @@ export default function DaewoonTable({
         yunLabel="대운"
         currentGanzi={currentDaewoonGanzi}
         pendingStartYear={pendingStartYear}
-        context={currentDaewoonGanzi ? { kind: 'year', year: currentYear } : null}
+        context={currentDaewoonGanzi && activeDaewoonYear != null
+          ? { kind: 'year', year: activeDaewoonYear }
+          : null}
       />
       <div className="mb-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm">
         <span className="font-medium text-gray-700 dark:text-gray-200">
@@ -157,8 +166,8 @@ export default function DaewoonTable({
             <tr className="bg-gray-100">
               {[...daewoonTableItems].reverse().map((item, idx) => {
                 const actualIdx = daewoonTableItems.length - 1 - idx
-                const isActive = autoIndex >= 0 && actualIdx === autoIndex
-                const isSelected = selectedIdx >= 0 && actualIdx === selectedIdx && actualIdx !== autoIndex
+                const isActive = shouldHighlightDaewoonColumn(actualIdx, daewoon, now)
+                const isSelected = selectedIdx >= 0 && actualIdx === selectedIdx && !isActive
                 return (
                   <th
                     key={idx}

@@ -2,4 +2,5 @@
 export {
   getAdjustedBirthDateTime,
   getBirthTimeAdjustmentInfo,
+  getYunBirthDateTime,
 } from './birth-time-adjustment.ts';

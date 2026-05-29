@@ -6,20 +6,32 @@ import { HGANJI } from './constants.ts';
 import {
   getLunarMonthGanIndex,
   getLunarYearGanIndex,
+  getMonthlyJieQiEntries,
   lookupJieForYear,
 } from './jieqi-lunar.ts';
 
-const ANCHOR_SAJU_YEAR = 1996;
-const ANCHOR_YEAR_GANJI_INDEX = 12;
+const LICHUN_JIE_INDEX = 2;
 
-function pymod(a: number, b: number): number {
-  return ((a % b) + b) % b;
+/** 절입 직후 1분 — 해당 節·입춘 이후 월령·년주 간지 */
+function sampleAfterJieRu(dt: Date): { year: number; month: number; day: number; hour: number; min: number } {
+  const t = new Date(dt.getTime() + 60_000);
+  return {
+    year: t.getFullYear(),
+    month: t.getMonth() + 1,
+    day: t.getDate(),
+    hour: t.getHours(),
+    min: t.getMinutes(),
+  };
 }
 
-/** 양력 calYear 칸 — 해당년 입춘(立春)부터 적용되는 流年 간지 */
+/** 양력 calYear 칸 — 해당년 입춘(立春) 節入 직후 流年 간지 */
 export function getLiuNianGanziForCalendarYear(calYear: number): string {
-  const idx = pymod(ANCHOR_YEAR_GANJI_INDEX + (calYear - ANCHOR_SAJU_YEAR), 60);
-  return HGANJI[idx];
+  const lichun = lookupJieForYear(calYear, LICHUN_JIE_INDEX);
+  if (!lichun) {
+    return getLiuNianGanziAtDate(calYear, 2, 5, 12, 0);
+  }
+  const { year, month, day, hour, min } = sampleAfterJieRu(lichun);
+  return getLiuNianGanziAtDate(year, month, day, hour, min);
 }
 
 /** 특정 시각의 流年 간지 (원국 년주와 동일 규칙) */
@@ -34,9 +46,18 @@ export function getLiuNianGanziAtDate(
   return HGANJI[idx];
 }
 
-/** 양력 월 칸 대표 流月 (월 중순 시각 12節 기준, 원국 월주와 동일) */
+/** 양력 월 칸 — 그 달 첫 節入(◆) 직후 流月 간지 (원국 월주와 동일) */
 export function getLiuYueGanziForCalendarMonth(calYear: number, calMonth: number): string {
-  return getLiuYueGanziAtDate(calYear, calMonth, 15, 12, 0);
+  const firstJieRu = getMonthlyJieQiEntries(calYear, calMonth).find((e) => e.isJieRu);
+  if (!firstJieRu) {
+    return getLiuYueGanziAtDate(calYear, calMonth, 15, 12, 0);
+  }
+  const dt = lookupJieForYear(calYear, firstJieRu.jieIndex);
+  if (!dt) {
+    return getLiuYueGanziAtDate(calYear, calMonth, firstJieRu.day, firstJieRu.hour, firstJieRu.minute);
+  }
+  const { year, month, day, hour, min } = sampleAfterJieRu(dt);
+  return getLiuYueGanziAtDate(year, month, day, hour, min);
 }
 
 /** 특정 시각의 流月 간지 (원국 월주와 동일 규칙) */

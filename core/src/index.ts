@@ -69,6 +69,7 @@ export {
   formatMonthlyJieQiCell,
   formatLichunBoundaryCell,
   formatDaewoonStartCell,
+  formatSounStartCell,
   getMonthlyJieQiEntries,
   lookupJieForYear,
   JIEQI_KOR_24,
@@ -101,7 +102,7 @@ export {
   LunarConversionError,
 } from './lunar-calendar.ts'
 export type { LunarConversionErrorCode } from './lunar-calendar.ts'
-export { getAdjustedBirthDateTime } from './birth-calendar.ts'
+export { getAdjustedBirthDateTime, getYunBirthDateTime } from './birth-calendar.ts'
 export {
   getBirthTimeAdjustmentInfo,
   formatClockTime,

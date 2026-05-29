@@ -9,8 +9,8 @@ import {
 } from '../../utils/format.ts'
 import { YUN_SOUN_UI_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { formatDaewoonStartCell } from '@core/jieqi-lunar'
-import { getActiveSounIndex } from '../../utils/yun-period.ts'
+import { formatSounStartCell } from '@core/jieqi-lunar'
+import { getActiveSounIndex, shouldHighlightSounColumn } from '../../utils/yun-period.ts'
 import { SOUN_EMPTY_REASON } from '../../utils/ganzi-display.ts'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
@@ -30,7 +30,8 @@ const STEM_SIPSIN_MAP: Record<string, string> = {
 }
 
 export default function SounTable({ soun, daewoon, daewoonMeta, natalGanzis, yongsin, unknownTime }: Props) {
-  const activeSounIdx = getActiveSounIndex(soun, daewoon)
+  const now = new Date()
+  const activeSounIdx = getActiveSounIndex(soun, daewoon, now)
   const items = useMemo(() => soun.map((item) => {
     const ann = annotateTransit(item.ganzi, natalGanzis, yongsin)
     const interactions = collectNatalTransitInteractions(item.ganzi, natalGanzis)
@@ -93,7 +94,7 @@ export default function SounTable({ soun, daewoon, daewoonMeta, natalGanzis, yon
             <tr className="bg-gray-100">
               {displayItems.map((item, idx) => {
                 const actualIdx = items.length - 1 - idx
-                const isActive = activeSounIdx >= 0 && actualIdx === activeSounIdx
+                const isActive = shouldHighlightSounColumn(actualIdx, soun, daewoon, now)
                 return (
                 <th
                   key={idx}
@@ -110,7 +111,7 @@ export default function SounTable({ soun, daewoon, daewoonMeta, natalGanzis, yon
           <tbody>
             <tr>
               {displayItems.map((item, idx) => (
-                <JieQiBoundaryCell key={idx} text={formatDaewoonStartCell(item.startDate)} />
+                <JieQiBoundaryCell key={idx} text={formatSounStartCell(item.startDate)} />
               ))}
             </tr>
             <tr>

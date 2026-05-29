@@ -6,12 +6,18 @@ import { collectNatalTransitInteractions } from '../../utils/yun-bigo.ts'
 import YunBigoCell from './YunBigoCell.tsx'
 import { getLiuNianGanziForCalendarYear } from '@core/yun-transit'
 import { getManAge } from '@core/age'
-import { formatDaewoonStartCell } from '@core/jieqi-lunar'
+import { formatLichunBoundaryCell } from '@core/jieqi-lunar'
 import { stemColorClass, branchColorClass, stemSolidBgClass, branchSolidBgClass, formatSinsal, getStemAttr, getBranchAttr } from '../../utils/format.ts'
 import { YUN_SEWOON_UI_NOTES } from '../../utils/yun-method-notes.ts'
 import YunSectionHeading from './YunSectionHeading.tsx'
-import { isBeforeFirstDaewoon, getFirstDaewoonStartYear } from '../../utils/yun-period.ts'
-import { formatDaewoonAgeBridgeNote } from '../../utils/yun-age-notes.ts'
+import {
+  isBeforeFirstDaewoon,
+  getFirstDaewoonStartYear,
+  shouldHighlightSewoonYear,
+  getCurrentLiuNianGanzi,
+  getEffectiveYunCalendarYear,
+} from '../../utils/yun-period.ts'
+import { formatDaewoonAgeBridgeNote, formatSewoonHeaderCell } from '../../utils/yun-age-notes.ts'
 import { JieQiBoundaryCell } from './JieQiCell.tsx'
 
 interface Props {
@@ -128,15 +134,8 @@ export default function SewoonTable({
   const now = new Date()
   const beforeFirstDaewoon = isBeforeFirstDaewoon(daewoon)
   const pendingStartYear = beforeFirstDaewoon ? getFirstDaewoonStartYear(daewoon) : null
-  const activeIdx = (() => {
-    const t = now.getTime()
-    for (let i = sewoonItems.length - 1; i >= 0; i--) {
-      if (t >= sewoonItems[i].startDate.getTime()) return i
-    }
-    return -1
-  })()
-  const currentSewoonGanzi = beforeFirstDaewoon ? null : (activeIdx >= 0 ? sewoonItems[activeIdx]?.ganzi ?? null : null)
-  const currentSewoonYear = beforeFirstDaewoon ? null : (activeIdx >= 0 ? sewoonItems[activeIdx]?.year : null)
+  const effectiveSewoonYear = beforeFirstDaewoon ? null : getEffectiveYunCalendarYear(now)
+  const currentSewoonGanzi = beforeFirstDaewoon ? null : getCurrentLiuNianGanzi(now)
   const periodLabel = `만 ${targetDaewoon.age}세 (${startYearForSewoon}년~${endYearForSewoon - 1}년)`
   const ageBridgeNote = formatDaewoonAgeBridgeNote(
     birthYear, birthMonth, birthDay, targetDaewoon,
@@ -149,7 +148,7 @@ export default function SewoonTable({
         yunLabel="세운"
         currentGanzi={currentSewoonGanzi}
         pendingStartYear={pendingStartYear}
-        context={currentSewoonGanzi && currentSewoonYear != null ? { kind: 'year', year: currentSewoonYear } : null}
+        context={currentSewoonGanzi && effectiveSewoonYear != null ? { kind: 'year', year: effectiveSewoonYear } : null}
       />
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
         선택 대운: {periodLabel}
@@ -169,8 +168,7 @@ export default function SewoonTable({
           <thead>
             <tr className="bg-gray-100">
               {[...sewoonItems].reverse().map((item, idx) => {
-                const actualIdx = sewoonItems.length - 1 - idx
-                const isActive = !beforeFirstDaewoon && activeIdx >= 0 && actualIdx === activeIdx
+                const isActive = shouldHighlightSewoonYear(item.year, daewoon, now)
                 return (
                   <th
                     key={idx}
@@ -178,7 +176,14 @@ export default function SewoonTable({
                       isActive ? 'bg-[#FFFF00]' : 'bg-gray-100'
                     }`}
                   >
-                    만 {item.age}세<br />({item.year}년)
+                    {formatSewoonHeaderCell(item.year, item.age, item.startDate, '\n')
+                      .split('\n')
+                      .map((line, i, lines) => (
+                        <span key={i}>
+                          {line}
+                          {i < lines.length - 1 ? <br /> : null}
+                        </span>
+                      ))}
                   </th>
                 )
               })}
@@ -187,7 +192,7 @@ export default function SewoonTable({
           <tbody>
             <tr>
               {[...sewoonItems].reverse().map((item, idx) => (
-                <JieQiBoundaryCell key={idx} text={formatDaewoonStartCell(item.startDate)} />
+                <JieQiBoundaryCell key={idx} text={formatLichunBoundaryCell(item.year)} />
               ))}
             </tr>
             <tr>

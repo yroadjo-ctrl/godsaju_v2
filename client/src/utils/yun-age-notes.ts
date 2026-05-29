@@ -1,10 +1,25 @@
 import type { DaewoonItem, DaewoonMeta } from '@core/types'
 import { getManAge } from '@core/age'
 
-function formatStartDateShort(d: Date): string {
+export function formatStartDateShort(d: Date): string {
   const h = String(d.getHours()).padStart(2, '0')
   const min = String(d.getMinutes()).padStart(2, '0')
   return `${d.getMonth() + 1}/${d.getDate()} ${h}:${min}`
+}
+
+/** 세운 헤더용 — 월/일만 (예: 9/1) */
+export function formatStartDateMonthDay(d: Date): string {
+  return `${d.getMonth() + 1}/${d.getDate()}`
+}
+
+/** 세운 표 헤더 — 2030년 / (만45세 9/1) */
+export function formatSewoonHeaderCell(
+  year: number,
+  age: number,
+  startDate: Date,
+  lineBreak = '\n',
+): string {
+  return `${year}년${lineBreak}(만${age}세 ${formatStartDateMonthDay(startDate)})`
 }
 
 /** ◆시작 직후 만나이 vs 칸 헤더 불일치 시 (드묾) */

@@ -17,6 +17,8 @@ import BirthInfoSummary from './BirthInfoSummary.tsx'
 import MonthPillarBasisNotice from './MonthPillarBasisNotice.tsx'
 import { sajuToText } from '../../utils/text-export.ts'
 import type { BirthInput, SajuResult } from '@core/types'
+import { getYunBirthDateTime } from '@core/birth-calendar'
+import { useMemo } from 'react'
 import { useLocale } from '../../i18n/index.ts'
 
 interface Props {
@@ -44,6 +46,7 @@ export default function SajuView({
 
   const ganzis = result.pillars.map(p => p.pillar.ganzi)
   const natalPillars = ganzis // [시, 일, 월, 년]
+  const yunBirth = useMemo(() => getYunBirthDateTime(input), [input])
 
   return (
     <div className="space-y-6">
@@ -148,9 +151,9 @@ export default function SajuView({
         <DaewoonTable
           daewoon={result.daewoon}
           daewoonMeta={result.daewoonMeta}
-          birthYear={input.year}
-          birthMonth={input.month}
-          birthDay={input.day}
+          birthYear={yunBirth.year}
+          birthMonth={yunBirth.month}
+          birthDay={yunBirth.day}
           unknownTime={input.unknownTime}
           natalGanzis={ganzis}
           yongsin={result.yongsin}
@@ -165,11 +168,11 @@ export default function SajuView({
         <SewoonTable
           daewoon={result.daewoon}
           displayIndex={displayDaewoonIdx}
-          birthYear={input.year}
-          birthMonth={input.month}
-          birthDay={input.day}
-          birthHour={input.hour}
-          birthMinute={input.minute}
+          birthYear={yunBirth.year}
+          birthMonth={yunBirth.month}
+          birthDay={yunBirth.day}
+          birthHour={yunBirth.hour}
+          birthMinute={yunBirth.minute}
           dayStem={result.pillars[1].pillar.stem}
           yearBranch={result.pillars[3].pillar.branch}
           gongmangBranches={result.gongmang.branches}

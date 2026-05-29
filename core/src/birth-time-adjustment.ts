@@ -42,6 +42,27 @@ export function getAdjustedBirthDateTime(input: BirthInput): {
   return info.adjusted;
 }
 
+/**
+ * 운(대운·세운) 만나이·생일 표기 — 사주원국·대운과 동일 시각
+ * (보정된 양력 시각 + 시각 미상 시 12:00)
+ */
+export function getYunBirthDateTime(input: BirthInput): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+} {
+  const adjusted = getAdjustedBirthDateTime(input);
+  return {
+    year: adjusted.year,
+    month: adjusted.month,
+    day: adjusted.day,
+    hour: input.unknownTime ? 12 : adjusted.hour,
+    minute: input.unknownTime ? 0 : adjusted.minute,
+  };
+}
+
 /** UI용: 시간 보정 모드·분해·적용 시각 */
 export function getBirthTimeAdjustmentInfo(input: BirthInput): BirthTimeAdjustmentInfo {
   const solar = resolveSolarBirthDateTime(input);
