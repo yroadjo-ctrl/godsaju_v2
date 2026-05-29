@@ -771,7 +771,7 @@ export function sajuToText(
     lines.push(`| ${separatorRow} |`)
     
     // 나이 행
-    const ageRow = ['나이', ...reversedDaewoon.map(dw => `만 ${dw.age}${t('saju.ageSuffix')}[${dw.index}運]`)].join(' | ')
+    const ageRow = ['나이', ...reversedDaewoon.map(dw => `만 ${dw.age}${t('saju.ageSuffix')}`)].join(' | ')
     lines.push(`| ${ageRow} |`)
     
     // 시작연도 행
@@ -1302,10 +1302,10 @@ export function ziweiToText(
   lines.push(sectionTitle(fmt('大限')))
   lines.push('─────')
   const daxianList = getDaxianList(chart)
-  for (const dx of daxianList) {
+  daxianList.forEach((dx, i) => {
     const stars = dx.mainStars.length > 0 ? dx.mainStars.map(s => fmt(s)).join(' ') : `(${fmt('空宮')})`
-    lines.push(`${String(dx.ageStart).padStart(3)}-${String(dx.ageEnd).padStart(3)}歲  ${fmt(dx.palaceName)}  ${dx.ganZhi}  ${stars}`)
-  }
+    lines.push(`${String(dx.ageStart).padStart(3)}-${String(dx.ageEnd).padStart(3)}歲[${i + 1}限]  ${fmt(dx.palaceName)}  ${dx.ganZhi}  ${stars}`)
+  })
   lines.push(ZIWEI_XUSUI_EXPORT_NOTE)
 
   const liunian = resolveZiweiLiunian(chart, liunianOrYear)

@@ -176,7 +176,11 @@ export default function DaewoonTable({
                     }`}
                     onClick={() => onSelectDaewoon(actualIdx)}
                   >
-                    만 {item.age}세[{item.index}運]<br />({item.startYear}년~)
+                    [{item.index}運]
+                    <br />
+                    만 {item.age}세
+                    <br />
+                    ({item.startYear}년~)
                   </th>
                 )
               })}

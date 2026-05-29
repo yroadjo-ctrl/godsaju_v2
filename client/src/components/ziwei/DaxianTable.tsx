@@ -59,6 +59,8 @@ export default function DaxianTable({
                           : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
+                    [{actualIdx + 1}限]
+                    <br />
                     {dx.ageStart}-{dx.ageEnd}歲
                     {startYear != null && (
                       <>
