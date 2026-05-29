@@ -877,10 +877,6 @@ export function sajuToText(
     const endYear = nextDw ? nextDw.startDate.getFullYear() : startYear + 10
 
     lines.push(`- **선택 대운**: 만 ${targetDw.age}세[${targetDw.index}運] · ${formatDaewoonStartCell(targetDw.startDate).replace(/\n/g, ' ')} (${startYear}년~${endYear - 1}년)`)
-    const sewoonBridge = formatDaewoonAgeBridgeNote(
-      yunBirth.year, yunBirth.month, yunBirth.day, targetDw,
-    )
-    if (sewoonBridge) lines.push(sewoonBridge)
     for (const line of YUN_SEWOON_EXPORT_NOTES) lines.push(line)
     lines.push('')
 

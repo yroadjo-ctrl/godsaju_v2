@@ -35,11 +35,6 @@ export function findActiveDaewoonIndex(daewoon: DaewoonItem[], now: Date = new D
   return -1
 }
 
-/** @deprecated findActiveDaewoonIndex 사용 */
-export function findActiveDaewoonIndexByAge(daewoon: DaewoonItem[], _currentAge: number): number {
-  return findActiveDaewoonIndex(daewoon)
-}
-
 /** 세운 표 하이라이트 — 📍 현재 세운과 동일(입춘 기준 적용 연도 칸) */
 export function shouldHighlightSewoonYear(
   year: number,

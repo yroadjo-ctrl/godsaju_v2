@@ -3,9 +3,6 @@ import { HGANJI, YANGGAN } from './constants.ts';
 import { calcSolarTerms, calcPillarIndices } from './pillars.ts';
 import { calcDaysForDaewoonSu } from './daewoon-start.ts';
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-export const MS_PER_SAJU_YEAR = 365.242196 * MS_PER_DAY;
-
 /** 년간 음양 + 성별 → 順逆行 구분 (陽男·陰女·陰男·陽女) */
 export type DaewoonYinYangGenderLabel = '陽男' | '陰女' | '陰男' | '陽女';
 
@@ -37,11 +34,6 @@ export interface DaewoonMeta {
   firstStartDate: Date;
   /** 월주 간지 (대운수 병기, 예: 戊申) */
   monthGanzi: string;
-}
-
-export function daewoonAgeFromBirth(birth: Date, start: Date): number {
-  const years = (start.getTime() - birth.getTime()) / MS_PER_SAJU_YEAR;
-  return Math.max(0, Math.round(years));
 }
 
 /** 대운수·順逆行 — 3日=1年 */

@@ -12,7 +12,7 @@ const LUNAR_MONTH_HANJA = [
 
 /** AI 복사 — 大限·流年 나이 기준 (사주 만나이와 별도) */
 export const ZIWEI_XUSUI_EXPORT_NOTE =
-  '※ 大限·流年 나이 = 虚岁(해당 양력년 − 출생년 + 1). 사주 대운·세운의 12/31 만나이와 다를 수 있음.'
+  '※ 大限·流年 나이 = 虚岁(해당 양력년 − 출생년 + 1). 사주 대운·세운은 만나이(생일·◆시작 기준)라 다를 수 있음.'
 
 export function getMainStarsAtZhi(chart: ZiweiChart, zhi: string): string[] {
   const palace = getPalaceByZhi(chart, zhi)

@@ -1,9 +1,9 @@
 # 만나이 · 대운·세운·소운 나이 규칙
 
-갓사주 v2에서 **표에 쓰는 나이**와 **운 활성 판정** 기준을 정리한 문서입니다.  
-구현: `core/src/age.ts`, `core/src/saju.ts`, `core/src/soun.ts`, `client/src/utils/yun-period.ts`
+갓사주 v2에서 **표에 쓰는 나이**와 **운 활성 판정** 기준입니다.  
+구현: `core/src/age.ts`, `core/src/saju.ts`, `core/src/soun.ts`, `client/src/components/saju/SewoonTable.tsx`, `client/src/utils/yun-period.ts`
 
-> UI·AI 복사의 짧은 `※` 안내는 이 문서의 요약본입니다. 상세·예시는 여기를 기준으로 합니다.
+> UI·AI 복사의 `※` 안내는 `client/src/utils/yun-method-notes.ts` 요약본입니다.
 
 ---
 
@@ -13,30 +13,22 @@
 
 - 생일 **당일**에만 +1
 - 1월 1일에 자동으로 +1 되지 **않음**
-- `getManAge(birthY, birthM, birthD, refDate)` — `refDate` 시점 만나이
-
-```ts
-// core/src/age.ts
-age = refDate.year - birthYear
-if (refDate가 생일 전) age--
-```
+- `getManAge(birthY, birthM, birthD, refDate)` — `refDate` 순간의 KST 벽시계 날짜로 판정
 
 ---
 
-## 2. 표 칸 나이 (대운 · 세운 · 소운 공통)
+## 2. 표 칸 나이 (대운 · 세운 · 소운)
 
-**해당 양력년 12월 31일** 기준 만나이.
+모두 **`getManAge` + 해당 칸의 기준 시각** 입니다. (12/31 기준 아님)
 
-- 함수: `getManAgeInCalendarYear(birthY, birthM, birthD, calendarYear)`
-- 대운 헤더 `N세[O運]`, 세운·소운 칸 `N세 (YYYY년)` 모두 이 기준
+| 구분 | 기준 시각 | 헤더 표기 |
+|------|-----------|-----------|
+| **대운** | 각 運 `startDate` (◆대운 시작) | `N세[O運]` |
+| **세운** | 그해 생일 시각 (`출생 월·일·시`를 해당 연도에 적용) | `만N세 M/D` (M/D = 생일) |
+| **소운** | 그해 생일 시각 (◆소운 시작) | 연도 + 만나이 |
 
-| 구분 | 기준일 |
-|------|--------|
-| 대운 헤더 | `startDate`가 속한 **연도**의 12/31 |
-| 세운 칸 | 해당 **연도**의 12/31 |
-| 소운 칸 | 해당 **연도**의 12/31 |
-
-**활성 칸·현재 O운**은 12/31 나이가 아니라 **`startDate`·오늘 날짜**로 판정 (아래 §4).
+- 대운·소운·세운 칸의 `age` 필드 = 위 기준 시각의 만나이
+- 세운 **간지(流年)** 는 나이와 별도 — 해당 양력년 **◆입춘 직후** 레퍼런스 (`getLiuNianGanziForCalendarYear`)
 
 ---
 
@@ -45,10 +37,7 @@ if (refDate가 생일 전) age--
 **1운 `startDate` 연도 − 출생 연도** (양력, 매년 1주).
 
 - 함수: `getSounYearCount(birthYear, firstDaewoonStartDate)`
-- 대운수(반올림)와 **칸 개수**를 혼동하지 말 것 — 칸 수는 **연도 차**, 나이는 **12/31 만나이**
-
-예: 1982-05-08 남, 1운 1992-01-20 시작  
-→ 소운 **10칸** (1982~1991), 마지막 칸 **9세(1991)**
+- 칸 **개수** = 연도 차, 칸 **나이** = §2 소운 기준
 
 ---
 
@@ -58,22 +47,26 @@ if (refDate가 생일 전) age--
 |------|------|
 | 첫 대운 전 (소운 구간) | `now < daewoon[0].startDate` |
 | 활성 대운 칸 | `now >= 해당 運 startDate` (가장 최근) |
-| 세운 올해 하이라이트 | 올해 + 대운 시작 **후**만 |
-| 현재 O운 간지 | 입춘·12節·`startDate` (운 종류별 기존 규칙) |
+| 현재 세운 | 입춘 기준 적용 연도 (`getEffectiveYunCalendarYear`) |
+| 현재 O운 간지 | KST 「지금」+ 입춘·12節·`startDate` |
 
-함수: `isBeforeFirstDaewoon`, `findActiveDaewoonIndex` (`client/src/utils/yun-period.ts`)
+함수: `yun-period.ts` (`isBeforeFirstDaewoon`, `findActiveDaewoonIndex` 등)
 
 ---
 
-## 5. ◆시작 시점 vs 칸(12/31) 나이 차이
+## 5. 대운수 표기 vs 1運 ◆시작 만나이
 
-**생일이 ◆시작보다 늦으면** (예: 5월생, 1월 ◆시작):
+**대운수**(`daewoonSuDisplay`) = 절기일수÷3 반올림 **표기용**.  
+**1運 칸 나이** = ◆시작 시점 `getManAge(..., startDate)`.
 
-- ◆시작 **당시** 만나이: `getManAge(..., startDate)` → 예: **9세**
-- 같은 해 **칸** 나이: 12/31 → 예: **10세**
-- 대운수 **표기**(반올림): 예: **10** (정밀 9.7)
+생일이 ◆시작보다 늦으면 (예: 5월생, 1월 ◆시작) 표기가 1세 차이 날 수 있음.
 
-UI·AI 복사에서 1세 차이 날 때 **주황 안내** (`formatDaewoonAgeBridgeNote`).
+- ◆시작 당시: 만 9세
+- 대운수 표기: 10 (정밀 9.7)
+
+이때 UI·AI에 `formatDaewoonAgeBridgeNote` 안내 (1運만).
+
+**같은 해 세운 칸**은 생일 기준이라 대운 1運 칸 나이와 다를 수 있음 (예: ◆시작 1월 9세, 9월 생일 세운 칸 10세).
 
 ---
 
@@ -83,46 +76,32 @@ UI·AI 복사에서 1세 차이 날 때 **주황 안내** (`formatDaewoonAgeBrid
 |------|-----|
 | 대운수 표기 | 10 (정밀 9.7) |
 | 1운 ◆시작 | 1992-01-20 01:42 |
-| ◆시작 당시 만나이 | 9세 |
-| 1992년 대운·세운 칸 | 10세 |
-| 소운 | 0~9세 (1982~1991), 10칸 |
-| 4운 헤더 | 40세[4運] (2022~) |
-| 2022년 ◆시작 당시 | 39세 → 칸 40세 |
+| 1운 칸 나이 | 9세 (◆시작 시점) |
+| 1992년 세운 칸 | 10세 (1992-05-08 생일) |
+| 소운 | 1982~1991, 10칸 |
 
 ---
 
-## 7. 예시 — 1982-09-08 07:00 남 서울
+## 7. 시주(時柱) 계산
 
-| 항목 | 값 |
-|------|-----|
-| 대운수 | 0 |
-| 1운 | 0세[1運], 1982-09-15~ |
-| 소운 | 0칸 (대운 시작과 동일) |
-| 5운 | 40세[5運], 癸丑 (2022~) |
+- **반시**: 30분 경계로 시지 결정
+- **통자시/야자시**: `jasiMethod` (`pillars.ts` `calcPillarIndices`)
+- 출생 **경도 보정**은 해외 출생 `birth-time-adjustment` 에서만 (시주 주석의 「동경 127.5°」는 사용하지 않음)
 
 ---
 
-## 8. 간지·대운수·절기
-
-다음은 **만나이 통일과 무관** — 기존 엔진 유지.
-
-- 대운수: 절기까지 일수 ÷ 3 (3일=1년)
-- 대운·세운 **간지**: 입춘·12節 (원국과 동일)
-- ◆시작 행: 실제 運 전환 시각 (lunar + KST)
-
----
-
-## 9. 관련 파일
+## 8. 관련 파일
 
 | 파일 | 역할 |
 |------|------|
-| `core/src/age.ts` | 만나이 계산 |
-| `core/src/saju.ts` | 대운 헤더 나이 |
-| `core/src/soun.ts` | 소운 칸 수·나이 |
-| `client/src/utils/yun-period.ts` | 활성 대운·세운 하이라이트 |
-| `client/src/utils/yun-method-notes.ts` | UI·AI 복사 짧은 안내 |
-| `client/src/utils/yun-age-notes.ts` | ◆시작 vs 칸 나이 동적 안내 |
+| `core/src/age.ts` | `getManAge` |
+| `core/src/saju.ts` | 대운 칸 나이 |
+| `core/src/soun.ts` | 소운 칸·칸 수 |
+| `client/src/components/saju/SewoonTable.tsx` | 세운 칸·헤더 |
+| `client/src/utils/yun-period.ts` | 활성 운·입춘 |
+| `client/src/utils/yun-age-notes.ts` | 대운수 vs 1運 안내 |
+| `client/src/utils/yun-method-notes.ts` | UI·AI `※` |
 
 ---
 
-*최종 갱신: Phase 4 #13 — 만나이 통일·헤더 규칙 문서화*
+*갱신: KST 「지금」 통일 · 만나이·문서·미사용 API 정리*

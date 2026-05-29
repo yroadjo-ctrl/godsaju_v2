@@ -17,15 +17,10 @@ export {
   RELATION_TABS, collectRelationListItems, formatRelationListItem, countByTab,
 } from './relation-tabs.ts'
 export type { RelationTabId, RelationTabDef, RelationListItem } from './relation-tabs.ts'
-export {
-  getManAge,
-  getManAgeInCalendarYear,
-} from './age.ts'
+export { getManAge } from './age.ts'
 export {
   calculateDaewoonMeta,
-  daewoonAgeFromBirth,
   formatDaewoonYinYangGenderLabel,
-  MS_PER_SAJU_YEAR,
 } from './daewoon-meta.ts'
 export type { DaewoonYinYangGenderLabel } from './daewoon-meta.ts'
 export {

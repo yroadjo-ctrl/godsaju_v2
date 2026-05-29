@@ -266,7 +266,7 @@ export function calcPillarIndices(
   if (so24day < 0) so24day += 60;
   else if (so24day > 59) so24day -= 60;
 
-  // 시주 (반시 체계: 30분 경계, 동경 127.5도 보정)
+  // 시주 (반시 체계: 30분 경계 · 통자시/야자시는 jasiMethod)
   let i: number;
   if (hour === 0 || (hour === 1 && min < 30)) {
     i = 0; // 子 (조자시: 00:00~01:29)
