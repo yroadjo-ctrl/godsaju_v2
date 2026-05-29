@@ -21,6 +21,8 @@ export default function LiuyueTable({ chart, displayYear, onYearChange }: Props)
     () => calculateLiunian(chart, displayYear),
     [chart, displayYear],
   )
+  /** 표시: 臘月(좌) ← 正月(우) — 流年 표와 동일 */
+  const liuyueCols = useMemo(() => [...liunian.liuyue].reverse(), [liunian.liuyue])
 
   const handlePrevYear = () => onYearChange(displayYear - 1)
   const handleNextYear = () => onYearChange(displayYear + 1)
@@ -53,13 +55,13 @@ export default function LiuyueTable({ chart, displayYear, onYearChange }: Props)
         </div>
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-        流月는 선택한 流年({displayYear}년) 기준 음력월 순서입니다.
+        流月는 선택한 流年({displayYear}년) 기준입니다. 열 순서: 臘月(좌) ← 正月(우).
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-800">
-              {liunian.liuyue.map(ly => (
+              {liuyueCols.map(ly => (
                 <th
                   key={ly.month}
                   className="border border-black dark:border-gray-600 px-2 py-1 text-center min-w-[88px] text-xs bg-gray-100 dark:bg-gray-800"
@@ -73,7 +75,7 @@ export default function LiuyueTable({ chart, displayYear, onYearChange }: Props)
           </thead>
           <tbody>
             <tr>
-              {liunian.liuyue.map(ly => (
+              {liuyueCols.map(ly => (
                 <td key={ly.month} className="border border-black dark:border-gray-600 px-2 py-2 text-center">
                   <span className={`inline-flex items-center justify-center w-8 h-8 text-base font-hanja rounded text-white ${branchSolidBgClass(ly.mingGongZhi)}`}>
                     {ly.mingGongZhi}
@@ -82,14 +84,14 @@ export default function LiuyueTable({ chart, displayYear, onYearChange }: Props)
               ))}
             </tr>
             <tr>
-              {liunian.liuyue.map(ly => (
+              {liuyueCols.map(ly => (
                 <td key={ly.month} className="border border-black dark:border-gray-600 px-2 py-1 text-center text-xs">
                   <ZiweiInline text={ly.natalPalaceName} />
                 </td>
               ))}
             </tr>
             <tr>
-              {liunian.liuyue.map(ly => {
+              {liuyueCols.map(ly => {
                 const stars = getMainStarsAtZhi(chart, ly.mingGongZhi)
                 return (
                   <td key={ly.month} className="border border-black dark:border-gray-600 px-2 py-1 text-center text-xs leading-tight">

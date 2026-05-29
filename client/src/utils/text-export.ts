@@ -1,7 +1,6 @@
 ﻿import { Solar } from 'lunar-javascript'
 import type { BirthInput, SajuResult, ZiweiChart, LiuNianInfo, NatalChart } from '@core/types'
 import { ELEMENT_HANJA, PILLAR_NAMES, PALACE_NAMES, MAIN_STAR_NAMES, JIJANGGAN, GONGMANG_TABLE, HGANJI } from '@core/constants'
-import { getDaxianList } from '@core/ziwei'
 import { formatRelation, fmt2, formatSinsal, getStemAttr, getBranchAttr } from './format.ts'
 import { ZODIAC_SYMBOLS, PLANET_SYMBOLS, ASPECT_SYMBOLS, ROMAN, formatDegree } from '@core/natal'
 import { t as translate, getLocale } from '../i18n/index.ts'
@@ -58,8 +57,15 @@ import { buildAiExecutiveSummaryLines } from './executive-summary.ts'
 import { formatYunBigoPlainText, collectNatalTransitInteractions } from './yun-bigo.ts'
 import { formatZiweiInline, formatZhiKorHanja } from './ziwei-labels.ts'
 import { formatGanziKorHanja } from './ganzi-display.ts'
-import { buildZiweiMingPanSummaryLines, buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
-import { resolveZiweiLiunian, appendLiunianExportSections, ZIWEI_XUSUI_EXPORT_NOTE } from './ziwei-liunian-export.ts'
+import { buildZiweiPalaceGridText } from './ziwei-palace-grid.ts'
+import {
+  resolveZiweiLiunian,
+  appendLiunianExportSections,
+  buildDaxianHorizontalTableLines,
+  formatZiweiCurrentYunLine,
+  ZIWEI_YUN_TABLE_EXPORT_NOTES,
+} from './ziwei-liunian-export.ts'
+import { getActiveDaxianToday } from './ziwei-yun-period.ts'
 import type { Locale } from '../i18n/index.ts'
 
 /** AI 복사 섹션 제목 (■ 접두) */
@@ -1265,6 +1271,7 @@ export function ziweiToText(
   chart: ZiweiChart,
   input: BirthInput,
   liunianOrYear?: LiuNianInfo | number,
+  selectedDaxianIdx?: number,
 ): string {
   const lines: string[] = []
   const fmt = formatZiweiInline
@@ -1274,11 +1281,6 @@ export function ziweiToText(
   lines.push('| 이름 | 생년월일시 | 시간(12간지) / 통자시·야자시 / 성별 | 출생위치 |')
   lines.push('| --- | --- | --- | --- |')
   lines.push(formatBirthInfoRow(input))
-  lines.push('')
-
-  lines.push(sectionTitle(fmt('命盤')))
-  lines.push('─────')
-  lines.push(...buildZiweiMingPanSummaryLines(chart, fmt))
   lines.push('')
 
   lines.push(sectionTitle(fmt('十二宮')))
@@ -1298,18 +1300,19 @@ export function ziweiToText(
     }
   }
 
-  lines.push('')
-  lines.push(sectionTitle(fmt('大限')))
-  lines.push('─────')
-  const daxianList = getDaxianList(chart)
-  daxianList.forEach((dx, i) => {
-    const stars = dx.mainStars.length > 0 ? dx.mainStars.map(s => fmt(s)).join(' ') : `(${fmt('空宮')})`
-    lines.push(`${String(dx.ageStart).padStart(3)}-${String(dx.ageEnd).padStart(3)}歲[${i + 1}限]  ${fmt(dx.palaceName)}  ${dx.ganZhi}  ${stars}`)
-  })
-  lines.push(ZIWEI_XUSUI_EXPORT_NOTE)
-
   const liunian = resolveZiweiLiunian(chart, liunianOrYear)
-  appendLiunianExportSections(lines, chart, liunian, fmt, sectionTitle)
+
+  lines.push('')
+  lines.push(formatZiweiCurrentYunLine(liunian, getActiveDaxianToday(chart)))
+  lines.push(sectionTitle(fmt('大限')))
+  for (const note of ZIWEI_YUN_TABLE_EXPORT_NOTES) lines.push(note)
+  lines.push('')
+  lines.push(...buildDaxianHorizontalTableLines(chart, fmt))
+  lines.push('')
+
+  appendLiunianExportSections(lines, chart, liunian, fmt, sectionTitle, {
+    selectedDaxianIdx,
+  })
 
   return lines.join('\n')
 }

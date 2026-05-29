@@ -6,13 +6,18 @@ import { getZiweiXuSuiInCalendarYear } from '@core/ziwei'
 import { branchSolidBgClass } from '../../utils/format.ts'
 import { ZiweiInline, ZiweiSectionTitleKey } from './ZiweiLabel.tsx'
 import { getMainStarsAtZhi } from '../../utils/ziwei-liunian-export.ts'
-import { getCalendarYearsForDaxian, type ZiweiDaxianItem } from '../../utils/ziwei-yun-period.ts'
+import {
+  getCalendarYearsForDaxian,
+  shouldHighlightZiweiLiunianYear,
+  type ZiweiDaxianItem,
+} from '../../utils/ziwei-yun-period.ts'
 
 interface Props {
   chart: ZiweiChart
   daxian: ZiweiDaxianItem
-  displayYear: number
   onYearChange: (year: number) => void
+  selectedDaxianIdx: number
+  autoDaxianIdx: number
 }
 
 interface LiunianColumn {
@@ -71,8 +76,9 @@ function formatSiHuaCell(liunian: LiuNianInfo): ReactNode {
 export default function LiunianTable({
   chart,
   daxian,
-  displayYear,
   onYearChange,
+  selectedDaxianIdx,
+  autoDaxianIdx,
 }: Props) {
   const columns = useMemo(() => buildLiunianColumns(chart, daxian), [chart, daxian])
   const currentYear = new Date().getFullYear()
@@ -89,25 +95,27 @@ export default function LiunianTable({
         선택 大限: {periodLabel}
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-        열을 클릭하면 해당 연도의 流月을 아래에서 볼 수 있습니다.
+        열을 클릭하면 해당 연도의 流月을 아래에서 볼 수 있습니다. 노란 칸은 현재 大限일 때 올해만 표시됩니다(사주 세운과 동일).
       </p>
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-800">
               {[...columns].reverse().map(col => {
-                const isCurrentYear = col.year === currentYear
-                const isSelected = col.year === displayYear && col.year !== currentYear
+                const isActive = shouldHighlightZiweiLiunianYear(
+                  col.year,
+                  selectedDaxianIdx,
+                  autoDaxianIdx,
+                  currentYear,
+                )
                 return (
                   <th
                     key={col.year}
                     onClick={() => onYearChange(col.year)}
                     className={`border border-black dark:border-gray-600 px-2 py-2 text-center min-w-[100px] text-xs font-semibold cursor-pointer transition-colors ${
-                      isSelected
-                        ? 'bg-[#66FFFF]'
-                        : isCurrentYear
-                          ? 'bg-[#FFFF00]'
-                          : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      isActive
+                        ? 'bg-[#FFFF00]'
+                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
                     {col.age}세<br />

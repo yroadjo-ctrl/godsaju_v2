@@ -70,7 +70,7 @@ export default function ZiweiView({ input }: Props) {
         <div className="flex items-center justify-between gap-2 mb-3">
           <ZiweiSectionTitle kor="자미두수 명반" hanja="紫微斗數 命盤" as="h2" />
           <CopyButton
-            getText={() => ziweiToText(chart, input, liunianYear)}
+            getText={() => ziweiToText(chart, input, liunianYear, selectedDaxianIdx)}
             label={t('copy.aiCopy')}
           />
         </div>
@@ -95,8 +95,9 @@ export default function ZiweiView({ input }: Props) {
           <LiunianTable
             chart={chart}
             daxian={displayDaxian}
-            displayYear={liunianYear}
             onYearChange={setLiunianYear}
+            selectedDaxianIdx={selectedDaxianIdx}
+            autoDaxianIdx={autoDaxianIdx}
           />
         )}
         <LiuyueTable

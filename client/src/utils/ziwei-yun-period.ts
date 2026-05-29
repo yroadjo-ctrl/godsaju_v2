@@ -53,6 +53,26 @@ export function getDaxianStartCalendarYear(
   return years[0] ?? null
 }
 
+/** 현재 大限 구간 표시 중인지 (대한 파란 선택이 아님 — 사주 display 대운 = auto 대운과 동일) */
+export function isViewingActiveZiweiDaxian(
+  selectedDaxianIdx: number,
+  autoDaxianIdx: number,
+): boolean {
+  if (selectedDaxianIdx < 0) return true
+  return selectedDaxianIdx === autoDaxianIdx
+}
+
+/** 流年 표 노란 칸 — 현재 大限일 때만 올해(사주 shouldHighlightSewoonYear와 동일, 파란 칸 없음) */
+export function shouldHighlightZiweiLiunianYear(
+  year: number,
+  selectedDaxianIdx: number,
+  autoDaxianIdx: number,
+  calendarYear: number = new Date().getFullYear(),
+): boolean {
+  if (!isViewingActiveZiweiDaxian(selectedDaxianIdx, autoDaxianIdx)) return false
+  return year === calendarYear
+}
+
 /** 올해 虚岁 기준 활성 大限 */
 export function getActiveDaxianToday(chart: ZiweiChart) {
   const list = getDaxianList(chart)
