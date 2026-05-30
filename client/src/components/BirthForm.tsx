@@ -489,13 +489,8 @@ const BirthForm = forwardRef<BirthFormHandle, Props>(function BirthForm({ onSubm
               >
                 <option value="solar">{t('form.calendar.solar')}</option>
                 <option value="lunar">{t('form.calendar.lunar')}</option>
-                <option
-                  value="lunarLeap"
-                  disabled={leapMonth == null}
-                >
-                  {leapMonth != null
-                    ? t('form.calendar.lunarLeap')
-                    : t('form.calendar.lunarLeapDisabled')}
+                <option value="lunarLeap" disabled={leapMonth == null}>
+                  {t('form.calendar.lunarLeap')}
                 </option>
               </select>
               <div className="grid grid-cols-3 gap-2">

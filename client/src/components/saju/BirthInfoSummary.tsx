@@ -98,7 +98,7 @@ export default function BirthInfoSummary({ input }: Props) {
           {' '}
           {solarConversion.text}
           {solarConversion.isLeap && (
-            <span className="ml-1 text-gray-500 dark:text-gray-400">(음력 윤달)</span>
+            <span className="ml-1 text-gray-500 dark:text-gray-400">(윤달(음력))</span>
           )}
         </p>
       )}

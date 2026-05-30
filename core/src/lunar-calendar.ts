@@ -86,7 +86,7 @@ export function calendarTypeLabel(calendarType?: CalendarType): string {
     case 'lunar':
       return '음력';
     case 'lunarLeap':
-      return '음력(윤달)';
+      return '윤달(음력)';
   }
 }
 

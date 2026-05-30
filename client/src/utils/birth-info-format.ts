@@ -140,7 +140,7 @@ export function formatCalculationBasisLines(input: BirthInput): string[] {
       const solar = resolveSolarBirthDateTime(input)
       lines.push(`양력 변환: ${formatIsoDateTime(solar.year, solar.month, solar.day, solar.hour, solar.minute)}`)
       if (input.calendarType === 'lunarLeap') {
-        lines.push('(음력 윤달 입력)')
+        lines.push('(윤달(음력) 입력)')
       }
     } catch {
       lines.push('(양력 변환 실패 — 입력값 확인 필요)')
